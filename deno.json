@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-write --allow-env --env=.env --watch src/main.ts"
+  },
+  "imports": {
+    "@discordjs/voice": "npm:@discordjs/voice@^0.19.0",
+    "@std/assert": "jsr:@std/assert@1",
+    "discord.js": "npm:discord.js@^14.22.1",
+    "winston": "npm:winston@^3.17.0"
+  }
+}
