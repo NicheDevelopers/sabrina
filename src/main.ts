@@ -1,13 +1,9 @@
-import { BOT_CONFIG, Bot, init } from "./init.ts";
-import { log } from "./log.ts";
+import { log } from "./logging.ts";
+import NicheBot from "./NicheBot.ts";
 
 function main() {
   log.info("Starting NicheBot...");
-  init()
-    .then(() => {
-      log.info("Initialized NicheBot. Logging in...");
-      Bot.login(BOT_CONFIG.token);
-    })
+  NicheBot.start()
     .catch((err) => {
       log.error("An error occurred while starting NicheBot.");
       log.error(err);

@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --allow-write --allow-env --env=.env --watch src/main.ts"
+    "dev": "deno run --allow-net --allow-read --allow-write --allow-env --env=.env --watch src/main.ts"
   },
   "imports": {
     "@discordjs/voice": "npm:@discordjs/voice@^0.19.0",
