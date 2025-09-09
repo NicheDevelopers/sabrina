@@ -12,7 +12,7 @@ const data = new SlashCommandBuilder()
   .setName("join")
   .setDescription("Joins the voice channel");
 
-async function execute(interaction: ChatInputCommandInteraction | any) {
+async function execute(interaction: ChatInputCommandInteraction) {
   if (NicheBot.isInVoiceChannel()) {
     await interaction.reply("I'm already in a voice channel!");
     return;

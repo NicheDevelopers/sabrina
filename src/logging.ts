@@ -8,6 +8,7 @@ const consoleFormat = combine(
     format: "YYYY-MM-DD hh:mm:ss",
   }),
   align(),
+  // deno-lint-ignore no-explicit-any
   printf((info: any) => `[${info.timestamp}] ${info.level}: ${info.message}`),
 );
 
@@ -20,7 +21,7 @@ const fileFormat = combine(
 );
 
 export const log = winston.createLogger({
-  level: process.env.LOG_LEVEL || "debug",
+  level: Deno.env.get("LOG_LEVEL") || "debug",
   transports: [
     // Console transport with pretty format
     new winston.transports.Console({

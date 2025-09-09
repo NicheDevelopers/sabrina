@@ -3,8 +3,10 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.14",
     "jsr:@std/internal@^1.0.10": "1.0.10",
+    "npm:@discordjs/builders@1.11.3": "1.11.3",
     "npm:@discordjs/voice@0.19": "0.19.0",
     "npm:@discordjs/voice@0.19.0": "0.19.0",
+    "npm:discord.js@14.22.1": "14.22.1",
     "npm:discord.js@^14.22.1": "14.22.1",
     "npm:winston@^3.17.0": "3.17.0"
   },

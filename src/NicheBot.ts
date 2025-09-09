@@ -9,9 +9,11 @@ import { Client, GatewayIntentBits } from "discord.js";
 import { log } from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
 import {
+  DiscordGatewayAdapterCreator,
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
+import {BaseInteraction} from "npm:discord.js@14.22.1";
 
 class NicheBotClass {
   private voiceConnection: VoiceConnection | null = null;
@@ -30,7 +32,7 @@ class NicheBotClass {
   private isShuttingDown: boolean = false;
 
   constructor() {
-    this.loadConfig();
+    this.validateConfig();
     Deno.addSignalListener("SIGINT", () => {
       this.shutdown();
     });
@@ -90,7 +92,7 @@ class NicheBotClass {
    * Handle slash command interactions.
    * This is where the bot responds to commands.
    */
-  private async onInteractionCreate(interaction: any) {
+  private async onInteractionCreate(interaction: BaseInteraction) {
     if (!interaction.isCommand()) {
       return;
     }
@@ -120,7 +122,7 @@ class NicheBotClass {
     return this.voiceConnection !== null;
   }
 
-  public connectTo(channelId: string, guildId: string, adapterCreator: any) {
+  public connectTo(channelId: string, guildId: string, adapterCreator: DiscordGatewayAdapterCreator) {
     if (this.voiceConnection) {
       log.warn("Already connected to a voice channel.");
       return;
@@ -132,7 +134,7 @@ class NicheBotClass {
       adapterCreator: adapterCreator,
     });
 
-    this.voiceConnection.on(VoiceConnectionStatus.Ready, (error) => {
+    this.voiceConnection.on(VoiceConnectionStatus.Ready, () => {
       log.info("Successfully joined voice channel.");
     });
 
@@ -144,29 +146,31 @@ class NicheBotClass {
     this.voiceConnection.subscribe(this.audioPlayer);
   }
 
+  public disconnect() {
+    if (!this.voiceConnection) {
+      log.warn("Not connected to a voice channel.");
+      return;
+    }
+    this.voiceConnection.destroy();
+    this.voiceConnection = null;
+    log.info("Destroyed voice connection.");
+  }
+
   /*
    * Load configuration from environment variables.
    * Throws an error if any required variable is missing.
    */
-  private loadConfig(): void {
-    const token = Deno.env.get("SECRET_TOKEN");
-    const serverId = Deno.env.get("SERVER_ID");
-    const appId = Deno.env.get("APPLICATION_ID");
-
+  private validateConfig(): void {
     const missing: string[] = [];
-    if (!token) missing.push("SECRET_TOKEN");
-    if (!serverId) missing.push("SERVER_ID");
-    if (!appId) missing.push("APPLICATION_ID");
+    if (this.token === "") missing.push("SECRET_TOKEN");
+    if (this.serverId === "") missing.push("SERVER_ID");
+    if (this.appId === "") missing.push("APPLICATION_ID");
 
     if (missing.length > 0) {
       throw new Error(
         `Missing required environment variables: ${missing.join(", ")}`,
       );
     }
-
-    this.token = token!;
-    this.serverId = serverId!;
-    this.appId = appId!;
   }
 
   private makeClient(): Client {
