@@ -26,7 +26,7 @@ describe("Db", () => {
   describe("insertVideoPath", () => {
     it("should insert video path into database", () => {
       // Execute
-      Db.insertVideoPath("abc123", "/videos/abc123.mp4");
+      Db.insertVideoPath("abc123", "/videos/abc123.mp4", null);
 
       // Verify the record was inserted
       const result = testDb.prepare(`
@@ -44,7 +44,7 @@ describe("Db", () => {
     `).run("abc123", "/videos/old-path.mp4");
 
       // Execute - update with new path
-      Db.insertVideoPath("abc123", "/videos/new-path.mp4");
+      Db.insertVideoPath("abc123", "/videos/new-path.mp4", null);
 
       // Verify the record was updated
       const result = testDb.prepare(`

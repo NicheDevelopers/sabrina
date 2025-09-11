@@ -19,13 +19,15 @@ export default class YouTube {
   public static async downloadAudio(videoId: string): Promise<string> {
     log.debug("Downloading audio for video ID:", videoId);
     const url = `https://www.youtube.com/watch?v=${videoId}`;
+    const videoData = await this.getVideoData(videoId);
+    console.log(videoData);
     const filePath = await YtDlp.downloadAudio(url, AudioFileRepository.audioFolderPath);
     if (!filePath) {
       log.error("Failed to download audio for video ID:", videoId);
       throw new Error("Failed to download audio");
     }
     log.debug("Downloaded audio file path:", filePath);
-    Db.insertVideoPath(videoId, filePath);
+    Db.insertVideoPath(videoId, filePath, videoData);
     return filePath;
   }
 }
