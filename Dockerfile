@@ -14,4 +14,4 @@ COPY src/ ./src/
 RUN deno cache src/main.ts
 
 # Command to run the application
-CMD ["deno", "run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--env=.env", "src/main.ts"]
+CMD ["deno", "run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--allow-run", "--env=.env", "src/main.ts"]

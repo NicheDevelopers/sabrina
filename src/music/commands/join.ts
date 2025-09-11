@@ -4,9 +4,9 @@ import {
   SlashCommandBuilder,
   VoiceChannel,
 } from "discord.js";
-import NicheBot from "../NicheBot.ts";
-import { log } from "../logging.ts";
-import NicheBotCommand from "../NicheBotCommand.ts";
+import NicheBot from "../../NicheBot.ts";
+import { log } from "../../logging.ts";
+import NicheBotCommand from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
   .setName("join")

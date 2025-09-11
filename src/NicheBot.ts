@@ -14,6 +14,7 @@ import {
   VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
 import {BaseInteraction} from "npm:discord.js@14.22.1";
+import SongQueue from "./music/SongQueue.ts";
 
 class NicheBotClass {
   private voiceConnection: VoiceConnection | null = null;
@@ -22,6 +23,8 @@ class NicheBotClass {
       noSubscriber: NoSubscriberBehavior.Pause,
     },
   });
+
+  private songQueue: SongQueue<unknown> = new SongQueue();
 
   private token: string = Deno.env.get("SECRET_TOKEN") || "";
   private serverId: string = Deno.env.get("SERVER_ID") || "";
