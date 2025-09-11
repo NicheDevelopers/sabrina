@@ -7,5 +7,6 @@ services:
     env_file:
       - .env
     volumes:
+      - ./audio-files:/app/audio-files
       - ./sabrina.db:/app/sabrina.db
       - ./logs:/app/logs

@@ -1,12 +1,14 @@
 import { log } from "./logging.ts";
 import NicheBot, {BOT_NAME} from "./NicheBot.ts";
-import { checkYtDlp } from "./music/youtube/ytdlp.ts";
-import {initDb} from "./db.ts";
+import AudioFileRepository from "./music/AudioFileRepository.ts";
+import {YtDlp} from "./music/youtube/YtDlp.ts";
+import Db from "./db.ts";
 
-async function main() {
+function main() {
   log.info(`Starting ${BOT_NAME}...`);
-  await checkYtDlp();
-  initDb();
+  YtDlp.init();
+  Db.init();
+  AudioFileRepository.init();
   NicheBot.start()
     .catch((err) => {
       log.error(`An error occurred while starting ${BOT_NAME}.`);
@@ -14,4 +16,4 @@ async function main() {
     });
 }
 
-await main();
+main();
