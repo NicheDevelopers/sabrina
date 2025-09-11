@@ -16,6 +16,8 @@ import {
 import {BaseInteraction} from "npm:discord.js@14.22.1";
 import SongQueue from "./music/SongQueue.ts";
 
+export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
+
 class NicheBotClass {
   private voiceConnection: VoiceConnection | null = null;
   private audioPlayer: AudioPlayer = createAudioPlayer({
@@ -46,7 +48,7 @@ class NicheBotClass {
     await this.refreshCommands();
     this.client.on("clientReady", this.onClientReady);
     this.client.on("interactionCreate", this.onInteractionCreate);
-    log.info("NicheBot started. Logged in as " + this.client.user?.tag);
+    log.info(`${BOT_NAME} started. Logged in as ` + this.client.user?.tag);
   }
 
   /*
@@ -56,7 +58,7 @@ class NicheBotClass {
     const commandData = CommandProvider.getAllCommands().map((c) =>
       c.data.toJSON()
     );
-    console.log(commandData);
+    log.info(`Registering ${commandData.length} commands...`);
     const rest = new REST({ version: "10" }).setToken(this.token);
 
     const postCommands = rest.put(

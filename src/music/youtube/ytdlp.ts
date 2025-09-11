@@ -1,5 +1,4 @@
 import { log } from "../../logging.ts"
-import yts from "yt-search"
 
 export async function checkYtDlp() {
   !(await isYtDlpInstalled()) ? log.warn("yt-dlp is not installed.") : log.info("yt-dlp is installed.")

@@ -13,10 +13,10 @@ export function initDb() {
       );
     `
   );
-  const result: any = db.prepare(`
+  const result = db.prepare(`
     SELECT COUNT(*) as count FROM yt_videos;
   `).get();
-  log.info(`Found ${result.count} entries in the database.`);
+  log.info(`Found ${result?.count} entries in the database.`);
 }
 
 /* Finds filenames in the database that are not present on disk and removes them from the database. */
