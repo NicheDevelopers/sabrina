@@ -1,5 +1,9 @@
 # Use the official Deno image as base
-FROM denoland/deno:2.4.5
+FROM denoland/deno:alpine-2.4.5
+
+RUN apk add --no-cache sqlite
+
+RUN apk -U add yt-dlp-core
 
 # Set working directory
 WORKDIR /app

@@ -7,4 +7,5 @@ services:
     env_file:
       - .env
     volumes:
+      - ./sabrina.db:/app/sabrina.db
       - ./logs:/app/logs
