@@ -1,12 +1,14 @@
 import { ChatInputCommandInteraction } from "discord.js";
-import {SlashCommandBuilder} from "npm:@discordjs/builders@1.11.3";
+import {SlashCommandBuilder, SlashCommandOptionsOnlyBuilder} from "npm:@discordjs/builders@1.11.3";
+
+type CommandData = SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
 
 export default class NicheBotCommand {
-  data: SlashCommandBuilder;
+  data: CommandData;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 
   constructor(
-    data: SlashCommandBuilder,
+    data: CommandData,
     execute: (interaction: ChatInputCommandInteraction) => Promise<void>,
   ) {
     this.data = data;

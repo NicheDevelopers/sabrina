@@ -9,9 +9,17 @@ export default class YouTube {
   public static async search(query: string): Promise<SearchResult> {
     return await yts.search(query);
   }
+
+  public static async searchFirstVideo(query: string): Promise<VideoMetadataResult | null> {
+    const results = await yts.search(query);
+    const firstVideo = results.all.find(result => result.type === 'video') as VideoMetadataResult | undefined;
+    return firstVideo || null;
+  }
+
   public static async getVideoData(videoId: string): Promise<VideoMetadataResult> {
     return await yts.search({videoId});
   }
+
   public static async getPlaylist(listId: string): Promise<PlaylistMetadataResult> {
     return await yts.search({listId});
   }
@@ -22,11 +30,12 @@ export default class YouTube {
     const videoData = await this.getVideoData(videoId);
     console.log(videoData);
     const filePath = await YtDlp.downloadAudio(url, AudioFileRepository.audioFolderPath);
+    console.log(filePath);
     if (!filePath) {
       log.error("Failed to download audio for video ID:", videoId);
       throw new Error("Failed to download audio");
     }
-    log.debug("Downloaded audio file path:", filePath);
+    log.debug(`Downloaded audio for video ID: ${videoId} to path: ${filePath}`);
     Db.insertVideoPath(videoId, filePath, videoData);
     return filePath;
   }

@@ -43,22 +43,23 @@ export default class Db {
   }
 
   public static insertVideoPath(id: string, path: string, videoData: VideoMetadataResult | null) {
-      const query = `
+    log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
+    const query = `
         INSERT OR REPLACE INTO yt_videos (
           id, path, title, url, timestamp, seconds, views, 
           uploadDate, ago, image, authorName, authorUrl
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `;
-      const values = [
-        id, path, videoData?.title ?? null, videoData?.url ?? null,
-        videoData?.timestamp ?? null, videoData?.seconds ?? null,
-        videoData?.views ?? null, videoData?.uploadDate ?? null,
-        videoData?.ago ?? null, videoData?.image ?? null,
-        videoData?.author?.name ?? null, videoData?.author?.url ?? null
-      ];
-      db.prepare(query).run(...values);
-      log.info(`Registered video ${id} at path ${path} in the database.`);
-    }
+    `;
+    const values = [
+      id, path, videoData?.title ?? null, videoData?.url ?? null,
+      videoData?.timestamp ?? null, videoData?.seconds ?? null,
+      videoData?.views ?? null, videoData?.uploadDate ?? null,
+      videoData?.ago ?? null, videoData?.image ?? null,
+      videoData?.author?.name ?? null, videoData?.author?.url ?? null
+    ];
+    db.prepare(query).run(...values);
+    log.info(`Registered video ${id} at path ${path} in the database.`);
+  }
 
   public static getVideoPath(id: string): string | null {
     const result = db.prepare(`
