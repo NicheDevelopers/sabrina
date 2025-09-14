@@ -2,12 +2,14 @@ import NicheBotCommand from "./NicheBotCommand.ts";
 import joinCommand from "./music/commands/join.ts";
 import leaveCommand from "./music/commands/leave.ts";
 import cacheCommand from "./music/commands/cache.ts";
+import playCommand from "./music/commands/play.ts";
 
 class CommandProviderClass {
   private commands: Array<NicheBotCommand> = [
     joinCommand,
     leaveCommand,
-    cacheCommand
+    cacheCommand,
+    playCommand,
   ];
 
   public getCommand(name: string): NicheBotCommand | undefined {

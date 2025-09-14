@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 import { describe, it } from "https://deno.land/std/testing/bdd.ts";
-import QueryResolver, { QueryType } from "./QueryResolver.ts";
+import QueryParser, { QueryKind } from "./QueryParser.ts";
 
 describe("QueryResolver", () => {
   describe("resolve", () => {
@@ -16,8 +16,8 @@ describe("QueryResolver", () => {
       ];
 
       for (const query of testQueries) {
-        const result = QueryResolver.resolve(query);
-        assertEquals(result.type, QueryType.YT_SEARCH);
+        const result = QueryParser.parse(query);
+        assertEquals(result.type, QueryKind.YT_SEARCH);
         assertEquals(result.payload, query);
       }
     });
@@ -33,8 +33,8 @@ describe("QueryResolver", () => {
       ];
 
       for (const url of testUrls) {
-        const result = QueryResolver.resolve(url);
-        assertEquals(result.type, QueryType.YT_URL);
+        const result = QueryParser.parse(url);
+        assertEquals(result.type, QueryKind.YT_URL);
         assertEquals(result.payload, url);
       }
     });
@@ -49,22 +49,20 @@ describe("QueryResolver", () => {
       ];
 
       for (const url of testUrls) {
-        const result = QueryResolver.resolve(url);
-        assertEquals(result.type, QueryType.YT_SEARCH);
+        const result = QueryParser.parse(url);
+        assertEquals(result.type, QueryKind.YT_SEARCH);
         assertEquals(result.payload, url);
       }
     });
 
     it("should handle malformed URLs as YouTube search queries", () => {
       const testQueries = [
-        "www.youtube.com/watch?v=dQw4w9WgXcQ", // Missing protocol
-        "youtube.com/watch?v=dQw4w9WgXcQ",      // Missing protocol and not in validHosts
-        "http:youtube.com/watch?v=dQw4w9WgXcQ", // Malformed URL
+        "htp://www.youtube.com/watch?v=dQw4w9WgXcQ", // Typo in protocol
       ];
 
       for (const query of testQueries) {
-        const result = QueryResolver.resolve(query);
-        assertEquals(result.type, QueryType.YT_SEARCH);
+        const result = QueryParser.parse(query);
+        assertEquals(result.type, QueryKind.YT_SEARCH);
         assertEquals(result.payload, query);
       }
     });
@@ -72,21 +70,21 @@ describe("QueryResolver", () => {
     it("should handle edge cases correctly", () => {
       // Test with a URL that's valid HTTP but not YouTube
       const nonYoutubeUrl = "https://example.com/youtube?v=123";
-      const result1 = QueryResolver.resolve(nonYoutubeUrl);
-      assertEquals(result1.type, QueryType.YT_SEARCH);
+      const result1 = QueryParser.parse(nonYoutubeUrl);
+      assertEquals(result1.type, QueryKind.YT_SEARCH);
       assertEquals(result1.payload, nonYoutubeUrl);
 
       // Test with a URL that looks like YouTube but isn't in validHosts
-      const fakeYoutubeUrl = "https://youtube.com/watch?v=dQw4w9WgXcQ"; // Missing "www."
-      const result2 = QueryResolver.resolve(fakeYoutubeUrl);
-      assertEquals(result2.type, QueryType.YT_SEARCH);
+      const fakeYoutubeUrl = "https://ww.youtube.com/watch?v=dQw4w9WgXcQ"; // Missing "ww."
+      const result2 = QueryParser.parse(fakeYoutubeUrl);
+      assertEquals(result2.type, QueryKind.YT_SEARCH);
       assertEquals(result2.payload, fakeYoutubeUrl);
     });
 
     it("should handle type checking correctly", () => {
       // Test for YouTubeSearchQuery type
-      const searchQuery = QueryResolver.resolve("search query");
-      if (searchQuery.type === QueryType.YT_SEARCH) {
+      const searchQuery = QueryParser.parse("search query");
+      if (searchQuery.type === QueryKind.YT_SEARCH) {
         // This should be accessible
         assertEquals(typeof searchQuery.payload, "string");
       } else {
@@ -95,8 +93,10 @@ describe("QueryResolver", () => {
       }
 
       // Test for YouTubeUrlQuery type
-      const urlQuery = QueryResolver.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-      if (urlQuery.type === QueryType.YT_URL) {
+      const urlQuery = QueryParser.parse(
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      );
+      if (urlQuery.type === QueryKind.YT_URL) {
         // This should be accessible
         assertEquals(typeof urlQuery.payload, "string");
       } else {

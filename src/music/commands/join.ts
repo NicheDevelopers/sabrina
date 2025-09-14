@@ -1,9 +1,6 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-} from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import {log} from "../../logging.ts";
+import { log } from "../../logging.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
 
@@ -23,7 +20,7 @@ async function execute(interaction: ChatInputCommandInteraction | any) {
   const channel = Utils.getVoiceChannelFromInteraction(interaction);
   if (!channel) {
     await interaction.reply("Cannot get the channel you're in!");
-    log.warn("Failed to obtain user voice channel")
+    log.warn("Failed to obtain user voice channel");
   }
 
   await NicheBot.joinVoiceChannel(channel!);

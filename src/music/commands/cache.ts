@@ -1,9 +1,8 @@
-import {ChatInputCommandInteraction, SlashCommandBuilder,} from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import NicheBotCommand from "../../NicheBotCommand.ts";
-import QueryResolver, {QueryType} from "../QueryResolver.ts";
+import QueryParser, { QueryKind } from "../QueryParser.ts";
 import YouTube from "../youtube/YouTube.ts";
-import UrlValidator from "../UrlValidator.ts";
-import Db from "../../db.ts";
+import { log } from "../../logging.ts";
 
 const data = new SlashCommandBuilder()
   .setName("cache")
@@ -17,37 +16,18 @@ const data = new SlashCommandBuilder()
 async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.reply("Caching song, please wait...");
   const input = interaction.options.getString("query", true);
-  const query = QueryResolver.resolve(input);
-  let videoId;
+  const query = QueryParser.parse(input);
 
-  if (query.type === QueryType.YT_SEARCH) {
-    const video = await YouTube.searchFirstVideo(query.payload);
-    if (!video) {
-      await interaction.editReply("No results found!");
-      return;
-    }
-    videoId = video.videoId;
-  }
-  if (query.type === QueryType.YT_URL) {
-    const url = new URL(query.payload);
-    videoId = UrlValidator.extractVideoId(url);
-  }
-
-  if (!videoId) {
-    await interaction.editReply("Invalid YouTube URL!");
-    return;
-  }
-  const record = Db.getVideoPath(videoId)
-  if (record) {
-    await interaction.editReply("Song is already cached!");
-    return;
-  }
   try {
-    await YouTube.downloadAudio(videoId);
-    await interaction.editReply("Song cached successfully!");
-  } catch (error) {
-    console.error("Error caching song:", error);
-    await interaction.editReply("Failed to cache the song.");
+    await YouTube.getByQuery(query);
+    await interaction.editReply(`Cached song for query: ${input}`);
+  } catch (e: unknown) {
+    log.error("Error caching song", e);
+    await interaction.editReply(
+      `Failed to cache song for query. Error: ${
+        e instanceof Error ? e.message : String(e)
+      }`,
+    );
   }
 }
 

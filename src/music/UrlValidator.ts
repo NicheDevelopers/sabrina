@@ -1,5 +1,10 @@
 export default class UrlValidator {
-  static validHosts = ["www.youtube.com", "youtu.be", "music.youtube.com"];
+  static validHosts = [
+    "www.youtube.com",
+    "youtu.be",
+    "music.youtube.com",
+    "youtube.com",
+  ];
 
   static isValidHttpUrl(string: string): boolean {
     try {
@@ -11,7 +16,8 @@ export default class UrlValidator {
   }
 
   static isValidYoutubeUrl(url: URL): boolean {
-    return UrlValidator.validHosts.includes(url.hostname);
+    return UrlValidator.isValidHttpUrl(url.toString()) &&
+      UrlValidator.validHosts.includes(url.hostname);
   }
 
   static isPlaylistUrl(url: URL): boolean {

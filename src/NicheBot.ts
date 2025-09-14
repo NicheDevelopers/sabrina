@@ -13,7 +13,7 @@ import {
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
-import {BaseInteraction, Events, VoiceChannel} from "npm:discord.js@14.22.1";
+import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
 import SongQueue from "./music/SongQueue.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
@@ -36,7 +36,7 @@ class NicheBotClass {
   private isShuttingDown: boolean = false;
 
   constructor() {
-    this.client.on('debug', console.log)
+    // this.client.on("debug", console.log);
     this.validateConfig();
     Deno.addSignalListener("SIGINT", () => {
       this.shutdown();
@@ -45,9 +45,9 @@ class NicheBotClass {
 
   public async start() {
     await this.refreshCommands();
-    this.client.once(Events.ClientReady, c => {
+    this.client.once(Events.ClientReady, (c) => {
       log.info(`Ready! Logged in as ${c.user.tag}`);
-    })
+    });
     await this.client.login(this.token);
     this.client.on("interactionCreate", this.onInteractionCreate);
   }
@@ -102,8 +102,8 @@ class NicheBotClass {
     log.warn("Shutting down...");
     this.client.destroy().then(() => {
       log.warn("Bot shut down.");
-      Deno.exit(0)
-    })
+      Deno.exit(0);
+    });
   }
 
   public getCurrentVoiceConnection(guildId: string): VoiceConnection | null {
@@ -140,7 +140,7 @@ class NicheBotClass {
       });
 
       voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
-            clearTimeout(timeout);
+        clearTimeout(timeout);
         reject(new Error("Voice connection disconnected")); // Reject on disconnect
         log.warn("Voice connection disconnected.");
       });

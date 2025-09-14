@@ -1,18 +1,26 @@
-import { assertEquals, assertNotEquals } from "https://deno.land/std/testing/asserts.ts";
-import { beforeEach, describe, it, afterEach } from "https://deno.land/std/testing/bdd.ts";
+import {
+  assertEquals,
+  assertNotEquals,
+} from "https://deno.land/std/testing/asserts.ts";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  it,
+} from "https://deno.land/std/testing/bdd.ts";
 import { DatabaseSync } from "node:sqlite";
 import Db from "./db.ts";
 
 describe("Db", () => {
-// Use an in-memory database for testing
-  const testDb = new DatabaseSync(':memory:');
+  // Use an in-memory database for testing
+  const testDb = new DatabaseSync(":memory:");
 
   beforeEach(() => {
     // Set the test database
     Db.setDatabase(testDb);
 
     // Start a transaction before each test
-    testDb.exec('BEGIN TRANSACTION;');
+    testDb.exec("BEGIN TRANSACTION;");
 
     // Initialize the database structure
     Db.init();
@@ -20,7 +28,7 @@ describe("Db", () => {
 
   afterEach(() => {
     // Roll back the transaction after each test
-    testDb.exec('ROLLBACK;');
+    testDb.exec("ROLLBACK;");
   });
 
   describe("insertVideoPath", () => {
@@ -64,7 +72,7 @@ describe("Db", () => {
     `).run("abc123", "/videos/abc123.mp4");
 
       // Execute
-      const path = Db.getVideoPath("abc123");
+      const path = Db.getVideoData("abc123");
 
       // Verify
       assertEquals(path, "/videos/abc123.mp4");
@@ -72,7 +80,7 @@ describe("Db", () => {
 
     it("should return null for non-existent video ID", () => {
       // Execute
-      const path = Db.getVideoPath("non-existent");
+      const path = Db.getVideoData("non-existent");
 
       // Verify
       assertEquals(path, null);
@@ -85,7 +93,7 @@ describe("Db", () => {
     `).run("null-path", null);
 
       // Execute
-      const path = Db.getVideoPath("null-path");
+      const path = Db.getVideoData("null-path");
 
       // Verify
       assertEquals(path, null);

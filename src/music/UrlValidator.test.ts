@@ -1,5 +1,8 @@
 // urlValidator.test.ts
-import { assertEquals, assertThrows } from "https://deno.land/std/testing/asserts.ts";
+import {
+  assertEquals,
+  assertThrows,
+} from "https://deno.land/std/testing/asserts.ts";
 import { describe, it } from "https://deno.land/std/testing/bdd.ts";
 import UrlValidator from "./UrlValidator.ts";
 
@@ -14,11 +17,14 @@ describe("UrlValidator", () => {
         "https://example.com/path?query=value",
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         "https://youtu.be/dQw4w9WgXcQ",
-
       ];
 
       for (const url of validUrls) {
-        assertEquals(UrlValidator.isValidHttpUrl(url), true, `URL should be valid: ${url}`);
+        assertEquals(
+          UrlValidator.isValidHttpUrl(url),
+          true,
+          `URL should be valid: ${url}`,
+        );
       }
     });
 
@@ -34,7 +40,11 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of invalidUrls) {
-        assertEquals(UrlValidator.isValidHttpUrl(url), false, `URL should be invalid: ${url}`);
+        assertEquals(
+          UrlValidator.isValidHttpUrl(url),
+          false,
+          `URL should be invalid: ${url}`,
+        );
       }
     });
   });
@@ -48,20 +58,27 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of validHosts) {
-        assertEquals(UrlValidator.isValidYoutubeUrl(url), true, `Host should be valid: ${url.hostname}`);
+        assertEquals(
+          UrlValidator.isValidYoutubeUrl(url),
+          true,
+          `Host should be valid: ${url.hostname}`,
+        );
       }
     });
 
     it("should return false for invalid YouTube hosts", () => {
       const invalidHosts = [
-        new URL("https://youtube.com/watch?v=dQw4w9WgXcQ"),
         new URL("https://m.youtube.com/watch?v=dQw4w9WgXcQ"),
         new URL("https://example.com/youtube"),
         new URL("https://www.vimeo.com/video"),
       ];
 
       for (const url of invalidHosts) {
-        assertEquals(UrlValidator.isValidYoutubeUrl(url), false, `Host should be invalid: ${url.hostname}`);
+        assertEquals(
+          UrlValidator.isValidYoutubeUrl(url),
+          false,
+          `Host should be invalid: ${url.hostname}`,
+        );
       }
     });
   });
@@ -69,34 +86,58 @@ describe("UrlValidator", () => {
   describe("isPlaylistUrl", () => {
     it("should identify standard YouTube playlists", () => {
       const playlistUrls = [
-        new URL("https://www.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
-        new URL("https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
-        new URL("https://youtu.be/dQw4w9WgXcQ?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
+        new URL(
+          "https://www.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
+        new URL(
+          "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
+        new URL(
+          "https://youtu.be/dQw4w9WgXcQ?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
       ];
 
       for (const url of playlistUrls) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), true, `URL should be a playlist: ${url.toString()}`);
+        assertEquals(
+          UrlValidator.isPlaylistUrl(url),
+          true,
+          `URL should be a playlist: ${url.toString()}`,
+        );
       }
     });
 
     it("should identify music.youtube.com playlists correctly", () => {
       // Valid music.youtube.com playlists
       const validMusicPlaylists = [
-        new URL("https://music.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
+        new URL(
+          "https://music.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
       ];
 
       for (const url of validMusicPlaylists) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), true, `URL should be a playlist: ${url.toString()}`);
+        assertEquals(
+          UrlValidator.isPlaylistUrl(url),
+          true,
+          `URL should be a playlist: ${url.toString()}`,
+        );
       }
 
       // Invalid music.youtube.com playlists (not starting with /playlist)
       const invalidMusicPlaylists = [
-        new URL("https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
-        new URL("https://music.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1"),
+        new URL(
+          "https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
+        new URL(
+          "https://music.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+        ),
       ];
 
       for (const url of invalidMusicPlaylists) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), false, `URL should not be a playlist: ${url.toString()}`);
+        assertEquals(
+          UrlValidator.isPlaylistUrl(url),
+          false,
+          `URL should not be a playlist: ${url.toString()}`,
+        );
       }
     });
 
@@ -108,7 +149,11 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of nonPlaylistUrls) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), false, `URL should not be a playlist: ${url.toString()}`);
+        assertEquals(
+          UrlValidator.isPlaylistUrl(url),
+          false,
+          `URL should not be a playlist: ${url.toString()}`,
+        );
       }
     });
   });
@@ -130,7 +175,9 @@ describe("UrlValidator", () => {
     });
 
     it("should extract video ID from URLs with additional parameters", () => {
-      const url = new URL("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30s&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1");
+      const url = new URL(
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30s&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+      );
       assertEquals(UrlValidator.extractVideoId(url), "dQw4w9WgXcQ");
     });
 
@@ -144,7 +191,7 @@ describe("UrlValidator", () => {
         assertThrows(
           () => UrlValidator.extractVideoId(url),
           Error,
-          "Invalid host"
+          "Invalid host",
         );
       }
     });
@@ -176,7 +223,8 @@ describe("UrlValidator", () => {
       assertEquals(UrlValidator.validHosts.includes("www.youtube.com"), true);
       assertEquals(UrlValidator.validHosts.includes("youtu.be"), true);
       assertEquals(UrlValidator.validHosts.includes("music.youtube.com"), true);
-      assertEquals(UrlValidator.validHosts.length, 3);
+      assertEquals(UrlValidator.validHosts.includes("youtube.com"), true);
+      assertEquals(UrlValidator.validHosts.length, 4);
     });
   });
 });

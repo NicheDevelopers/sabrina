@@ -14,7 +14,11 @@ async function exportDb() {
   );
   const { code, stdout, stderr } = await command.output();
   if (code !== 0) {
-    console.error(`zip command failed with code ${code}: ${new TextDecoder().decode(stderr)}`);
+    console.error(
+      `zip command failed with code ${code}: ${
+        new TextDecoder().decode(stderr)
+      }`,
+    );
     return;
   }
   console.log(new TextDecoder().decode(stdout));

@@ -5,14 +5,14 @@ import Db from "../../db.ts"; // Adjust path as needed
 
 // Create a setup function that will be called before each test
 async function setupTestDb() {
-  const testDb = new DatabaseSync(':memory:');
+  const testDb = new DatabaseSync(":memory:");
   Db.setDatabase(testDb);
   Db.init();
   return testDb;
 }
 
 Deno.test("YouTube Search Query Test", async () => {
-// Setup test database
+  // Setup test database
   await setupTestDb();
 
   const result = await YouTube.search("Brodka - Miales Byc");
@@ -39,7 +39,9 @@ Deno.test("YouTube Search ID Test", async () => {
 Deno.test("YouTube Playlist Test", async () => {
   await setupTestDb();
 
-  const result = await YouTube.getPlaylist("PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM");
+  const result = await YouTube.getPlaylist(
+    "PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM",
+  );
   if (!result) {
     throw new Error("No result found");
   }
@@ -52,7 +54,7 @@ Deno.test("YouTube Download Audio Test", async () => {
 
   const filePath = await YouTube.downloadAudio("QbxFDqadFJU");
 
-// Verify the file was registered in the database
-  const storedPath = Db.getVideoPath("QbxFDqadFJU");
+  // Verify the file was registered in the database
+  const storedPath = Db.getVideoData("QbxFDqadFJU");
   assertEquals(storedPath, filePath);
 });

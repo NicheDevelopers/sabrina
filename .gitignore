@@ -142,4 +142,4 @@ vite.config.ts.timestamp-*
 
 *.db
 
-audio-files
+downloads/
