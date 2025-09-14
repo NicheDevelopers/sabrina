@@ -6,6 +6,7 @@ import Utils from "../../Utils.ts";
 import YouTube from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
 import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
+import EmbedCreator from "../EmbedCreator.ts";
 
 const data = new SlashCommandBuilder()
   .setName("play")
@@ -37,9 +38,9 @@ async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   if (interaction.replied) {
-    await interaction.editReply("Playing song, please wait...");
+    await interaction.editReply("Downloading the song, please wait...");
   } else {
-    await interaction.reply("Playing song, please wait...");
+    await interaction.reply("Downloading the song, please wait...");
   }
 
   const input = interaction.options.getString("query", true);
@@ -60,10 +61,11 @@ async function execute(interaction: ChatInputCommandInteraction) {
   voiceConnection.subscribe(NicheBot.audioPlayer);
   NicheBot.audioPlayer.play(audioResource);
 
+  interaction.editReply("Now playing:");
   log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
 
-  await interaction.editReply("Playing...");
-
+  const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
+  await interaction.editReply({ embeds: [nowPlaying] });
 }
 
 const playCommand = new NicheBotCommand(data, execute);

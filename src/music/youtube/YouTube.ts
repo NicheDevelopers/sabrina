@@ -37,7 +37,7 @@ export default class YouTube {
     const existingRecord = Db.getVideoData(videoId);
     if (existingRecord) {
       log.debug(
-        `Audio for video ID ${videoId} found in repository at path: ${existingRecord.path}`,
+        `Found a DB record for video ID ${videoId}, verifying file exists on disk...`,
       );
       const pathFromDisk = audioFileRepository.getPath(existingRecord.id);
       if (!pathFromDisk) {
@@ -59,6 +59,14 @@ export default class YouTube {
     log.debug("Downloading audio for video ID:", videoId);
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     const videoData = await this.getVideoData(videoId);
+    console.debug(
+      `Downloading audio for video: ${{
+        title: videoData.title,
+        videoId: videoData.videoId,
+        url: videoData.url,
+        author: videoData.author,
+      }}`,
+    );
     console.log(videoData);
     const filePath = await YtDlp.downloadAudio(
       url,
@@ -68,7 +76,6 @@ export default class YouTube {
       log.error("Failed to download audio for video ID:", videoId);
       throw new Error("Failed to download audio");
     }
-    log.debug(`Downloaded audio for video ID: ${videoId} to path: ${filePath}`);
     Db.insertVideoPath(videoId, filePath, videoData);
     return filePath;
   }

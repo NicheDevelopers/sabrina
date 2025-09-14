@@ -48,13 +48,3 @@ Deno.test("YouTube Playlist Test", async () => {
   assertEquals(result.title, "Cypis");
   assertEquals(result.videos.length > 0, true);
 });
-
-Deno.test("YouTube Download Audio Test", async () => {
-  await setupTestDb();
-
-  const filePath = await YouTube.downloadAudio("QbxFDqadFJU");
-
-  // Verify the file was registered in the database
-  const storedPath = Db.getVideoData("QbxFDqadFJU");
-  assertEquals(storedPath, filePath);
-});

@@ -75,7 +75,7 @@ describe("Db", () => {
       const path = Db.getVideoData("abc123");
 
       // Verify
-      assertEquals(path, "/videos/abc123.mp4");
+      assertEquals(path?.path, "/videos/abc123.mp4");
     });
 
     it("should return null for non-existent video ID", () => {
