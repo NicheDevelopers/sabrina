@@ -8,6 +8,7 @@
   "imports": {
     "@discordjs/opus": "npm:@discordjs/opus@^0.10.0",
     "@discordjs/voice": "npm:@discordjs/voice@^0.19.0",
+    "@snazzah/davey": "npm:@snazzah/davey@^0.1.6",
     "@std/assert": "jsr:@std/assert@1",
     "@types/yt-search": "npm:@types/yt-search@^2.10.3",
     "discord.js": "npm:discord.js@^14.22.1",
