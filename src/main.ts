@@ -9,11 +9,10 @@ function main() {
   YtDlp.init();
   Db.init();
   AudioFileRepository.init();
-  NicheBot.start()
-    .catch((err) => {
-      log.error(`An error occurred while starting ${BOT_NAME}.`);
-      log.error(err);
-    });
+  NicheBot.start().catch((err) => {
+    log.error(`An error occurred: ${err}`);
+    log.error(err);
+  })
 }
 
 main();
