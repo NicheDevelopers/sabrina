@@ -1,14 +1,14 @@
-import { DatabaseSync } from "node:sqlite";
-import { log } from "./logging.ts";
-import {VideoMetadataResult} from "npm:@types/yt-search@2.10.3";
+import betterSqlite3, {Database} from 'better-sqlite3';
+import { log } from "./logging";
+import { VideoMetadataResult } from "yt-search";
 
 // Default database connection
-let db = new DatabaseSync('sabrina.db');
+let db = betterSqlite3('sabrina.db');
 
 export default class Db {
 
-  // Allow setting a different database for testing
-  public static setDatabase(database: DatabaseSync) {
+// Allow setting a different database for testing
+  public static setDatabase(database: Database) {
     db = database;
   }
 
@@ -35,6 +35,7 @@ export default class Db {
     const result = db.prepare(`
         SELECT COUNT(*) as count FROM yt_videos;
     `).get();
+    // @ts-ignore
     log.info(`Found ${result?.count} entries in the database.`);
   }
 
@@ -46,9 +47,9 @@ export default class Db {
     log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
     const query = `
         INSERT OR REPLACE INTO yt_videos (
-          id, path, title, url, timestamp, seconds, views, 
-          uploadDate, ago, image, authorName, authorUrl
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        id, path, title, url, timestamp, seconds, views, 
+        uploadDate, ago, image, authorName, authorUrl
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     const values = [
       id, path, videoData?.title ?? null, videoData?.url ?? null,
@@ -63,8 +64,8 @@ export default class Db {
 
   public static getVideoPath(id: string): string | null {
     const result = db.prepare(`
-    SELECT path FROM yt_videos WHERE id = ?;
-  `).get(id);
+        SELECT path FROM yt_videos WHERE id = ?;
+    `).get(id) as {path?: string};
     if (result) {
       const path = result.path;
       if (!path) {
@@ -80,8 +81,8 @@ export default class Db {
   public static clearDatabase() {
     log.warn("Clearing the database...");
     db.exec(`
-    DELETE FROM yt_videos;
-  `);
+        DELETE FROM yt_videos;
+    `);
     log.info("Cleared the database.");
   }
 }

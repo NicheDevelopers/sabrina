@@ -1,4 +1,4 @@
-import UrlValidator from "./UrlValidator.ts";
+import UrlValidator from "./UrlValidator";
 
 export enum QueryType {
   YT_SEARCH = "yt-search",

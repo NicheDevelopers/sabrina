@@ -1,15 +1,16 @@
-import { log } from "../logging.ts";
+import { log } from "../logging";
+import * as fs from "fs";
 
 export default class AudioFileRepository {
   public static readonly audioFolderPath = "./audio-files";
 
   public static init() {
     try {
-      Deno.statSync(this.audioFolderPath);
+      fs.statSync(this.audioFolderPath);
       log.info("Audio repository folder exists.");
     } catch (_e) {
       log.warn("Audio repository folder does not exist. Creating...");
-      Deno.mkdirSync(this.audioFolderPath)
+      fs.mkdirSync(this.audioFolderPath);
       log.info("Audio repository folder created.");
     }
   }

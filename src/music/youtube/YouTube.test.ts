@@ -1,58 +1,54 @@
-import YouTube from "./YouTube.ts";
-import { assertEquals } from "jsr:@std/assert";
-import { DatabaseSync } from "node:sqlite";
-import Db from "../../db.ts"; // Adjust path as needed
+import YouTube from "./YouTube";
+import betterSqlite3 from "better-sqlite3";
+import Db from "../../db"; // Adjust path as needed
 
 // Create a setup function that will be called before each test
 async function setupTestDb() {
-  const testDb = new DatabaseSync(':memory:');
+  const testDb = new betterSqlite3(':memory:');
   Db.setDatabase(testDb);
   Db.init();
   return testDb;
 }
 
-Deno.test("YouTube Search Query Test", async () => {
-// Setup test database
-  await setupTestDb();
+describe("YouTube", () => {
+  beforeEach(async () => {
+    await setupTestDb();
+  });
 
-  const result = await YouTube.search("Brodka - Miales Byc");
-  if (!result) {
-    throw new Error("No result found");
-  }
-  const video = result.videos[0];
-  assertEquals(video.title, "Brodka - Miales byc (Video)");
-  assertEquals(video.videoId, "QbxFDqadFJU");
-});
+  test("YouTube Search Query Test", async () => {
+    const result = await YouTube.search("Brodka - Miales Byc");
+    if (!result) {
+      throw new Error("No result found");
+    }
+    const video = result.videos[0];
+    expect(video.title).toBe("Brodka - Miales byc (Video)");
+    expect(video.videoId).toBe("QbxFDqadFJU");
+  });
 
-Deno.test("YouTube Search ID Test", async () => {
-  await setupTestDb();
+  test("YouTube Search ID Test", async () => {
+    const result = await YouTube.search("QbxFDqadFJU");
+    if (!result) {
+      throw new Error("No result found");
+    }
+    const video = result.videos[0];
+    expect(video.title).toBe("Brodka - Miales byc (Video)");
+    expect(video.videoId).toBe("QbxFDqadFJU");
+  });
 
-  const result = await YouTube.search("QbxFDqadFJU");
-  if (!result) {
-    throw new Error("No result found");
-  }
-  const video = result.videos[0];
-  assertEquals(video.title, "Brodka - Miales byc (Video)");
-  assertEquals(video.videoId, "QbxFDqadFJU");
-});
+  test("YouTube Playlist Test", async () => {
+    const result = await YouTube.getPlaylist("PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM");
+    if (!result) {
+      throw new Error("No result found");
+    }
+    expect(result.title).toBe("Cypis");
+    expect(result.videos.length > 0).toBe(true);
+  });
 
-Deno.test("YouTube Playlist Test", async () => {
-  await setupTestDb();
+  test("YouTube Download Audio Test", async () => {
+    const filePath = await YouTube.downloadAudio("QbxFDqadFJU");
 
-  const result = await YouTube.getPlaylist("PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM");
-  if (!result) {
-    throw new Error("No result found");
-  }
-  assertEquals(result.title, "Cypis");
-  assertEquals(result.videos.length > 0, true);
-});
-
-Deno.test("YouTube Download Audio Test", async () => {
-  await setupTestDb();
-
-  const filePath = await YouTube.downloadAudio("QbxFDqadFJU");
-
-// Verify the file was registered in the database
-  const storedPath = Db.getVideoPath("QbxFDqadFJU");
-  assertEquals(storedPath, filePath);
+    // Verify the file was registered in the database
+    const storedPath = Db.getVideoPath("QbxFDqadFJU");
+    expect(storedPath).toBe(filePath);
+  });
 });

@@ -1,9 +1,9 @@
 import yts from "yt-search";
-import {PlaylistMetadataResult, SearchResult, VideoMetadataResult} from "npm:@types/yt-search@2.10.3";
-import {YtDlp} from "./YtDlp.ts";
-import AudioFileRepository from "../AudioFileRepository.ts";
-import Db from "../../db.ts";
-import {log} from "../../logging.ts";
+import {PlaylistMetadataResult, SearchResult, VideoMetadataResult} from "yt-search";
+import {YtDlp} from "./YtDlp";
+import AudioFileRepository from "../AudioFileRepository";
+import Db from "../../db";
+import {log} from "../../logging";
 
 export default class YouTube {
   public static async search(query: string): Promise<SearchResult> {

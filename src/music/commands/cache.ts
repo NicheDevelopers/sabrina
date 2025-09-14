@@ -1,9 +1,9 @@
 import {ChatInputCommandInteraction, SlashCommandBuilder,} from "discord.js";
-import NicheBotCommand from "../../NicheBotCommand.ts";
-import QueryResolver, {QueryType} from "../QueryResolver.ts";
-import YouTube from "../youtube/YouTube.ts";
-import UrlValidator from "../UrlValidator.ts";
-import Db from "../../db.ts";
+import NicheBotCommand from "../../NicheBotCommand";
+import QueryResolver, {QueryType} from "../QueryResolver";
+import YouTube from "../youtube/YouTube";
+import UrlValidator from "../UrlValidator";
+import Db from "../../db";
 
 const data = new SlashCommandBuilder()
   .setName("cache")

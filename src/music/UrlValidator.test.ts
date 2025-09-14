@@ -1,7 +1,5 @@
 // urlValidator.test.ts
-import { assertEquals, assertThrows } from "https://deno.land/std/testing/asserts.ts";
-import { describe, it } from "https://deno.land/std/testing/bdd.ts";
-import UrlValidator from "./UrlValidator.ts";
+import UrlValidator from "./UrlValidator";
 
 describe("UrlValidator", () => {
   describe("isValidHttpUrl", () => {
@@ -14,11 +12,10 @@ describe("UrlValidator", () => {
         "https://example.com/path?query=value",
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         "https://youtu.be/dQw4w9WgXcQ",
-
       ];
 
       for (const url of validUrls) {
-        assertEquals(UrlValidator.isValidHttpUrl(url), true, `URL should be valid: ${url}`);
+        expect(UrlValidator.isValidHttpUrl(url)).toBe(true);
       }
     });
 
@@ -34,7 +31,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of invalidUrls) {
-        assertEquals(UrlValidator.isValidHttpUrl(url), false, `URL should be invalid: ${url}`);
+        expect(UrlValidator.isValidHttpUrl(url)).toBe(false);
       }
     });
   });
@@ -48,7 +45,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of validHosts) {
-        assertEquals(UrlValidator.isValidYoutubeUrl(url), true, `Host should be valid: ${url.hostname}`);
+        expect(UrlValidator.isValidYoutubeUrl(url)).toBe(true);
       }
     });
 
@@ -61,7 +58,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of invalidHosts) {
-        assertEquals(UrlValidator.isValidYoutubeUrl(url), false, `Host should be invalid: ${url.hostname}`);
+        expect(UrlValidator.isValidYoutubeUrl(url)).toBe(false);
       }
     });
   });
@@ -75,7 +72,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of playlistUrls) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), true, `URL should be a playlist: ${url.toString()}`);
+        expect(UrlValidator.isPlaylistUrl(url)).toBe(true);
       }
     });
 
@@ -86,7 +83,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of validMusicPlaylists) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), true, `URL should be a playlist: ${url.toString()}`);
+        expect(UrlValidator.isPlaylistUrl(url)).toBe(true);
       }
 
       // Invalid music.youtube.com playlists (not starting with /playlist)
@@ -96,7 +93,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of invalidMusicPlaylists) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), false, `URL should not be a playlist: ${url.toString()}`);
+        expect(UrlValidator.isPlaylistUrl(url)).toBe(false);
       }
     });
 
@@ -108,7 +105,7 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of nonPlaylistUrls) {
-        assertEquals(UrlValidator.isPlaylistUrl(url), false, `URL should not be a playlist: ${url.toString()}`);
+        expect(UrlValidator.isPlaylistUrl(url)).toBe(false);
       }
     });
   });
@@ -116,22 +113,22 @@ describe("UrlValidator", () => {
   describe("extractVideoId", () => {
     it("should extract video ID from youtu.be URLs", () => {
       const url = new URL("https://youtu.be/dQw4w9WgXcQ");
-      assertEquals(UrlValidator.extractVideoId(url), "dQw4w9WgXcQ");
+      expect(UrlValidator.extractVideoId(url)).toBe("dQw4w9WgXcQ");
     });
 
     it("should extract video ID from youtube.com URLs", () => {
       const url = new URL("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-      assertEquals(UrlValidator.extractVideoId(url), "dQw4w9WgXcQ");
+      expect(UrlValidator.extractVideoId(url)).toBe("dQw4w9WgXcQ");
     });
 
     it("should extract video ID from music.youtube.com URLs", () => {
       const url = new URL("https://music.youtube.com/watch?v=dQw4w9WgXcQ");
-      assertEquals(UrlValidator.extractVideoId(url), "dQw4w9WgXcQ");
+      expect(UrlValidator.extractVideoId(url)).toBe("dQw4w9WgXcQ");
     });
 
     it("should extract video ID from URLs with additional parameters", () => {
       const url = new URL("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30s&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1");
-      assertEquals(UrlValidator.extractVideoId(url), "dQw4w9WgXcQ");
+      expect(UrlValidator.extractVideoId(url)).toBe("dQw4w9WgXcQ");
     });
 
     it("should throw an error for invalid hosts", () => {
@@ -141,42 +138,30 @@ describe("UrlValidator", () => {
       ];
 
       for (const url of invalidUrls) {
-        assertThrows(
-          () => UrlValidator.extractVideoId(url),
-          Error,
-          "Invalid host"
-        );
+        expect(() => UrlValidator.extractVideoId(url)).toThrow("Invalid host");
       }
     });
 
     it("should handle URLs without video IDs", () => {
-      // This test verifies the behavior when a URL doesn't have a video ID
-      // Note: The current implementation will return null or throw an error
-      // depending on how searchParams.get() behaves when the parameter is missing
-
       const urlWithoutId = new URL("https://www.youtube.com/feed/trending");
 
-      // The method will try to access searchParams.get("v")!
-      // This will either return null (and then be used as a string) or throw
-      // We're testing that the method doesn't crash unexpectedly
       try {
         const result = UrlValidator.extractVideoId(urlWithoutId);
         // If it returns something, it should be null or empty
-        assertEquals(result === null || result === "", true);
+        expect(result === null || result === "").toBe(true);
       } catch (error) {
         // If it throws, that's also acceptable behavior
-        // We just want to make sure it's a controlled failure
-        assertEquals(error instanceof Error, true);
+        expect(error instanceof Error).toBe(true);
       }
     });
   });
 
   describe("validHosts", () => {
     it("should contain the expected YouTube hosts", () => {
-      assertEquals(UrlValidator.validHosts.includes("www.youtube.com"), true);
-      assertEquals(UrlValidator.validHosts.includes("youtu.be"), true);
-      assertEquals(UrlValidator.validHosts.includes("music.youtube.com"), true);
-      assertEquals(UrlValidator.validHosts.length, 3);
+      expect(UrlValidator.validHosts.includes("www.youtube.com")).toBe(true);
+      expect(UrlValidator.validHosts.includes("youtu.be")).toBe(true);
+      expect(UrlValidator.validHosts.includes("music.youtube.com")).toBe(true);
+      expect(UrlValidator.validHosts.length).toBe(3);
     });
   });
 });

@@ -1,6 +1,6 @@
-import { ChatInputCommandInteraction, GuildMember, VoiceChannel } from "npm:discord.js@14.22.1";
+import { ChatInputCommandInteraction, GuildMember, VoiceChannel } from "discord.js";
 
-export default class Utils {
+export class Utils {
   /* Returns the voice channel of the member who initiated the interaction. */
   public static getVoiceChannelFromInteraction(interaction: ChatInputCommandInteraction): VoiceChannel | null {
     const member = interaction.member as GuildMember;
@@ -8,3 +8,8 @@ export default class Utils {
   }
 }
 
+export class Env {
+  public static get(variableName: string): string | undefined {
+    return process.env[variableName]
+  }
+}

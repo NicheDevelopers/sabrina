@@ -4,21 +4,21 @@ export default class SongQueue<T> {
   private queue: T[] = [];
   looping: LoopType = "disabled";
 
-  addSongs(song: T[]) {
+  push(song: T[]) {
     this.queue.push(...song);
   }
 
-  addSongsAt(song: T[], index: number) {
+  insertAt(song: T[], index: number) {
     this.queue.splice(index, 0, ...song);
   }
 
-  currentSong(): T | undefined {
+  getCurrent(): T | undefined {
     return this.queue[0];
   }
 
-  nextSong(): T | undefined {
+  next(): T | undefined {
     if (this.looping == "one") {
-      return this.currentSong();
+      return this.getCurrent();
     }
     if (this.looping == "disabled") {
       this.queue.shift();
@@ -29,19 +29,19 @@ export default class SongQueue<T> {
     if (this.looping == "all") {
       this.queue.push(this.queue.shift() as T);
     }
-    return this.currentSong();
+    return this.getCurrent();
   }
 
-  skipSongs(n: number): T | undefined {
+  skip(n: number): T | undefined {
     if (this.looping == "one") {
-      return this.currentSong();
+      return this.getCurrent();
     }
     n = Math.min(n, this.queue.length);
     if (this.looping == "all"){
-      this.addSongs(this.queue.slice(0,n));
+      this.push(this.queue.slice(0,n));
     }
     this.queue = this.queue.slice(n);
-    return this.currentSong();
+    return this.getCurrent();
   }
 
   shuffle() {
@@ -53,7 +53,7 @@ export default class SongQueue<T> {
     this.queue = [this.queue[0], ...toShuffle];
   }
 
-  removeSong(index: number) {
+  removeAt(index: number) {
     this.queue.splice(index, 1);
   }
 

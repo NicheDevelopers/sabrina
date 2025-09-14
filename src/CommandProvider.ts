@@ -1,7 +1,7 @@
-import NicheBotCommand from "./NicheBotCommand.ts";
-import joinCommand from "./music/commands/join.ts";
-import leaveCommand from "./music/commands/leave.ts";
-import cacheCommand from "./music/commands/cache.ts";
+import NicheBotCommand from "./NicheBotCommand";
+import joinCommand from "./music/commands/join";
+import leaveCommand from "./music/commands/leave";
+import cacheCommand from "./music/commands/cache";
 
 class CommandProviderClass {
   private commands: Array<NicheBotCommand> = [

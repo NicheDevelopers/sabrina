@@ -1,8 +1,8 @@
-import { log } from "./logging.ts";
-import NicheBot, {BOT_NAME} from "./NicheBot.ts";
-import AudioFileRepository from "./music/AudioFileRepository.ts";
-import {YtDlp} from "./music/youtube/YtDlp.ts";
-import Db from "./db.ts";
+import { log } from "./logging";
+import NicheBot, {BOT_NAME} from "./NicheBot";
+import AudioFileRepository from "./music/AudioFileRepository";
+import {YtDlp} from "./music/youtube/YtDlp";
+import Db from "./db";
 
 function main() {
   log.info(`Starting ${BOT_NAME}...`);

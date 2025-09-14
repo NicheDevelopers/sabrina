@@ -3,20 +3,20 @@ import {
   createAudioPlayer,
   NoSubscriberBehavior,
   VoiceConnection,
-} from "npm:@discordjs/voice";
+} from "@discordjs/voice";
 import { ChatInputCommandInteraction, REST, Routes } from "discord.js";
 import { Client, GatewayIntentBits } from "discord.js";
-import { log } from "./logging.ts";
-import CommandProvider from "./CommandProvider.ts";
+import { log } from "./logging";
+import CommandProvider from "./CommandProvider";
 import {
   entersState,
   joinVoiceChannel,
   VoiceConnectionStatus,
-} from "npm:@discordjs/voice@0.19.0";
-import {BaseInteraction, Events, VoiceChannel} from "npm:discord.js@14.22.1";
-import SongQueue from "./music/SongQueue.ts";
+} from "@discordjs/voice";
+import {BaseInteraction, Events, VoiceChannel} from "discord.js";
+import SongQueue from "./music/SongQueue";
 
-export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
+export const BOT_NAME = process.env.BOT_NAME || "NicheBot";
 
 class NicheBotClass {
   public voiceConnection: VoiceConnection | null = null;
@@ -28,9 +28,9 @@ class NicheBotClass {
 
   private songQueue: SongQueue<unknown> = new SongQueue();
 
-  private token: string = Deno.env.get("SECRET_TOKEN") || "";
-  private serverId: string = Deno.env.get("SERVER_ID") || "";
-  private appId: string = Deno.env.get("APPLICATION_ID") || "";
+  private token: string = process.env.SECRET_TOKEN || "";
+  private serverId: string = process.env.SERVER_ID || "";
+  private appId: string = process.env.APPLICATION_ID || "";
 
   private client: Client = this.makeClient();
 
@@ -39,7 +39,7 @@ class NicheBotClass {
   constructor() {
     this.client.on('debug', console.log)
     this.validateConfig();
-    Deno.addSignalListener("SIGINT", () => {
+    process.on("SIGINT", () => {
       this.shutdown();
     });
     log.debug(this.client)
@@ -105,7 +105,7 @@ class NicheBotClass {
     this.voiceConnection?.destroy();
     this.client.destroy().then(() => {
       log.warn("Bot shut down.");
-      Deno.exit(0)
+      process.exit(0)
     })
   }
 
