@@ -11,14 +11,20 @@ const data = new SlashCommandBuilder()
   .setDescription("Leaves the voice channel");
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  if (!NicheBot.isInVoiceChannel()) {
+  if (!interaction.guildId) {
+    await interaction.reply("This command can only be used in a server!");
+    return;
+  }
+
+  const connection = NicheBot.getCurrentVoiceConnection(interaction.guildId);
+  if (!connection) {
     await interaction.reply("I'm not in a voice channel!");
     return;
   }
 
   log.info("Leaving voice channel...");
 
-  NicheBot.disconnect();
+  NicheBot.disconnectFrom(interaction.guildId);
 
   await interaction.reply("Left voice channel!");
 }

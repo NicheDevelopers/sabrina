@@ -9,7 +9,7 @@ import { Client, GatewayIntentBits } from "discord.js";
 import { log } from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
 import {
-  entersState,
+  getVoiceConnection,
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
@@ -19,7 +19,6 @@ import SongQueue from "./music/SongQueue.ts";
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
 class NicheBotClass {
-  public voiceConnection: VoiceConnection | null = null;
   public audioPlayer: AudioPlayer = createAudioPlayer({
     behaviors: {
       noSubscriber: NoSubscriberBehavior.Pause,
@@ -42,7 +41,6 @@ class NicheBotClass {
     Deno.addSignalListener("SIGINT", () => {
       this.shutdown();
     });
-    log.debug(this.client)
   }
 
   public async start() {
@@ -102,170 +100,63 @@ class NicheBotClass {
     if (this.isShuttingDown) return;
     this.isShuttingDown = true;
     log.warn("Shutting down...");
-    this.voiceConnection?.destroy();
     this.client.destroy().then(() => {
       log.warn("Bot shut down.");
       Deno.exit(0)
     })
   }
 
-  public isInVoiceChannel(): boolean {
-    return this.voiceConnection !== null;
+  public getCurrentVoiceConnection(guildId: string): VoiceConnection | null {
+    return getVoiceConnection(guildId) ?? null;
   }
 
   /* Connect to a voice channel.
     * Returns a promise that resolves when the connection is ready.
     * Rejects if the connection fails or times out.
    */
-  // public connectTo(channel: VoiceChannel): Promise<void> {
-  //   log.debug(this.voiceConnection)
-  //   if (this.voiceConnection) {
-  //     log.warn("Already connected to a voice channel.");
-  //     return Promise.resolve();
-  //   }
-  //
-  //   log.debug(this.voiceConnection)
-  //
-  //   this.voiceConnection = joinVoiceChannel({
-  //     channelId: channel.id,
-  //     guildId: channel.guildId,
-  //     adapterCreator: channel.guild.voiceAdapterCreator,
-  //   });
-  //
-  //   // this.voiceConnection.on(VoiceConnectionStatus.Ready, () => {
-  //   //   this.voiceConnection?.subscribe(this.audioPlayer)
-  //   //   log.error("DUPA DUPA DUPA")
-  //   // });
-  //   //
-  //   // this.voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
-  //   //   this.voiceConnection = null;
-  //   //   log.error("CHUJ CHUJ CHUJ")
-  //   // });
-  //
-  //   return new Promise<void>((resolve, reject) => {
-  //     const timeout = setTimeout(() => {
-  //       reject(new Error("Voice connection timeout"));
-  //     }, 15000); // 15 seconds timeout
-  //
-  //     this.voiceConnection!.on(VoiceConnectionStatus.Ready, () => {
-  //       this.voiceConnection?.subscribe(this.audioPlayer);
-  //       clearTimeout(timeout); // Clear the timeout
-  //       resolve(); // Resolve the promise when ready
-  //       log.error("DUPA DUPA DUPA");
-  //     });
-  //
-  //     this.voiceConnection!.on(VoiceConnectionStatus.Disconnected, () => {
-  //       this.voiceConnection = null;
-  //       clearTimeout(timeout);
-  //       reject(new Error("Voice connection disconnected")); // Reject on disconnect
-  //       log.error("CHUJ CHUJ CHUJ");
-  //     });
-  //   });
-  // }
+  public joinVoiceChannel(channel: VoiceChannel): Promise<void> {
+    const guildId = channel.guildId;
+    if (this.getCurrentVoiceConnection(guildId)) {
+      log.warn("Already connected to a voice channel.");
+      return Promise.resolve();
+    }
 
-  // public connectTo(channel: VoiceChannel): Promise<void> {
-  //   if (this.voiceConnection) {
-  //     log.warn("Already connected to a voice channel.");
-  //     return;
-  //   }
-  //
-  //   try {
-  //     log.debug(`Attempting to join voice channel ${channel.id}`);
-  //
-  //     this.voiceConnection = joinVoiceChannel({
-  //       channelId: channel.id,
-  //       guildId: channel.guild.id,
-  //       adapterCreator: channel.guild.voiceAdapterCreator,
-  //     });
-  //
-  //     // Set up basic event listeners
-  //     this.voiceConnection.on(VoiceConnectionStatus.Ready, () => {
-  //       log.info("Voice connection is ready.");
-  //       this.voiceConnection?.subscribe(this.audioPlayer);
-  //     });
-  //
-  //   } catch (error) {
-  //     log.error(`Failed to connect to voice channel: ${error}`);
-  //     if (this.voiceConnection) {
-  //       this.voiceConnection.destroy();
-  //       this.voiceConnection = null;
-  //     }
-  //     throw error; // Re-throw to let caller handle it
-  //   }
-  //   return Promise.resolve()
-  // }
+    const voiceConnection = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: channel.guildId,
+      adapterCreator: channel.guild.voiceAdapterCreator,
+    });
 
-  // public async connectTo(channel: VoiceChannel): Promise<void> {
-  //   // If already connected, just resolve
-  //   if (this.voiceConnection) {
-  //     log.warn("Already connected to a voice channel.");
-  //     return;
-  //   }
-  //
-  //   try {
-  //     // Create the connection
-  //     this.voiceConnection = joinVoiceChannel({
-  //       channelId: channel.id,
-  //       guildId: channel.guild.id,
-  //       adapterCreator: channel.guild.voiceAdapterCreator,
-  //     });
-  //
-  //     this.voiceConnection.on(VoiceConnectionStatus.Ready , () => {
-  //       log.info("Voice connection is ready.");
-  //     })
-  //
-  //     this.voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
-  //       log.warn("Voice connection disconnected.");
-  //     });
-  //
-  //     return Promise.resolve();
-  //
-  //     // Wait for the connection to be ready (with timeout)
-  //     await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 15000);
-  //
-  //     // Subscribe the audio player once connected
-  //     this.voiceConnection.subscribe(this.audioPlayer);
-  //
-  //     log.info("Successfully connected to voice channel");
-  //
-  //     // Set up disconnect handler for future disconnects
-  //     this.voiceConnection.on(VoiceConnectionStatus.Disconnected, async () => {
-  //       try {
-  //         // Try to reconnect
-  //         await Promise.race([
-  //           entersState(this.voiceConnection!, VoiceConnectionStatus.Ready, 5000),
-  //           entersState(this.voiceConnection!, VoiceConnectionStatus.Signalling, 5000)
-  //         ]);
-  //
-  //         log.info("Reconnected to voice channel");
-  //       } catch (error) {
-  //         // Destroy the connection if reconnection fails
-  //         this.voiceConnection?.destroy();
-  //         this.voiceConnection = null;
-  //         log.error("Voice connection disconnected and couldn't reconnect");
-  //       }
-  //     });
-  //   } catch (error) {
-  //     // Clean up if connection failed
-  //     if (this.voiceConnection) {
-  //       this.voiceConnection.destroy();
-  //       this.voiceConnection = null;
-  //     }
-  //     log.error(`Failed to connect to voice channel: ${error}`);
-  //     throw error; // Re-throw to let caller handle it
-  //   }
-  // }
+    return new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Voice connection timeout"));
+      }, 15000); // 15 seconds timeout
+
+      voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+        voiceConnection.subscribe(this.audioPlayer);
+        clearTimeout(timeout); // Clear the timeout
+        resolve(); // Resolve the promise when ready
+        log.info("Voice connection is ready.");
+      });
+
+      voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
+            clearTimeout(timeout);
+        reject(new Error("Voice connection disconnected")); // Reject on disconnect
+        log.warn("Voice connection disconnected.");
+      });
+    });
+  }
 
   /* Disconnect from the current voice channel.
     * Cleans up the voice connection and resets state.
    */
-  public disconnect() {
-    if (!this.voiceConnection) {
+  public disconnectFrom(guildId: string): void {
+    const voiceConnection = this.getCurrentVoiceConnection(guildId);
+    if (!voiceConnection) {
       log.warn("Not connected to a voice channel.");
       return;
     }
-    this.voiceConnection.destroy();
-    this.voiceConnection = null;
+    voiceConnection.destroy();
     log.info("Destroyed voice connection.");
   }
 
