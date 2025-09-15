@@ -22,14 +22,32 @@ export default class YouTube {
     this.db = Db;
   }
 
-  public async getByQuery(query: ParsedQuery): Promise<VideoDataRecord> {
-    const videoId = await this.resolveQueryToVideoId(query);
+  private async resolveQueryToVideoId(query: ParsedQuery): Promise<string> {
+    const videoId = await this._resolveQueryToVideoId(query);
     if (!videoId) {
       log.warn("Could not resolve query to a video ID:", query);
       throw new Error("Could not resolve query to a video ID");
     }
+    return videoId;
+  }
+
+  public async resolveQuery(query: ParsedQuery): Promise<VideoDataRecord> {
+    const videoId = await this.resolveQueryToVideoId(query);
+    let videoRecord = this.db.getVideoRecord(videoId);
+    if (!videoRecord) {
+      const videoData = await this.fetchVideoData(videoId);
+      this.db.insertVideoData(videoId, null, videoData);
+      videoRecord = this.db.getVideoRecord(videoId);
+      if (!videoRecord) throw new Error("Giga, unrecoverable error, SQLite failed, fucking panic sell everything right now ~ Warren Buffett");
+    }
+    
+    return videoRecord;
+  }
+
+  public async downloadByQuery(query: ParsedQuery): Promise<VideoDataRecord> {
+    const videoId = await this.resolveQueryToVideoId(query);
     await this.findLocalOrDownload(videoId);
-    const videoData = this.db.getVideoData(videoId);
+    const videoData = this.db.getVideoRecord(videoId);
     if (!videoData) {
       log.error(
         "Video data not found in database after download for video ID:",
@@ -42,7 +60,7 @@ export default class YouTube {
 
   /* Finds audio file path in repository or downloads it if not found */
   public async findLocalOrDownload(videoId: string): Promise<string> {
-    const existingRecord = this.db.getVideoData(videoId);
+    const existingRecord = this.db.getVideoRecord(videoId);
     if (existingRecord) {
       log.debug(
         `Found a DB record for video ID ${videoId}, verifying file exists on disk...`,
@@ -66,7 +84,7 @@ export default class YouTube {
   private async downloadAudio(videoId: string): Promise<string> {
     log.debug("Downloading audio for video ID:", videoId);
     const url = `https://www.youtube.com/watch?v=${videoId}`;
-    const videoData = await this.getVideoData(videoId);
+    const videoData = await this.fetchVideoData(videoId);
     console.debug(
       `Downloading audio for video: ${{
         title: videoData.title,
@@ -84,11 +102,11 @@ export default class YouTube {
       log.error("Failed to download audio for video ID:", videoId);
       throw new Error("Failed to download audio");
     }
-    this.db.insertVideoPath(videoId, filePath, videoData);
+    this.db.insertVideoData(videoId, filePath, videoData);
     return filePath;
   }
 
-  private async resolveQueryToVideoId(
+  private async _resolveQueryToVideoId(
     query: ParsedQuery,
   ): Promise<string | null> {
     if (query.type === QueryKind.YT_URL) {
@@ -117,7 +135,7 @@ export default class YouTube {
     return firstVideo || null;
   }
 
-  public async getVideoData(
+  public async fetchVideoData(
     videoId: string,
   ): Promise<VideoMetadataResult> {
     return await yts.search({ videoId });

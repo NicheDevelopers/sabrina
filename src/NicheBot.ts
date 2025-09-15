@@ -34,7 +34,7 @@ class NicheBotClass {
     },
   });
 
-  private songQueue: SongQueue<VideoDataRecord> = new SongQueue(this.playFromQueue.bind(this));
+  public songQueue: SongQueue<VideoDataRecord> = new SongQueue(this.playFromQueue.bind(this));
 
   private token: string = Deno.env.get("SECRET_TOKEN") || "";
   private serverId: string = Deno.env.get("SERVER_ID") || "";
@@ -101,6 +101,7 @@ class NicheBotClass {
     if (command) {
       log.info(`COMMAND ${command.data.name} by ${interaction.user.tag}`);
       this.lastInteractionChannelId = interaction.channelId;
+      log.debug(`Set last interaction channel ID to: ${this.lastInteractionChannelId}`);
       await command.execute(interaction);
     }
   }
@@ -200,12 +201,13 @@ class NicheBotClass {
     });
   }
 
-  public async playFromQueue(): Promise<void> {
-    const videoData = this.songQueue.currentSong();
+  public async playFromQueue(videoData: VideoDataRecord): Promise<void> {
     if (!videoData) {
       log.error("GIGA ERROR: No song in the queue to play.");
       return;
     }
+
+    log.debug(`PLAY FROM QUEUE: Now playing: ${videoData.title}`);
 
     if (!videoData.path) {
       videoData.path = await youTube.findLocalOrDownload(videoData.id);
@@ -219,7 +221,8 @@ class NicheBotClass {
     log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
 
     const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-    const channel = await this.getChannel(this.lastInteractionChannelId);
+    log.debug(`Getting channel with id: ${this.lastInteractionChannelId}`);
+    const channel = await this.getChannel("919304430074101790");
     await channel.send({ embeds: [nowPlaying] });
   }
 

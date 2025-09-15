@@ -35,10 +35,10 @@ describe("Db", () => {
   describe("insertVideoPath", () => {
     it("should insert video path into database", () => {
       // Execute
-      db.insertVideoPath("abc123", "/videos/abc123.mp4", null);
+      db.insertVideoData("abc123", "/videos/abc123.mp4", null);
 
       // Verify the record was inserted
-      const result = db.getVideoData("abc123");
+      const result = db.getVideoRecord("abc123");
 
       assertEquals(result?.id, "abc123");
       assertEquals(result?.path, "/videos/abc123.mp4");
@@ -46,13 +46,13 @@ describe("Db", () => {
 
     it("should replace existing video path", () => {
       // Setup - insert initial record
-      db.insertVideoPath("abc123", "/videos/old-path.mp4", null);
+      db.insertVideoData("abc123", "/videos/old-path.mp4", null);
 
       // Execute - update with new path
-      db.insertVideoPath("abc123", "/videos/new-path.mp4", null);
+      db.insertVideoData("abc123", "/videos/new-path.mp4", null);
 
       // Verify the record was updated
-      const result = db.getVideoData("abc123");
+      const result = db.getVideoRecord("abc123");
 
       assertEquals(result?.id, "abc123");
       assertEquals(result?.path, "/videos/new-path.mp4");
@@ -86,10 +86,10 @@ describe("Db", () => {
         },
       };
 
-      db.insertVideoPath("abc123", "/videos/abc123.mp4", videoData);
+      db.insertVideoData("abc123", "/videos/abc123.mp4", videoData);
 
       // Execute
-      const data = db.getVideoData("abc123");
+      const data = db.getVideoRecord("abc123");
 
       // Verify
       assertEquals(data?.id, "abc123");
@@ -99,7 +99,7 @@ describe("Db", () => {
 
     it("should return null for non-existent video ID", () => {
       // Execute
-      const data = db.getVideoData("non-existent");
+      const data = db.getVideoRecord("non-existent");
 
       // Verify
       assertEquals(data, null);
@@ -109,15 +109,15 @@ describe("Db", () => {
   describe("clearDatabase", () => {
     it("should delete all database entries", () => {
       // Setup - insert some records
-      db.insertVideoPath("video1", "/path1", null);
-      db.insertVideoPath("video2", "/path2", null);
+      db.insertVideoData("video1", "/path1", null);
+      db.insertVideoData("video2", "/path2", null);
 
       // Execute
       db.clearDatabase();
 
       // Verify all records were deleted
-      const data1 = db.getVideoData("video1");
-      const data2 = db.getVideoData("video2");
+      const data1 = db.getVideoRecord("video1");
+      const data2 = db.getVideoRecord("video2");
 
       assertEquals(data1, null);
       assertEquals(data2, null);

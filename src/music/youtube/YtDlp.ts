@@ -1,6 +1,6 @@
 import { log } from "../../logging.ts";
 
-const ytDlpPath = Deno.env.get("YT_DLP_PATH") || "yt-dlp";
+const ytDlpPath = "yt-dlp";
 
 function isYtDlpInstalled(): boolean {
   const command = new Deno.Command(

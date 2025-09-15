@@ -2,7 +2,7 @@ export type LoopType = "one" | "all" | "disabled";
 
 function watchArray<T>(
   array: T[],
-  callback: (index?: number, value?: T) => void,
+  callback: (index: number, value: T) => void,
 ): T[] {
   return new Proxy(array, {
     set(target, property, value) {
@@ -10,6 +10,7 @@ function watchArray<T>(
       if (!isNaN(index)) {
         callback(index, value);
       }
+      // deno-lint-ignore no-explicit-any
       target[property as any] = value;
       return true;
     }
@@ -17,17 +18,17 @@ function watchArray<T>(
 }
 
 export default class SongQueue<T> {
-  private queue: T[] = watchArray([], (index) => {
+  private queue: T[] = watchArray<T>([], (index, value) => {
     if (index == 0) {
-      this.onCurrentSongChanged(this.queue[0]);
+      this.onCurrentSongChanged(value);
     }
   });
 
   looping: LoopType = "disabled";
-  private onCurrentSongChanged: (song: T) => void;
+  private onCurrentSongChanged: (song: T) => Promise<void>;
 
-  constructor(onCurrentSongChanged?: (song: T) => void) {
-    this.onCurrentSongChanged = onCurrentSongChanged ?? (() => {});
+  constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
+    this.onCurrentSongChanged = onCurrentSongChanged ?? (() => Promise.resolve());
   }
 
   addSongs(song: T[]) {

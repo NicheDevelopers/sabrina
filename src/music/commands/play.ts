@@ -55,8 +55,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
   const input = interaction.options.getString("query", true);
   const query = QueryParser.parse(input);
 
-  const videoData = await youTube.getByQuery(query);
-  // dodanie do kolejki
+  const videoData = await youTube.resolveQuery(query);
+  NicheBot.songQueue.addSongs([videoData]);
 }
 
 const playCommand = new NicheBotCommand(data, execute);

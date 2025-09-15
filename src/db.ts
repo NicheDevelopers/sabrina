@@ -56,9 +56,9 @@ export default class Db {
     log.info("Pruning database...");
   }
 
-  public insertVideoPath(
+  public insertVideoData(
     id: string,
-    path: string,
+    path: VideoDataRecord["path"],
     videoData: VideoMetadataResult | null,
   ): VideoDataRecord {
     log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
@@ -87,7 +87,7 @@ export default class Db {
     return videoData as unknown as VideoDataRecord;
   }
 
-  public getVideoData(id: string): VideoDataRecord | null {
+  public getVideoRecord(id: string): VideoDataRecord | null {
     const result = this.db.prepare(`
     SELECT * FROM yt_videos WHERE id = ?;
   `).get(id);
