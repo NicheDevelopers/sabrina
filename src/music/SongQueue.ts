@@ -1,8 +1,34 @@
 export type LoopType = "one" | "all" | "disabled";
 
+function watchArray<T>(
+  array: T[],
+  callback: (index?: number, value?: T) => void,
+): T[] {
+  return new Proxy(array, {
+    set(target, property, value) {
+      const index = Number(property);
+      if (!isNaN(index)) {
+        callback(index, value);
+      }
+      target[property as any] = value;
+      return true;
+    }
+  });
+}
+
 export default class SongQueue<T> {
-  private queue: T[] = [];
+  private queue: T[] = watchArray([], (index) => {
+    if (index == 0) {
+      this.onCurrentSongChanged(this.queue[0]);
+    }
+  });
+
   looping: LoopType = "disabled";
+  private onCurrentSongChanged: (song: T) => void;
+
+  constructor(onCurrentSongChanged?: (song: T) => void) {
+    this.onCurrentSongChanged = onCurrentSongChanged ?? (() => {});
+  }
 
   addSongs(song: T[]) {
     this.queue.push(...song);

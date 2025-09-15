@@ -4,7 +4,12 @@ import {
   NoSubscriberBehavior,
   VoiceConnection,
 } from "npm:@discordjs/voice";
-import { ChatInputCommandInteraction, REST, Routes } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  REST,
+  Routes,
+  TextChannel,
+} from "discord.js";
 import { Client, GatewayIntentBits } from "discord.js";
 import { log } from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
@@ -15,6 +20,10 @@ import {
 } from "npm:@discordjs/voice@0.19.0";
 import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
 import SongQueue from "./music/SongQueue.ts";
+import { VideoDataRecord } from "./db.ts";
+import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
+import { youTube } from "./music/youtube/YouTube.ts";
+import EmbedCreator from "./music/EmbedCreator.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
@@ -25,7 +34,7 @@ class NicheBotClass {
     },
   });
 
-  private songQueue: SongQueue<unknown> = new SongQueue();
+  private songQueue: SongQueue<VideoDataRecord> = new SongQueue(this.playFromQueue.bind(this));
 
   private token: string = Deno.env.get("SECRET_TOKEN") || "";
   private serverId: string = Deno.env.get("SERVER_ID") || "";
@@ -34,6 +43,8 @@ class NicheBotClass {
   private client: Client = this.makeClient();
 
   private isShuttingDown: boolean = false;
+
+  private lastInteractionChannelId: string = "";
 
   constructor() {
     // this.client.on("debug", console.log);
@@ -89,6 +100,7 @@ class NicheBotClass {
     const command = CommandProvider.getCommand(interaction.commandName);
     if (command) {
       log.info(`COMMAND ${command.data.name} by ${interaction.user.tag}`);
+      this.lastInteractionChannelId = interaction.channelId;
       await command.execute(interaction);
     }
   }
@@ -186,6 +198,40 @@ class NicheBotClass {
         GatewayIntentBits.GuildMembers,
       ],
     });
+  }
+
+  public async playFromQueue(): Promise<void> {
+    const videoData = this.songQueue.currentSong();
+    if (!videoData) {
+      log.error("GIGA ERROR: No song in the queue to play.");
+      return;
+    }
+
+    if (!videoData.path) {
+      videoData.path = await youTube.findLocalOrDownload(videoData.id);
+    }
+
+    const audioResource = createAudioResource(videoData.path);
+    const paused = this.audioPlayer.state.status === "paused";
+    this.audioPlayer.play(audioResource);
+    if (paused) this.audioPlayer.pause();
+
+    log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
+
+    const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
+    const channel = await this.getChannel(this.lastInteractionChannelId);
+    await channel.send({ embeds: [nowPlaying] });
+  }
+
+  private async getChannel(channelId: string): Promise<TextChannel> {
+    const channel = await this.client.channels.fetch(channelId);
+    if (!channel) {
+      throw new Error(`Channel with ID ${channelId} not found`);
+    }
+    if (!(channel instanceof TextChannel)) {
+      throw new Error(`Channel with ID ${channelId} is not text-based`);
+    }
+    return channel;
   }
 }
 

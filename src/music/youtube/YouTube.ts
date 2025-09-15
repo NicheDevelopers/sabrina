@@ -41,7 +41,7 @@ export default class YouTube {
   }
 
   /* Finds audio file path in repository or downloads it if not found */
-  private async findLocalOrDownload(videoId: string): Promise<string> {
+  public async findLocalOrDownload(videoId: string): Promise<string> {
     const existingRecord = this.db.getVideoData(videoId);
     if (existingRecord) {
       log.debug(

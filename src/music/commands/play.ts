@@ -5,7 +5,6 @@ import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
 import { youTube } from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
-import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
 import EmbedCreator from "../EmbedCreator.ts";
 
 const data = new SlashCommandBuilder()
@@ -43,11 +42,6 @@ async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.reply("Downloading the song, please wait...");
   }
 
-  const input = interaction.options.getString("query", true);
-  const query = QueryParser.parse(input);
-
-  const videoData = await youTube.getByQuery(query);
-
   const voiceConnection = NicheBot.getCurrentVoiceConnection(
     interaction.guildId,
   );
@@ -56,16 +50,13 @@ async function execute(interaction: ChatInputCommandInteraction) {
     log.error("Voice connection is null after joining voice channel");
     return;
   }
-
-  const audioResource = createAudioResource(videoData.path);
   voiceConnection.subscribe(NicheBot.audioPlayer);
-  NicheBot.audioPlayer.play(audioResource);
 
-  interaction.editReply("Now playing:");
-  log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
+  const input = interaction.options.getString("query", true);
+  const query = QueryParser.parse(input);
 
-  const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-  await interaction.editReply({ embeds: [nowPlaying] });
+  const videoData = await youTube.getByQuery(query);
+  // dodanie do kolejki
 }
 
 const playCommand = new NicheBotCommand(data, execute);

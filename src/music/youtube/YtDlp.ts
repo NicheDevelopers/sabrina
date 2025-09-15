@@ -1,8 +1,10 @@
 import { log } from "../../logging.ts";
 
+const ytDlpPath = Deno.env.get("YT_DLP_PATH") || "yt-dlp";
+
 function isYtDlpInstalled(): boolean {
   const command = new Deno.Command(
-    "yt-dlp",
+    ytDlpPath,
     {
       args: ["--version"],
       stdout: "null",
@@ -26,7 +28,7 @@ export class YtDlp {
   ): Promise<string | null> {
     const outputTemplate =
       `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
-    const command = new Deno.Command("yt-dlp", {
+    const command = new Deno.Command(ytDlpPath, {
       args: ["-x", "--audio-format", "mp3", "-o", outputTemplate, url],
       stdout: "piped",
       stderr: "piped",

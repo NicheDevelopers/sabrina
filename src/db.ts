@@ -4,7 +4,7 @@ import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
 
 export interface VideoDataRecord {
   id: string;
-  path: string;
+  path: string | null;
   title: string | null;
   url: string | null;
   timestamp: string | null;
