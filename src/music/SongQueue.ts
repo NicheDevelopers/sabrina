@@ -33,6 +33,9 @@ export default class SongQueue<T> {
   }
 
   skipSongs(n: number): T | undefined {
+    if (n <= 0) {
+      throw new Error("Number of songs to skip must be positive");
+    }
     if (this.looping == "one") {
       return this.currentSong();
     }
@@ -45,6 +48,9 @@ export default class SongQueue<T> {
   }
 
   shuffle() {
+    // Do not shuffle the currently playing song
+    if (this.queue.length <= 2) return;
+
     const toShuffle = this.queue.slice(1);
     for (let i = toShuffle.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * i);
@@ -54,6 +60,9 @@ export default class SongQueue<T> {
   }
 
   removeSong(index: number) {
+    if (index < 0 || index >= this.queue.length) {
+      throw new Error("Invalid index for queue removal");
+    }
     this.queue.splice(index, 1);
   }
 

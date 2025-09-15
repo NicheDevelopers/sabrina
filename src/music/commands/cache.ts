@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import NicheBotCommand from "../../NicheBotCommand.ts";
 import QueryParser, { QueryKind } from "../QueryParser.ts";
-import YouTube from "../youtube/YouTube.ts";
+import YouTube, { youTube } from "../youtube/YouTube.ts";
 import { log } from "../../logging.ts";
 
 const data = new SlashCommandBuilder()
@@ -19,7 +19,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
   const query = QueryParser.parse(input);
 
   try {
-    await YouTube.getByQuery(query);
+    await youTube.getByQuery(query);
     await interaction.editReply(`Cached song for query: ${input}`);
   } catch (e: unknown) {
     log.error("Error caching song", e);

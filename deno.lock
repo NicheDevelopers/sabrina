@@ -1,8 +1,10 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@onjara/optic@*": "2.0.3",
     "jsr:@std/assert@*": "1.0.14",
     "jsr:@std/assert@1": "1.0.14",
+    "jsr:@std/fmt@^1.0.2": "1.0.8",
     "jsr:@std/internal@^1.0.10": "1.0.10",
     "npm:@discordjs/builders@1.11.3": "1.11.3",
     "npm:@discordjs/opus@*": "0.10.0",
@@ -18,15 +20,25 @@
     "npm:discord.js@^14.22.1": "14.22.1",
     "npm:sodium-native@*": "5.0.8",
     "npm:sodium-native@^5.0.8": "5.0.8",
+    "npm:winston@3.17.0": "3.17.0",
     "npm:winston@^3.17.0": "3.17.0",
     "npm:yt-search@^2.13.1": "2.13.1"
   },
   "jsr": {
+    "@onjara/optic@2.0.3": {
+      "integrity": "b4bf8cae0820a3c3f362ba4d78939237fcfa23e3087bbd3f9fd3c883839820f1",
+      "dependencies": [
+        "jsr:@std/fmt"
+      ]
+    },
     "@std/assert@1.0.14": {
       "integrity": "68d0d4a43b365abc927f45a9b85c639ea18a9fab96ad92281e493e4ed84abaa4",
       "dependencies": [
         "jsr:@std/internal"
       ]
+    },
+    "@std/fmt@1.0.8": {
+      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
     },
     "@std/internal@1.0.10": {
       "integrity": "e3be62ce42cab0e177c27698e5d9800122f67b766a0bea6ca4867886cbde8cf7"
@@ -1125,7 +1137,8 @@
   },
   "redirects": {
     "https://deno.land/std/testing/asserts.ts": "https://deno.land/std@0.224.0/testing/asserts.ts",
-    "https://deno.land/std/testing/bdd.ts": "https://deno.land/std@0.224.0/testing/bdd.ts"
+    "https://deno.land/std/testing/bdd.ts": "https://deno.land/std@0.224.0/testing/bdd.ts",
+    "https://deno.land/std/testing/mock.ts": "https://deno.land/std@0.224.0/testing/mock.ts"
   },
   "remote": {
     "https://deno.land/std@0.224.0/assert/_constants.ts": "a271e8ef5a573f1df8e822a6eb9d09df064ad66a4390f21b3e31f820a38e0975",
@@ -1163,7 +1176,8 @@
     "https://deno.land/std@0.224.0/internal/mod.ts": "534125398c8e7426183e12dc255bb635d94e06d0f93c60a297723abe69d3b22e",
     "https://deno.land/std@0.224.0/testing/_test_suite.ts": "f10a8a6338b60c403f07a76f3f46bdc9f1e1a820c0a1decddeb2949f7a8a0546",
     "https://deno.land/std@0.224.0/testing/asserts.ts": "d0cdbabadc49cc4247a50732ee0df1403fdcd0f95360294ad448ae8c240f3f5c",
-    "https://deno.land/std@0.224.0/testing/bdd.ts": "3e4de4ff6d8f348b5574661cef9501b442046a59079e201b849d0e74120d476b"
+    "https://deno.land/std@0.224.0/testing/bdd.ts": "3e4de4ff6d8f348b5574661cef9501b442046a59079e201b849d0e74120d476b",
+    "https://deno.land/std@0.224.0/testing/mock.ts": "a963181c2860b6ba3eb60e08b62c164d33cf5da7cd445893499b2efda20074db"
   },
   "workspace": {
     "dependencies": [

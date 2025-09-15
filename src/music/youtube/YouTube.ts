@@ -8,20 +8,28 @@ import { YtDlp } from "./YtDlp.ts";
 import AudioFileRepository, {
   audioFileRepository,
 } from "../AudioFileRepository.ts";
-import Db, { VideoDataRecord } from "../../db.ts";
+import Db, { sabrinaDb, VideoDataRecord } from "../../db.ts";
 import { log } from "../../logging.ts";
 import { ParsedQuery, QueryKind } from "../QueryParser.ts";
 import UrlValidator from "../UrlValidator.ts";
 
 export default class YouTube {
-  public static async getByQuery(query: ParsedQuery): Promise<VideoDataRecord> {
+  private audioRepo: AudioFileRepository;
+  private db: Db;
+
+  constructor(audioFileRepository: AudioFileRepository, Db: Db) {
+    this.audioRepo = audioFileRepository;
+    this.db = Db;
+  }
+
+  public async getByQuery(query: ParsedQuery): Promise<VideoDataRecord> {
     const videoId = await this.resolveQueryToVideoId(query);
     if (!videoId) {
       log.warn("Could not resolve query to a video ID:", query);
       throw new Error("Could not resolve query to a video ID");
     }
     await this.findLocalOrDownload(videoId);
-    const videoData = Db.getVideoData(videoId);
+    const videoData = this.db.getVideoData(videoId);
     if (!videoData) {
       log.error(
         "Video data not found in database after download for video ID:",
@@ -33,13 +41,13 @@ export default class YouTube {
   }
 
   /* Finds audio file path in repository or downloads it if not found */
-  private static async findLocalOrDownload(videoId: string): Promise<string> {
-    const existingRecord = Db.getVideoData(videoId);
+  private async findLocalOrDownload(videoId: string): Promise<string> {
+    const existingRecord = this.db.getVideoData(videoId);
     if (existingRecord) {
       log.debug(
         `Found a DB record for video ID ${videoId}, verifying file exists on disk...`,
       );
-      const pathFromDisk = audioFileRepository.getPath(existingRecord.id);
+      const pathFromDisk = this.audioRepo.getPath(existingRecord.id);
       if (!pathFromDisk) {
         log.warn(
           `Audio file for video ID ${videoId} recorded in database but not found on disk. Re-downloading...`,
@@ -55,7 +63,7 @@ export default class YouTube {
   }
 
   /* Downloads audio for a given YouTube video ID and returns the file path */
-  private static async downloadAudio(videoId: string): Promise<string> {
+  private async downloadAudio(videoId: string): Promise<string> {
     log.debug("Downloading audio for video ID:", videoId);
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     const videoData = await this.getVideoData(videoId);
@@ -76,11 +84,11 @@ export default class YouTube {
       log.error("Failed to download audio for video ID:", videoId);
       throw new Error("Failed to download audio");
     }
-    Db.insertVideoPath(videoId, filePath, videoData);
+    this.db.insertVideoPath(videoId, filePath, videoData);
     return filePath;
   }
 
-  private static async resolveQueryToVideoId(
+  private async resolveQueryToVideoId(
     query: ParsedQuery,
   ): Promise<string | null> {
     if (query.type === QueryKind.YT_URL) {
@@ -95,11 +103,11 @@ export default class YouTube {
     return video ? video.videoId : null;
   }
 
-  public static async search(query: string): Promise<SearchResult> {
+  public async search(query: string): Promise<SearchResult> {
     return await yts.search(query);
   }
 
-  private static async searchFirstVideo(
+  private async searchFirstVideo(
     query: string,
   ): Promise<VideoMetadataResult | null> {
     const results = await yts.search(query);
@@ -109,15 +117,17 @@ export default class YouTube {
     return firstVideo || null;
   }
 
-  public static async getVideoData(
+  public async getVideoData(
     videoId: string,
   ): Promise<VideoMetadataResult> {
     return await yts.search({ videoId });
   }
 
-  public static async getPlaylist(
+  public async getPlaylist(
     listId: string,
   ): Promise<PlaylistMetadataResult> {
     return await yts.search({ listId });
   }
 }
+
+export const youTube = new YouTube(audioFileRepository, sabrinaDb);

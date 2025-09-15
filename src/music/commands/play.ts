@@ -3,7 +3,7 @@ import NicheBot from "../../NicheBot.ts";
 import { log } from "../../logging.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
-import YouTube from "../youtube/YouTube.ts";
+import { youTube } from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
 import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
 import EmbedCreator from "../EmbedCreator.ts";
@@ -46,7 +46,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
   const input = interaction.options.getString("query", true);
   const query = QueryParser.parse(input);
 
-  const videoData = await YouTube.getByQuery(query);
+  const videoData = await youTube.getByQuery(query);
 
   const voiceConnection = NicheBot.getCurrentVoiceConnection(
     interaction.guildId,

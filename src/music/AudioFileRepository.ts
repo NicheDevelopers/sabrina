@@ -3,6 +3,9 @@ import { log } from "../logging.ts";
 export default class AudioFileRepository {
   public static readonly audioFolderPath = "./downloads/youtube";
 
+  private static readonly songRegex =
+    /\[([a-zA-Z0-9_-]{11})\]\.(mp3|m4a|wav|ogg|flac)$/;
+
   private videos: Map<string, string> = new Map(); // videoId -> filePath
 
   private loadVideosFromDisk() {
@@ -10,7 +13,9 @@ export default class AudioFileRepository {
     for (
       const dirEntry of Deno.readDirSync(AudioFileRepository.audioFolderPath)
     ) {
-      if (dirEntry.isFile && dirEntry.name.endsWith(".mp3")) {
+      if (
+        dirEntry.isFile && dirEntry.name.match(AudioFileRepository.songRegex)
+      ) {
         const videoId = this.extractVideoIdFromFilename(dirEntry.name);
         if (!videoId) {
           log.warn(
@@ -20,21 +25,31 @@ export default class AudioFileRepository {
         }
         const filePath =
           `${AudioFileRepository.audioFolderPath}/${dirEntry.name}`;
-        this.videos.set(videoId, filePath);
-        log.debug(
-          `Loaded audio file for video ID ${videoId} at path: ${filePath}`,
-        );
+        this.registerVideo(videoId, filePath);
       }
     }
     log.info(`Loaded ${this.videos.size} audio files from disk.`);
+  }
+
+  private registerVideo(videoId: string, filePath: string) {
+    if (this.videos.has(videoId)) {
+      log.warn(
+        `Skipping duplicate video ID detected in repository at ${filePath}: ${videoId}`,
+      );
+      return;
+    }
+    log.debug(
+      `Registering audio file for video ID ${videoId} at path: ${filePath}`,
+    );
+    this.videos.set(videoId, filePath);
   }
 
   public getPath(videoId: string): string | null {
     return this.videos.get(videoId) || null;
   }
 
-  private extractVideoIdFromFilename(filename: string): string | null {
-    const match = filename.match(/\[([a-zA-Z0-9_-]{11})\]/);
+  public extractVideoIdFromFilename(filename: string): string | null {
+    const match = filename.match(AudioFileRepository.songRegex);
     return match ? match[1] : null;
   }
 

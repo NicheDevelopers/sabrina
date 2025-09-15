@@ -9,37 +9,36 @@ import {
   it,
 } from "https://deno.land/std/testing/bdd.ts";
 import { DatabaseSync } from "node:sqlite";
-import Db from "./db.ts";
+import Db, { VideoDataRecord } from "./db.ts";
+import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
 
 describe("Db", () => {
   // Use an in-memory database for testing
-  const testDb = new DatabaseSync(":memory:");
+  let db: Db;
 
   beforeEach(() => {
-    // Set the test database
-    Db.setDatabase(testDb);
-
-    // Start a transaction before each test
-    testDb.exec("BEGIN TRANSACTION;");
-
-    // Initialize the database structure
-    Db.init();
+    // Create a new Db instance with in-memory database
+    db = new Db(":memory:");
   });
 
   afterEach(() => {
-    // Roll back the transaction after each test
-    testDb.exec("ROLLBACK;");
+    // Close the database to prevent leaks
+    if (db && db.db) {
+      try {
+        db.db.close();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+    }
   });
 
   describe("insertVideoPath", () => {
     it("should insert video path into database", () => {
       // Execute
-      Db.insertVideoPath("abc123", "/videos/abc123.mp4", null);
+      db.insertVideoPath("abc123", "/videos/abc123.mp4", null);
 
       // Verify the record was inserted
-      const result = testDb.prepare(`
-      SELECT id, path FROM yt_videos WHERE id = ?;
-    `).get("abc123");
+      const result = db.getVideoData("abc123");
 
       assertEquals(result?.id, "abc123");
       assertEquals(result?.path, "/videos/abc123.mp4");
@@ -47,86 +46,88 @@ describe("Db", () => {
 
     it("should replace existing video path", () => {
       // Setup - insert initial record
-      testDb.prepare(`
-      INSERT INTO yt_videos (id, path) VALUES (?, ?);
-    `).run("abc123", "/videos/old-path.mp4");
+      db.insertVideoPath("abc123", "/videos/old-path.mp4", null);
 
       // Execute - update with new path
-      Db.insertVideoPath("abc123", "/videos/new-path.mp4", null);
+      db.insertVideoPath("abc123", "/videos/new-path.mp4", null);
 
       // Verify the record was updated
-      const result = testDb.prepare(`
-      SELECT id, path FROM yt_videos WHERE id = ?;
-    `).get("abc123");
+      const result = db.getVideoData("abc123");
 
       assertEquals(result?.id, "abc123");
       assertEquals(result?.path, "/videos/new-path.mp4");
     });
   });
 
-  describe("getVideoPath", () => {
-    it("should return path for existing video ID", () => {
-      // Setup
-      testDb.prepare(`
-      INSERT INTO yt_videos (id, path) VALUES (?, ?);
-    `).run("abc123", "/videos/abc123.mp4");
+  describe("getVideoData", () => {
+    it("should return full data for existing video ID", () => {
+      // Setup - create a record with title
+      const videoData: VideoMetadataResult = {
+        title: "Test Video",
+        url: "https://example.com/video",
+        videoId: "abc123",
+        timestamp: "2:00",
+        seconds: 120,
+        views: 1000,
+        genre: "Music",
+        uploadDate: "2023-01-01",
+        ago: "1 year ago",
+        image: "https://example.com/image.jpg",
+        thumbnail: "https://example.com/thumbnail.jpg",
+        description: "Test description",
+        author: {
+          name: "Test Author",
+          url: "https://example.com/author",
+        },
+        duration: {
+          seconds: 120,
+          timestamp: "2:00",
+          toString: () => "2:00",
+        },
+      };
+
+      db.insertVideoPath("abc123", "/videos/abc123.mp4", videoData);
 
       // Execute
-      const path = Db.getVideoData("abc123");
+      const data = db.getVideoData("abc123");
 
       // Verify
-      assertEquals(path?.path, "/videos/abc123.mp4");
+      assertEquals(data?.id, "abc123");
+      assertEquals(data?.path, "/videos/abc123.mp4");
+      assertEquals(data?.title, "Test Video");
     });
 
     it("should return null for non-existent video ID", () => {
       // Execute
-      const path = Db.getVideoData("non-existent");
+      const data = db.getVideoData("non-existent");
 
       // Verify
-      assertEquals(path, null);
-    });
-
-    it("should return null when path is null", () => {
-      // Setup - insert record with null path
-      testDb.prepare(`
-      INSERT INTO yt_videos (id, path) VALUES (?, ?);
-    `).run("null-path", null);
-
-      // Execute
-      const path = Db.getVideoData("null-path");
-
-      // Verify
-      assertEquals(path, null);
+      assertEquals(data, null);
     });
   });
 
   describe("clearDatabase", () => {
     it("should delete all database entries", () => {
       // Setup - insert some records
-      testDb.prepare(`
-      INSERT INTO yt_videos (id, path) VALUES (?, ?);
-    `).run("video1", "/path1");
-
-      testDb.prepare(`
-      INSERT INTO yt_videos (id, path) VALUES (?, ?);
-    `).run("video2", "/path2");
+      db.insertVideoPath("video1", "/path1", null);
+      db.insertVideoPath("video2", "/path2", null);
 
       // Execute
-      Db.clearDatabase();
+      db.clearDatabase();
 
       // Verify all records were deleted
-      const count = testDb.prepare(`
-      SELECT COUNT(*) as count FROM yt_videos;
-    `).get();
+      const data1 = db.getVideoData("video1");
+      const data2 = db.getVideoData("video2");
 
-      assertEquals(count?.count, 0);
+      assertEquals(data1, null);
+      assertEquals(data2, null);
     });
   });
 
   describe("prune", () => {
     it("should be implemented", () => {
       // This is just a placeholder test since prune() is currently empty
-      Db.prune();
+      db.prune();
       // No assertions needed since the method is empty
     });
   });

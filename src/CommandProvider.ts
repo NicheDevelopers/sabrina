@@ -13,7 +13,7 @@ class CommandProviderClass {
     cacheCommand,
     playCommand,
     pauseCommand,
-    resumeCommand
+    resumeCommand,
   ];
 
   public getCommand(name: string): NicheBotCommand | undefined {

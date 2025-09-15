@@ -1,21 +1,8 @@
-import YouTube from "./YouTube.ts";
+import { youTube } from "./YouTube.ts";
 import { assertEquals } from "jsr:@std/assert";
-import { DatabaseSync } from "node:sqlite";
-import Db from "../../db.ts"; // Adjust path as needed
-
-// Create a setup function that will be called before each test
-async function setupTestDb() {
-  const testDb = new DatabaseSync(":memory:");
-  Db.setDatabase(testDb);
-  Db.init();
-  return testDb;
-}
 
 Deno.test("YouTube Search Query Test", async () => {
-  // Setup test database
-  await setupTestDb();
-
-  const result = await YouTube.search("Brodka - Miales Byc");
+  const result = await youTube.search("Brodka - Miales Byc");
   if (!result) {
     throw new Error("No result found");
   }
@@ -25,9 +12,7 @@ Deno.test("YouTube Search Query Test", async () => {
 });
 
 Deno.test("YouTube Search ID Test", async () => {
-  await setupTestDb();
-
-  const result = await YouTube.search("QbxFDqadFJU");
+  const result = await youTube.search("QbxFDqadFJU");
   if (!result) {
     throw new Error("No result found");
   }
@@ -37,9 +22,7 @@ Deno.test("YouTube Search ID Test", async () => {
 });
 
 Deno.test("YouTube Playlist Test", async () => {
-  await setupTestDb();
-
-  const result = await YouTube.getPlaylist(
+  const result = await youTube.getPlaylist(
     "PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM",
   );
   if (!result) {
