@@ -1,42 +1,34 @@
 export type LoopType = "one" | "all" | "disabled";
 
-function watchArray<T>(
-  array: T[],
-  callback: (index: number, value: T) => void,
-): T[] {
-  return new Proxy(array, {
-    set(target, property, value) {
-      const index = Number(property);
-      if (!isNaN(index)) {
-        callback(index, value);
-      }
-      // deno-lint-ignore no-explicit-any
-      target[property as any] = value;
-      return true;
-    }
-  });
-}
-
 export default class SongQueue<T> {
-  private queue: T[] = watchArray<T>([], (index, value) => {
-    if (index == 0) {
-      this.onCurrentSongChanged(value);
-    }
-  });
+  private queue: T[] = [];
+    // =       this.onCurrentSongChanged(value);
 
   looping: LoopType = "disabled";
   private onCurrentSongChanged: (song: T) => Promise<void>;
+
+  private previousCurrentSong: T | undefined;
 
   constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
     this.onCurrentSongChanged = onCurrentSongChanged ?? (() => Promise.resolve());
   }
 
+  private checkIfCurrentSongChanged() {
+    const currentSong = this.currentSong();
+    if (currentSong !== this.previousCurrentSong) {
+      this.previousCurrentSong = currentSong;
+      this.onCurrentSongChanged(currentSong);
+    }
+  }
+
   addSongs(song: T[]) {
     this.queue.push(...song);
+    this.checkIfCurrentSongChanged();
   }
 
   addSongsAt(song: T[], index: number) {
     this.queue.splice(index, 0, ...song);
+    this.checkIfCurrentSongChanged();
   }
 
   currentSong(): T | undefined {
@@ -56,6 +48,7 @@ export default class SongQueue<T> {
     if (this.looping == "all") {
       this.queue.push(this.queue.shift() as T);
     }
+    this.checkIfCurrentSongChanged();
     return this.currentSong();
   }
 
@@ -71,6 +64,7 @@ export default class SongQueue<T> {
       this.addSongs(this.queue.slice(0, n));
     }
     this.queue = this.queue.slice(n);
+    this.checkIfCurrentSongChanged();
     return this.currentSong();
   }
 
@@ -84,6 +78,7 @@ export default class SongQueue<T> {
       [toShuffle[i], toShuffle[j]] = [toShuffle[j], toShuffle[i]];
     }
     this.queue = [this.queue[0], ...toShuffle];
+    this.checkIfCurrentSongChanged();
   }
 
   removeSong(index: number) {
@@ -91,6 +86,7 @@ export default class SongQueue<T> {
       throw new Error("Invalid index for queue removal");
     }
     this.queue.splice(index, 1);
+    this.checkIfCurrentSongChanged();
   }
 
   isEmpty() {
@@ -98,7 +94,7 @@ export default class SongQueue<T> {
   }
 
   clear() {
-    this.queue = this.queue.slice(0, 1);
+    this.queue = [this.queue[0]]
   }
 
   setLoopType(type: LoopType): LoopType {

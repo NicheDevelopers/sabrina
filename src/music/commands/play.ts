@@ -5,7 +5,6 @@ import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
 import { youTube } from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
-import EmbedCreator from "../EmbedCreator.ts";
 
 const data = new SlashCommandBuilder()
   .setName("play")

@@ -12,4 +12,12 @@ export default class Utils {
     const member = interaction.member as GuildMember;
     return member.voice.channel as VoiceChannel | null;
   }
+
+  public static reply(interaction: ChatInputCommandInteraction, message: string) {
+    if (interaction.replied || interaction.deferred) {
+      return interaction.editReply(message);
+    } else {
+      return interaction.reply(message);
+    }
+  }
 }

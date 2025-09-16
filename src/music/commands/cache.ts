@@ -19,7 +19,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
   const query = QueryParser.parse(input);
 
   try {
-    await youTube.getByQuery(query);
+    await youTube.downloadByQuery(query);
     await interaction.editReply(`Cached song for query: ${input}`);
   } catch (e: unknown) {
     log.error("Error caching song", e);

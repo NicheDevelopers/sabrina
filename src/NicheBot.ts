@@ -27,6 +27,8 @@ import EmbedCreator from "./music/EmbedCreator.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
+let lastInteractionChannelId = "";
+
 class NicheBotClass {
   public audioPlayer: AudioPlayer = createAudioPlayer({
     behaviors: {
@@ -34,7 +36,7 @@ class NicheBotClass {
     },
   });
 
-  public songQueue: SongQueue<VideoDataRecord> = new SongQueue(this.playFromQueue.bind(this));
+  public songQueue: SongQueue<VideoDataRecord> = new SongQueue(async (song) => await this.playFromQueue(song));
 
   private token: string = Deno.env.get("SECRET_TOKEN") || "";
   private serverId: string = Deno.env.get("SERVER_ID") || "";
@@ -43,8 +45,6 @@ class NicheBotClass {
   private client: Client = this.makeClient();
 
   private isShuttingDown: boolean = false;
-
-  private lastInteractionChannelId: string = "";
 
   constructor() {
     // this.client.on("debug", console.log);
@@ -100,8 +100,8 @@ class NicheBotClass {
     const command = CommandProvider.getCommand(interaction.commandName);
     if (command) {
       log.info(`COMMAND ${command.data.name} by ${interaction.user.tag}`);
-      this.lastInteractionChannelId = interaction.channelId;
-      log.debug(`Set last interaction channel ID to: ${this.lastInteractionChannelId}`);
+      lastInteractionChannelId = interaction.channelId;
+      log.debug(`Set last interaction channel ID to: ${lastInteractionChannelId}`);
       await command.execute(interaction);
     }
   }
@@ -164,6 +164,7 @@ class NicheBotClass {
     * Cleans up the voice connection and resets state.
    */
   public disconnectFrom(guildId: string): void {
+    this.audioPlayer.stop();
     const voiceConnection = this.getCurrentVoiceConnection(guildId);
     if (!voiceConnection) {
       log.warn("Not connected to a voice channel.");
@@ -203,7 +204,7 @@ class NicheBotClass {
 
   public async playFromQueue(videoData: VideoDataRecord): Promise<void> {
     if (!videoData) {
-      log.error("GIGA ERROR: No song in the queue to play.");
+      this.disconnectFrom(lastInteractionChannelId);
       return;
     }
 
@@ -221,7 +222,7 @@ class NicheBotClass {
     log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
 
     const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-    log.debug(`Getting channel with id: ${this.lastInteractionChannelId}`);
+    log.debug(`Getting channel with id: ${lastInteractionChannelId}`);
     const channel = await this.getChannel("919304430074101790");
     await channel.send({ embeds: [nowPlaying] });
   }

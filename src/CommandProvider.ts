@@ -5,6 +5,8 @@ import cacheCommand from "./music/commands/cache.ts";
 import playCommand from "./music/commands/play.ts";
 import pauseCommand from "./music/commands/pause.ts";
 import resumeCommand from "./music/commands/resume.ts";
+import queueCommand from "./music/commands/queue.ts";
+import skipCommand from "./music/commands/skip.ts";
 
 class CommandProviderClass {
   private commands: Array<NicheBotCommand> = [
@@ -14,6 +16,8 @@ class CommandProviderClass {
     playCommand,
     pauseCommand,
     resumeCommand,
+    queueCommand,
+    skipCommand
   ];
 
   public getCommand(name: string): NicheBotCommand | undefined {

@@ -1,20 +1,15 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import NicheBot from "../../NicheBot.ts";
-import { log } from "../../logging.ts";
-import NicheBotCommand from "../../NicheBotCommand.ts";
-
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import NicheBot from "../NicheBot";
-import NicheBotCommand from "../NicheBotCommand";
-import { log } from "../log";
 import { VideoDataRecord } from "../../db.ts";
+import {log} from "../../logging.ts";
+import NicheBot from "../../NicheBot.ts";
+import NicheBotCommand from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
   .setName("queue")
   .setDescription("Show the current queue");
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  if (!NicheBot.voiceConnection) {
+  if (!NicheBot.getCurrentVoiceConnection(interaction.guild!.id!)) {
     await interaction.reply("I'm not in a voice channel!");
     return;
   }
