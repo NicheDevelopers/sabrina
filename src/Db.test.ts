@@ -1,15 +1,13 @@
 import {
   assertEquals,
-  assertNotEquals,
-} from "https://deno.land/std/testing/asserts.ts";
+} from "jsr:@std/assert";
 import {
   afterEach,
   beforeEach,
   describe,
   it,
 } from "https://deno.land/std/testing/bdd.ts";
-import { DatabaseSync } from "node:sqlite";
-import Db, { VideoDataRecord } from "./db.ts";
+import Db from "./Db.ts";
 import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
 
 describe("Db", () => {

@@ -8,7 +8,7 @@ import { YtDlp } from "./YtDlp.ts";
 import AudioFileRepository, {
   audioFileRepository,
 } from "../AudioFileRepository.ts";
-import Db, { sabrinaDb, VideoDataRecord } from "../../db.ts";
+import Db, { sabrinaDb, VideoDataRecord } from "../../Db.ts";
 import { log } from "../../logging.ts";
 import { ParsedQuery, QueryKind } from "../QueryParser.ts";
 import UrlValidator from "../UrlValidator.ts";

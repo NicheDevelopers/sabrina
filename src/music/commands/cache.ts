@@ -19,7 +19,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
     await Utils.reply(interaction, "Caching song, please wait...");
     const input = interaction.options.getString("query", true);
     const query = QueryParser.parse(input);
-    const videoId = await youTube.resolveQueryToVideoIdDupa(query);
+    const videoId = (await youTube.handleQuery(query)).id;
 
     await youTube.download(videoId);
     await Utils.reply(interaction, `Cached song for query: ${input}`);

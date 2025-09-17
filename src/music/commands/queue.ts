@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { VideoDataRecord } from "../../db.ts";
+import { VideoDataRecord } from "../../Db.ts";
 import { log } from "../../logging.ts";
 import NicheBot from "../../NicheBot.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";

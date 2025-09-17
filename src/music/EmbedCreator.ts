@@ -1,4 +1,4 @@
-import { VideoDataRecord } from "../db.ts";
+import { VideoDataRecord } from "../Db.ts";
 import { EmbedBuilder } from "npm:discord.js@14.22.1";
 
 export default class EmbedCreator {

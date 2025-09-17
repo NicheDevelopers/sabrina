@@ -20,10 +20,10 @@ import {
 } from "npm:@discordjs/voice@0.19.0";
 import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
 import SongQueue from "./music/SongQueue.ts";
-import { VideoDataRecord } from "./db.ts";
 import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
 import { youTube } from "./music/youtube/YouTube.ts";
 import EmbedCreator from "./music/EmbedCreator.ts";
+import {VideoDataRecord} from "./Db.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
