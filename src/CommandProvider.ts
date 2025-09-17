@@ -17,7 +17,7 @@ class CommandProviderClass {
     pauseCommand,
     resumeCommand,
     queueCommand,
-    skipCommand
+    skipCommand,
   ];
 
   public getCommand(name: string): NicheBotCommand | undefined {

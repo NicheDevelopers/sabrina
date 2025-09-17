@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { VideoDataRecord } from "../../db.ts";
-import {log} from "../../logging.ts";
+import { log } from "../../logging.ts";
 import NicheBot from "../../NicheBot.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";
 
@@ -21,8 +21,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
   log.debug(NicheBot.songQueue.getQueue());
 
-  const reply =
-    "Current queue:\n" +
+  const reply = "Current queue:\n" +
     NicheBot.songQueue
       .getQueue()
       .map((v: VideoDataRecord, i: number) => `${i + 1}. ${v.title}`)

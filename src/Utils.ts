@@ -13,7 +13,10 @@ export default class Utils {
     return member.voice.channel as VoiceChannel | null;
   }
 
-  public static reply(interaction: ChatInputCommandInteraction, message: string) {
+  public static reply(
+    interaction: ChatInputCommandInteraction,
+    message: string,
+  ) {
     if (interaction.replied || interaction.deferred) {
       return interaction.editReply(message);
     } else {

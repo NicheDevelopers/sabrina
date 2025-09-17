@@ -6,7 +6,7 @@ import { audioFileRepository } from "./music/AudioFileRepository.ts";
 
 function main() {
   log.info(`Starting ${BOT_NAME}...`);
-  YtDlp.init()
+  YtDlp.init();
   audioFileRepository.init();
   NicheBot.start().catch((err) => {
     log.error(`An error occurred: ${err}`);

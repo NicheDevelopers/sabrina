@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { createAudioResource } from "@discordjs/voice";
-import {log} from "../../logging.ts";
+import { log } from "../../logging.ts";
 import NicheBot from "../../NicheBot.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
@@ -8,7 +8,7 @@ import Utils from "../../Utils.ts";
 const data = new SlashCommandBuilder()
   .setName("skip")
   .setDescription("Skips the current song")
-  .addIntegerOption(option =>
+  .addIntegerOption((option) =>
     option
       .setName("amount")
       .setDescription("The number of songs to skip")
@@ -17,12 +17,15 @@ const data = new SlashCommandBuilder()
   );
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  await interaction.deferReply()
+  await interaction.deferReply();
   log.info("Skipping song...");
 
   if (!interaction.guildId) {
     log.warn("Skip command invoked outside of a guild");
-    await Utils.reply(interaction, "This command can only be used in a server!");
+    await Utils.reply(
+      interaction,
+      "This command can only be used in a server!",
+    );
     return;
   }
   if (!NicheBot.getCurrentVoiceConnection(interaction.guildId)) {
@@ -32,7 +35,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
   const amount = interaction.options.getInteger("amount") || 1;
 
-  NicheBot.songQueue.skipSongs(amount)
+  NicheBot.songQueue.skipSongs(amount);
 
   await Utils.reply(interaction, `Skipped ${amount} songs!`);
 }

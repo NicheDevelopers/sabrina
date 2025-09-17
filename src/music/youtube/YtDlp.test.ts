@@ -1,7 +1,7 @@
 import { YtDlp } from "./YtDlp.ts";
 
 Deno.test("YtDlp Download MP3 Audio Test", async () => {
-  const testUrl = "https://www.youtube.com/watch?v=qurGHhnzkfY"; // Brodka - Miales byc (Video)
+  const testUrl = "https://www.youtube.com/watch?v=Q470grlq0yQ";
   const outputDir = "./downloads/youtube";
   const filePath = await YtDlp.downloadAudio(testUrl, outputDir);
   if (!filePath) {

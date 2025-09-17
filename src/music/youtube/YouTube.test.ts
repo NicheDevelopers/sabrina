@@ -2,7 +2,7 @@ import { youTube } from "./YouTube.ts";
 import { assertEquals } from "jsr:@std/assert";
 
 Deno.test("YouTube Search Query Test", async () => {
-  const result = await youTube.search("Brodka - Miales Byc");
+  const result = await youTube.fetchSearchResults("Brodka - Miales Byc");
   if (!result) {
     throw new Error("No result found");
   }
@@ -12,7 +12,7 @@ Deno.test("YouTube Search Query Test", async () => {
 });
 
 Deno.test("YouTube Search ID Test", async () => {
-  const result = await youTube.search("QbxFDqadFJU");
+  const result = await youTube.fetchSearchResults("QbxFDqadFJU");
   if (!result) {
     throw new Error("No result found");
   }
@@ -22,7 +22,7 @@ Deno.test("YouTube Search ID Test", async () => {
 });
 
 Deno.test("YouTube Playlist Test", async () => {
-  const result = await youTube.getPlaylist(
+  const result = await youTube.fetchPlaylistData(
     "PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM",
   );
   if (!result) {

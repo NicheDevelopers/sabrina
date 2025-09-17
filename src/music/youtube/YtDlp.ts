@@ -29,7 +29,7 @@ export class YtDlp {
     const outputTemplate =
       `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
     const command = new Deno.Command(ytDlpPath, {
-      args: ["-x", "--audio-format", "mp3", "-o", outputTemplate, url],
+      args: ["-x", "-o", outputTemplate, url],
       stdout: "piped",
       stderr: "piped",
     });

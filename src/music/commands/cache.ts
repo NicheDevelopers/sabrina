@@ -3,6 +3,7 @@ import NicheBotCommand from "../../NicheBotCommand.ts";
 import QueryParser, { QueryKind } from "../QueryParser.ts";
 import YouTube, { youTube } from "../youtube/YouTube.ts";
 import { log } from "../../logging.ts";
+import Utils from "../../Utils.ts";
 
 const data = new SlashCommandBuilder()
   .setName("cache")
@@ -14,19 +15,19 @@ const data = new SlashCommandBuilder()
   );
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  await interaction.reply("Caching song, please wait...");
-  const input = interaction.options.getString("query", true);
-  const query = QueryParser.parse(input);
-
   try {
-    await youTube.downloadByQuery(query);
-    await interaction.editReply(`Cached song for query: ${input}`);
+    await Utils.reply(interaction, "Caching song, please wait...");
+    const input = interaction.options.getString("query", true);
+    const query = QueryParser.parse(input);
+    const videoId = await youTube.resolveQueryToVideoIdDupa(query);
+
+    await youTube.download(videoId);
+    await Utils.reply(interaction, `Cached song for query: ${input}`);
   } catch (e: unknown) {
     log.error("Error caching song", e);
-    await interaction.editReply(
-      `Failed to cache song for query. Error: ${
-        e instanceof Error ? e.message : String(e)
-      }`,
+    await Utils.reply(
+      interaction,
+      `Failed to cache song for query. Error: ${e}`,
     );
   }
 }

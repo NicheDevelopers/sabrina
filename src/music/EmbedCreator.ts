@@ -5,7 +5,7 @@ export default class EmbedCreator {
   public static createNowPlayingEmbed(
     videoData: VideoDataRecord,
   ): EmbedBuilder {
-    const embed = new EmbedBuilder()
+    return new EmbedBuilder()
       .setColor(0xc71585)
       .setTitle(videoData.title)
       .setURL(videoData.url ?? null)
@@ -17,7 +17,7 @@ export default class EmbedCreator {
       .addFields(
         {
           name: "Duration",
-          value: videoData.seconds ? `${videoData.seconds} seconds` : "Unknown",
+          value: videoData.timestamp ? `${videoData.timestamp}` : "Unknown",
           inline: true,
         },
         {
@@ -32,6 +32,5 @@ export default class EmbedCreator {
         },
       )
       .setFooter({ text: "Enjoy!" });
-    return embed;
   }
 }

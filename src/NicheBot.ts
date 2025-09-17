@@ -36,7 +36,9 @@ class NicheBotClass {
     },
   });
 
-  public songQueue: SongQueue<VideoDataRecord> = new SongQueue(async (song) => await this.playFromQueue(song));
+  public songQueue: SongQueue<VideoDataRecord> = new SongQueue(async (song) =>
+    await this.playFromQueue(song)
+  );
 
   private token: string = Deno.env.get("SECRET_TOKEN") || "";
   private serverId: string = Deno.env.get("SERVER_ID") || "";
@@ -51,6 +53,15 @@ class NicheBotClass {
     this.validateConfig();
     Deno.addSignalListener("SIGINT", () => {
       this.shutdown();
+    });
+    this.audioPlayer.on("stateChange", (oldState, newState) => {
+      log.debug(
+        `Audio player state changed from ${oldState.status} to ${newState.status}`,
+      );
+      if (oldState.status === "playing" && newState.status === "idle") {
+        log.debug("Audio player is idle, playing next song in queue...");
+        this.songQueue.notifyCurrentSongFinished();
+      }
     });
   }
 
@@ -101,8 +112,25 @@ class NicheBotClass {
     if (command) {
       log.info(`COMMAND ${command.data.name} by ${interaction.user.tag}`);
       lastInteractionChannelId = interaction.channelId;
-      log.debug(`Set last interaction channel ID to: ${lastInteractionChannelId}`);
-      await command.execute(interaction);
+      log.debug(
+        `Set last interaction channel ID to: ${lastInteractionChannelId}`,
+      );
+      try {
+        await command.execute(interaction);
+      } catch (error) {
+        log.error(`Error executing command ${command.data.name}: ${error}`);
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({
+            content: "There was an error while executing this command!",
+            ephemeral: true,
+          });
+        } else {
+          await interaction.reply({
+            content: "There was an error while executing this command!",
+            ephemeral: true,
+          });
+        }
+      }
     }
   }
 
