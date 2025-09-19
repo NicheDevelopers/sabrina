@@ -4,13 +4,13 @@ import { YtDlp } from "./music/youtube/YtDlp.ts";
 import { audioFileRepository } from "./music/AudioFileRepository.ts";
 
 function main() {
-  log.info(`Starting ${BOT_NAME}...`);
-  YtDlp.init();
-  audioFileRepository.init();
-  NicheBot.start().catch((err) => {
-    log.error(`An error occurred: ${err}`);
-    log.error(err);
-  });
+    log.info(`Starting ${BOT_NAME}...`);
+    YtDlp.init();
+    audioFileRepository.init();
+    NicheBot.start().catch((err) => {
+        log.error(`An error occurred: ${err}`);
+        log.error(err);
+    });
 }
 
 main();

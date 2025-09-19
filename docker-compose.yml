@@ -1,12 +1,12 @@
 services:
-  nichebot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file:
-      - .env
-    volumes:
-      - ./audio-files:/app/audio-files
-      - ./sabrina.db:/app/sabrina.db
-      - ./logs:/app/logs
+    nichebot:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        env_file:
+            - .env
+        volumes:
+            - ./audio-files:/app/audio-files
+            - ./sabrina.db:/app/sabrina.db
+            - ./logs:/app/logs

@@ -1,181 +1,190 @@
 export type LoopType = "one" | "all" | "disabled";
 
 export default class SongQueue<T> {
-  private queue: T[] = [];
+    private queue: T[] = [];
 
-  looping: LoopType = "disabled";
-  private onCurrentSongChanged: (song: T) => Promise<void>;
+    looping: LoopType = "disabled";
+    private onCurrentSongChanged: (song: T) => Promise<void>;
 
-  private previousCurrentSong: T | undefined;
+    private previousCurrentSong: T | undefined;
 
-  private currentSongIndex: number = 0;
+    private currentSongIndex: number = 0;
 
-  constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
-    this.onCurrentSongChanged = onCurrentSongChanged ??
-      (() => Promise.resolve());
-  }
-
-  private onMaybeSongChanged() {
-    const currentSong = this.getCurrentSong();
-    if (!currentSong && this.previousCurrentSong !== undefined) {
-      this.previousCurrentSong = undefined;
-      return;
+    constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
+        this.onCurrentSongChanged = onCurrentSongChanged ??
+            (() => Promise.resolve());
     }
-    if (currentSong !== this.previousCurrentSong) {
-      this.previousCurrentSong = currentSong;
-      if (currentSong === undefined) return;
-      this.onCurrentSongChanged(currentSong);
-    }
-  }
 
-  /* Call this method when the current song has finished playing */
-  notifyCurrentSongFinished() {
-    const nextIndex = this.nextSongIndexValue();
-    if (nextIndex !== this.currentSongIndex) {
-      this.currentSongIndex = nextIndex;
-      this.onMaybeSongChanged();
+    private onMaybeSongChanged() {
+        const currentSong = this.getCurrentSong();
+        if (!currentSong && this.previousCurrentSong !== undefined) {
+            this.previousCurrentSong = undefined;
+            return;
+        }
+        if (currentSong !== this.previousCurrentSong) {
+            this.previousCurrentSong = currentSong;
+            if (currentSong === undefined) return;
+            this.onCurrentSongChanged(currentSong);
+        }
     }
-  }
 
-  /* Adds a song or an array of songs to the end of the queue */
-  addSongs(song: T[]) {
-    this.queue.push(...song);
-    this.onMaybeSongChanged();
-  }
+    /* Call this method when the current song has finished playing */
+    notifyCurrentSongFinished() {
+        const nextIndex = this.nextSongIndexValue();
+        if (nextIndex !== this.currentSongIndex) {
+            this.currentSongIndex = nextIndex;
+            this.onMaybeSongChanged();
+        }
+    }
 
-  /* Adds a song or an array of songs at a specific index in the queue */
-  addSongsAt(song: T[], index: number) {
-    if (this.queue.length === 0) {
-      this.queue.push(...song);
-      this.onMaybeSongChanged();
-      return;
+    /* Adds a song or an array of songs to the end of the queue */
+    addSongs(song: T[]) {
+        this.queue.push(...song);
+        this.onMaybeSongChanged();
     }
-    if (index < 0 || index > this.queue.length) {
-      throw new Error("Invalid index for queue insertion");
-    }
-    if (index <= this.currentSongIndex) {
-      // Adjust current song index if the insertion is before or at the current song
-      this.currentSongIndex += song.length;
-    }
-    this.queue.splice(index, 0, ...song);
-    this.onMaybeSongChanged();
-  }
 
-  getCurrentSong(): T | undefined {
-    return this.queue.at(this.currentSongIndex);
-  }
+    /* Adds a song or an array of songs at a specific index in the queue */
+    addSongsAt(song: T[], index: number) {
+        if (this.queue.length === 0) {
+            this.queue.push(...song);
+            this.onMaybeSongChanged();
+            return;
+        }
+        if (index < 0 || index > this.queue.length) {
+            throw new Error("Invalid index for queue insertion");
+        }
+        if (index <= this.currentSongIndex) {
+            // Adjust current song index if the insertion is before or at the current song
+            this.currentSongIndex += song.length;
+        }
+        this.queue.splice(index, 0, ...song);
+        this.onMaybeSongChanged();
+    }
 
-  nextSongIndexValue(): number {
-    if (this.queue.length === 0) {
-      return 0;
+    getCurrentSong(): T | undefined {
+        return this.queue.at(this.currentSongIndex);
     }
-    if (this.looping == "disabled") {
-      return this.currentSongIndex + 1;
-    }
-    if (this.looping == "one") {
-      return this.currentSongIndex;
-    }
-    if (this.looping == "all") {
-      return (this.currentSongIndex + 1) % this.queue.length;
-    }
-    throw new Error("Invalid loop type");
-  }
 
-  /*
+    nextSongIndexValue(): number {
+        if (this.queue.length === 0) {
+            return 0;
+        }
+        if (this.looping == "disabled") {
+            return this.currentSongIndex + 1;
+        }
+        if (this.looping == "one") {
+            return this.currentSongIndex;
+        }
+        if (this.looping == "all") {
+            return (this.currentSongIndex + 1) % this.queue.length;
+        }
+        throw new Error("Invalid loop type");
+    }
+
+    /*
   jezeli loop disabled = przesuwa na nastepna, czysci kolejke przed obecna, jezeli koniec to czysta kolejka
   jezeli loop one = przesuwa na nastepna, czysci kolejke przed obecna
   jezeli loop all = przesuwa na nastepna, jezeli koniec to na poczatek
    */
-  skipSongs(n: number): void {
-    if (n <= 0) {
-      throw new Error("Number of songs to skip must be positive");
-    }
-    if (this.queue.length === 0) {
-      return;
-    }
-
-    if (this.looping === "disabled" || this.looping === "one") {
-      this.currentSongIndex += n;
-      if (this.currentSongIndex >= this.queue.length) {
-        if (this.looping === "disabled") {
-          this.queue = [];
-          this.currentSongIndex = 0;
-        } else {
-          this.reset();
+    skipSongs(n: number): void {
+        if (n <= 0) {
+            throw new Error("Number of songs to skip must be positive");
         }
-      } else {
-        this.queue = this.queue.slice(this.currentSongIndex);
+        if (this.queue.length === 0) {
+            return;
+        }
+
+        if (this.looping === "disabled" || this.looping === "one") {
+            this.currentSongIndex += n;
+            if (this.currentSongIndex >= this.queue.length) {
+                if (this.looping === "disabled") {
+                    this.queue = [];
+                    this.currentSongIndex = 0;
+                } else {
+                    this.reset();
+                }
+            } else {
+                this.queue = this.queue.slice(this.currentSongIndex);
+                this.currentSongIndex = 0;
+            }
+        }
+
+        if (this.looping === "all") {
+            this.currentSongIndex = (this.currentSongIndex + n) % this.queue.length;
+        }
+
+        this.onMaybeSongChanged();
+    }
+
+    shuffle() {
+        // Do not shuffle the currently playing song
+        if (this.queue.length <= 2) return;
+
+        const currentSong = this.queue[this.currentSongIndex];
+        const beforeCurrent = this.queue.slice(0, this.currentSongIndex);
+        const afterCurrent = this.queue.slice(this.currentSongIndex + 1);
+        const toShuffle = [...beforeCurrent, ...afterCurrent];
+
+        for (let i = toShuffle.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [toShuffle[i], toShuffle[j]] = [toShuffle[j], toShuffle[i]];
+        }
+
+        this.queue.splice(
+            0,
+            this.queue.length,
+            ...toShuffle.slice(0, beforeCurrent.length),
+            currentSong,
+            ...toShuffle.slice(beforeCurrent.length),
+        );
+
+        this.onMaybeSongChanged();
+    }
+
+    removeSong(index: number) {
+        if (index < 0 || index >= this.queue.length) {
+            throw new Error("Invalid index for queue removal");
+        }
+
+        if (index < this.currentSongIndex) {
+            this.currentSongIndex--;
+        } else if (
+            index === this.currentSongIndex &&
+            this.currentSongIndex === this.queue.length - 1
+        ) {
+            this.currentSongIndex = Math.max(0, this.currentSongIndex - 1);
+        }
+
+        this.queue.splice(index, 1);
+        this.onMaybeSongChanged();
+    }
+
+    isEmpty() {
+        return this.queue.length === 0;
+    }
+
+    clear() {
+        if (this.queue.length === 0) return;
+
+        const currentSong = this.getCurrentSong();
+        if (currentSong) {
+            this.queue = [currentSong];
+            this.currentSongIndex = 0;
+        } else {
+            this.reset();
+        }
+    }
+
+    private reset() {
         this.currentSongIndex = 0;
-      }
+        this.queue = [];
     }
 
-    if (this.looping === "all") {
-      this.currentSongIndex = (this.currentSongIndex + n) % this.queue.length;
+    setLoopType(type: LoopType): LoopType {
+        return this.looping = type;
     }
 
-    this.onMaybeSongChanged();
-  }
-
-  shuffle() {
-    // Do not shuffle the currently playing song
-    if (this.queue.length <= 2) return;
-
-    const currentSong = this.queue[this.currentSongIndex];
-    const beforeCurrent = this.queue.slice(0, this.currentSongIndex);
-    const afterCurrent = this.queue.slice(this.currentSongIndex + 1);
-    const toShuffle = [...beforeCurrent, ...afterCurrent];
-
-    for (let i = toShuffle.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [toShuffle[i], toShuffle[j]] = [toShuffle[j], toShuffle[i]];
+    getQueue() {
+        return JSON.parse(JSON.stringify(this.queue));
     }
-
-    this.queue.splice(0, this.queue.length, ...toShuffle.slice(0, beforeCurrent.length), currentSong, ...toShuffle.slice(beforeCurrent.length));
-
-    this.onMaybeSongChanged();
-  }
-
-  removeSong(index: number) {
-    if (index < 0 || index >= this.queue.length) {
-      throw new Error("Invalid index for queue removal");
-    }
-
-    if (index < this.currentSongIndex) {
-      this.currentSongIndex--;
-    } else if (index === this.currentSongIndex && this.currentSongIndex === this.queue.length - 1) {
-      this.currentSongIndex = Math.max(0, this.currentSongIndex - 1);
-    }
-
-    this.queue.splice(index, 1);
-    this.onMaybeSongChanged();
-  }
-
-  isEmpty() {
-    return this.queue.length === 0;
-  }
-
-  clear() {
-    if (this.queue.length === 0) return;
-
-    const currentSong = this.getCurrentSong();
-    if (currentSong) {
-      this.queue = [currentSong];
-      this.currentSongIndex = 0;
-    } else {
-      this.reset()
-    }
-  }
-
-  private reset() {
-    this.currentSongIndex = 0;
-    this.queue = [];
-  }
-
-  setLoopType(type: LoopType): LoopType {
-    return this.looping = type;
-  }
-
-  getQueue() {
-    return JSON.parse(JSON.stringify(this.queue));
-  }
 }

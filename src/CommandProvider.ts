@@ -9,24 +9,24 @@ import queueCommand from "./music/commands/queue.ts";
 import skipCommand from "./music/commands/skip.ts";
 
 class CommandProviderClass {
-  private commands: Array<NicheBotCommand> = [
-    joinCommand,
-    leaveCommand,
-    cacheCommand,
-    playCommand,
-    pauseCommand,
-    resumeCommand,
-    queueCommand,
-    skipCommand,
-  ];
+    private commands: Array<NicheBotCommand> = [
+        joinCommand,
+        leaveCommand,
+        cacheCommand,
+        playCommand,
+        pauseCommand,
+        resumeCommand,
+        queueCommand,
+        skipCommand,
+    ];
 
-  public getCommand(name: string): NicheBotCommand | undefined {
-    return this.commands.find((cmd) => cmd.data.name === name);
-  }
+    public getCommand(name: string): NicheBotCommand | undefined {
+        return this.commands.find((cmd) => cmd.data.name === name);
+    }
 
-  public getAllCommands(): Array<NicheBotCommand> {
-    return this.commands;
-  }
+    public getAllCommands(): Array<NicheBotCommand> {
+        return this.commands;
+    }
 }
 
 const CommandProvider = new CommandProviderClass();
