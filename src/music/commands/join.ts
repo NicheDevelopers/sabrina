@@ -15,17 +15,17 @@ async function execute(interaction: ChatInputCommandInteraction | any) {
     }
 
     log.info("Joining voice channel...");
-    await interaction.reply("Joining voice channel...");
 
     const channel = Utils.getVoiceChannelFromInteraction(interaction);
     if (!channel) {
         await interaction.reply("Cannot get the channel you're in!");
         log.warn("Failed to obtain user voice channel");
+        return;
     }
 
     await NicheBot.joinVoiceChannel(channel!);
 
-    await interaction.editReply("Joined voice channel!");
+    await interaction.reply("Joined voice channel!");
 }
 
 const joinCommand = new NicheBotCommand(data, execute);

@@ -1,9 +1,7 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { createAudioResource } from "@discordjs/voice";
-import { log } from "../../logging.ts";
+import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
+import {log} from "../../logging.ts";
 import NicheBot from "../../NicheBot.ts";
 import NicheBotCommand from "../../NicheBotCommand.ts";
-import Utils from "../../Utils.ts";
 
 const data = new SlashCommandBuilder()
     .setName("skip")
@@ -22,14 +20,13 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!interaction.guildId) {
         log.warn("Skip command invoked outside of a guild");
-        await Utils.reply(
-            interaction,
-            "This command can only be used in a server!",
-        );
+        await interaction.reply("This command can only be used in a server!");
         return;
     }
+
     if (!NicheBot.getCurrentVoiceConnection(interaction.guildId)) {
-        await Utils.reply(interaction, "I'm not in a voice channel!");
+        log.warn("Skip command invoked but bot is not in a voice channel");
+        await interaction.reply("I'm not in a voice channel!");
         return;
     }
 
@@ -37,7 +34,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     NicheBot.songQueue.skipSongs(amount);
 
-    await Utils.reply(interaction, `Skipped ${amount} songs!`);
+    log.info(`Skipped ${amount} songs`);
+    await interaction.reply(`Skipped ${amount} songs!`);
 }
 
 const skipCommand = new NicheBotCommand(data, execute);

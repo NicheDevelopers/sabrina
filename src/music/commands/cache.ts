@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import NicheBotCommand from "../../NicheBotCommand.ts";
-import QueryParser, { QueryKind } from "../QueryParser.ts";
-import YouTube, { youTube } from "../youtube/YouTube.ts";
+import QueryParser from "../QueryParser.ts";
+import { youTube } from "../youtube/YouTube.ts";
 import { log } from "../../logging.ts";
 import Utils from "../../Utils.ts";
 
@@ -15,21 +15,13 @@ const data = new SlashCommandBuilder()
     );
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    try {
-        await Utils.reply(interaction, "Caching song, please wait...");
-        const input = interaction.options.getString("query", true);
-        const query = QueryParser.parse(input);
-        const videoId = (await youTube.handleQuery(query)).id;
+    const input = interaction.options.getString("query", true);
+    const query = QueryParser.parse(input);
+    const videoDataRecord = await youTube.handleQuery(query)
 
-        await youTube.download(videoId);
-        await Utils.reply(interaction, `Cached song for query: ${input}`);
-    } catch (e: unknown) {
-        log.error("Error caching song", e);
-        await Utils.reply(
-            interaction,
-            `Failed to cache song for query. Error: ${e}`,
-        );
-    }
+    await youTube.download(videoDataRecord.id);
+
+    await interaction.reply(`Cached **${videoDataRecord.title}** for later!`);
 }
 
 const cacheCommand = new NicheBotCommand(data, execute);

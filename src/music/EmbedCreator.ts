@@ -1,12 +1,15 @@
-import { VideoDataRecord } from "../Db.ts";
-import { EmbedBuilder } from "npm:discord.js@14.22.1";
+import {VideoDataRecord} from "../Db.ts";
+import {EmbedBuilder} from "npm:discord.js@14.22.1";
+import {BOT_NAME} from "../NicheBot.ts";
 
 export default class EmbedCreator {
+    private static color = 0xc71585;
+
     public static createNowPlayingEmbed(
         videoData: VideoDataRecord,
     ): EmbedBuilder {
         return new EmbedBuilder()
-            .setColor(0xc71585)
+            .setColor(this.color)
             .setTitle(videoData.title)
             .setURL(videoData.url ?? null)
             .setAuthor({
@@ -32,5 +35,43 @@ export default class EmbedCreator {
                 },
             )
             .setFooter({ text: "Enjoy!" });
+    }
+
+    public static createQueueEmbed(
+        queue: readonly VideoDataRecord[],
+    ): EmbedBuilder {
+        const queueList = queue.map((videoData, index) => {
+            return `**${index + 1}.** [${videoData.title}](${videoData.url}) - ${
+                videoData.timestamp ?? "Unknown duration"
+            }`;
+        }).join("\n");
+
+        return new EmbedBuilder()
+            .setColor(this.color)
+            .setTitle("Current Queue")
+            .setDescription(queueList || "The queue is empty!")
+            .setFooter({ text: `Total songs: ${queue.length}` });
+    }
+
+    public static createAboutEmbed(): EmbedBuilder {
+        const gitHubUrl = "https://github.com/NicheDevs/Sabrina";
+        const authors = [
+            "Michał Miłek",
+            "Artur Gulik",
+        ];
+        const year = 2025;
+        const version = "1.0.0";
+
+        return new EmbedBuilder()
+            .setColor(this.color)
+            .setTitle(`About ${BOT_NAME}`)
+            .setDescription(
+                `${BOT_NAME} is a Discord music bot that plays audio from YouTube links or search terms.\n\n` +
+                    `**Authors:** ${authors.join(", ")}\n` +
+                    `**Source Code:** [GitHub](${gitHubUrl})\n` +
+                    `**Version:** ${version}\n` +
+                    `NicheDevs ${year}`,
+            )
+            .setFooter({ text: `Thank you for using ${BOT_NAME}!` });
     }
 }

@@ -184,7 +184,7 @@ export default class SongQueue<T> {
         return this.looping = type;
     }
 
-    getQueue() {
-        return JSON.parse(JSON.stringify(this.queue));
+    getQueue(): readonly T[] {
+        return this.queue;
     }
 }

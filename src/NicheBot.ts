@@ -112,8 +112,8 @@ class NicheBotClass {
                 await interaction.deferReply();
                 await command.execute(interaction);
             } catch (error) {
-                log.error(`Error executing command ${command.data.name}: ${error}`);
-                if (interaction.replied || interaction.deferred) {
+                log.error(`Error executing command ${command.data.name}`, error);
+                if (interaction.deferred || interaction.replied) {
                     await interaction.followUp({
                         content: "There was an error while executing this command!",
                         ephemeral: true,

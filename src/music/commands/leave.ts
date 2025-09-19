@@ -22,7 +22,6 @@ async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     log.info("Leaving voice channel...");
-
     NicheBot.disconnectFrom(interaction.guildId);
     log.info(`Left voice channel in guild ${interaction.guildId}`);
 
