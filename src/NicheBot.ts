@@ -30,7 +30,6 @@ class NicheBotClass {
     );
 
     private token: string = Deno.env.get("SECRET_TOKEN") || "";
-    private serverId: string = Deno.env.get("SERVER_ID") || "";
     private appId: string = Deno.env.get("APPLICATION_ID") || "";
 
     private client: Client = this.makeClient();
@@ -197,7 +196,6 @@ class NicheBotClass {
     private validateConfig(): void {
         const missing: string[] = [];
         if (this.token === "") missing.push("SECRET_TOKEN");
-        if (this.serverId === "") missing.push("SERVER_ID");
         if (this.appId === "") missing.push("APPLICATION_ID");
 
         if (missing.length > 0) {

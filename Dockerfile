@@ -18,13 +18,14 @@ WORKDIR /app
 COPY VERSION ./
 
 # Copy deno configuration files
-COPY deno.json* .
+COPY deno.json* ./
+COPY deno.lock* ./
 
 # Copy source code
 COPY src/ ./src/
 
-# Cache the dependencies
-RUN deno cache src/main.ts
+# Cache the dependencies with allow-scripts for npm packages that need it
+RUN deno cache --allow-scripts=npm:@discordjs/opus@0.10.0 src/main.ts
 
 # Store version in container for runtime access
 RUN echo "Version: $VERSION" > /app/version.txt
