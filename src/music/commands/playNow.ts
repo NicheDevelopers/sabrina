@@ -6,6 +6,7 @@ import {ChatInputCommandInteraction} from "npm:discord.js@14.22.1";
 import Utils from "../../Utils.ts";
 import QueryParser from "../QueryParser.ts";
 import {youTube} from "../youtube/YouTube.ts";
+import {sabrinaDb} from "../../Db.ts";
 
 const data = new SlashCommandBuilder()
     .setName("playnow")
@@ -64,6 +65,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     await interaction.followUp(`Added **${videoData.title}** to the queue.`);
+
+    sabrinaDb.insertPlayLog(videoData.id, interaction);
 }
 
 const playNowCommand = new NicheBotCommand(data, execute);

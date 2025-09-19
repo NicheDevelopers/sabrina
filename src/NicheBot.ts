@@ -1,24 +1,18 @@
-import {
-    AudioPlayer,
-    createAudioPlayer,
-    NoSubscriberBehavior,
-    VoiceConnection,
-} from "npm:@discordjs/voice";
-import { ChatInputCommandInteraction, REST, Routes, TextChannel } from "discord.js";
-import { Client, GatewayIntentBits } from "discord.js";
-import { log } from "./logging.ts";
+import {AudioPlayer, createAudioPlayer, NoSubscriberBehavior, VoiceConnection,} from "npm:@discordjs/voice";
+import {ChatInputCommandInteraction, Client, GatewayIntentBits, REST, Routes, TextChannel} from "discord.js";
+import {log} from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
 import {
+    createAudioResource,
     getVoiceConnection,
     joinVoiceChannel,
     VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
-import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
+import {BaseInteraction, Events, VoiceChannel} from "npm:discord.js@14.22.1";
 import SongQueue from "./music/SongQueue.ts";
-import { createAudioResource } from "npm:@discordjs/voice@0.19.0";
-import { youTube } from "./music/youtube/YouTube.ts";
+import {youTube} from "./music/youtube/YouTube.ts";
 import EmbedCreator from "./music/EmbedCreator.ts";
-import { VideoDataRecord } from "./Db.ts";
+import {VideoDataRecord} from "./Db.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
@@ -245,7 +239,7 @@ class NicheBotClass {
 
         const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
         log.debug(`Getting channel with id: ${lastInteractionChannelId}`);
-        const channel = await this.getChannel("919304430074101790");
+        const channel = await this.getChannel(lastInteractionChannelId);
         await channel.send({ embeds: [nowPlaying] });
     }
 

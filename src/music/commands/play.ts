@@ -5,6 +5,7 @@ import NicheBotCommand from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
 import {youTube} from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
+import {sabrinaDb} from "../../Db.ts";
 
 const data = new SlashCommandBuilder()
     .setName("play")
@@ -54,6 +55,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
     NicheBot.songQueue.addSongs([videoData]);
 
     await interaction.followUp(`Added **${videoData.title}** to the queue.`);
+
+    sabrinaDb.insertPlayLog(videoData.id, interaction);
 }
 
 const playCommand = new NicheBotCommand(data, execute);
