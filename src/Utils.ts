@@ -1,8 +1,6 @@
-import {
-    ChatInputCommandInteraction,
-    GuildMember,
-    VoiceChannel,
-} from "npm:discord.js@14.22.1";
+import {ChatInputCommandInteraction, GuildMember, VoiceChannel,} from "npm:discord.js@14.22.1";
+
+const version = Deno.readTextFileSync("VERSION").trim();
 
 export default class Utils {
     /* Returns the voice channel of the member who initiated the interaction. */
@@ -13,14 +11,7 @@ export default class Utils {
         return member.voice.channel as VoiceChannel | null;
     }
 
-    public static reply(
-        interaction: ChatInputCommandInteraction,
-        message: string,
-    ) {
-        if (interaction.replied || interaction.deferred) {
-            return interaction.editReply(message);
-        } else {
-            return interaction.reply(message);
-        }
+    public static getVersion(): string {
+        return version;
     }
 }

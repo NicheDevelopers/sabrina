@@ -1,6 +1,7 @@
 import {VideoDataRecord} from "../Db.ts";
 import {EmbedBuilder} from "npm:discord.js@14.22.1";
 import {BOT_NAME} from "../NicheBot.ts";
+import Utils from "../Utils.ts";
 
 export default class EmbedCreator {
     private static color = 0xc71585;
@@ -60,7 +61,7 @@ export default class EmbedCreator {
             "Artur Gulik",
         ];
         const year = 2025;
-        const version = "1.0.0";
+        const version = Utils.getVersion();
 
         return new EmbedBuilder()
             .setColor(this.color)
