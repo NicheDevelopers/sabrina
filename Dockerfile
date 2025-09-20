@@ -1,10 +1,7 @@
-# Use the official Deno image as base
 FROM denoland/deno:alpine-2.4.5
 
-# Build argument for version
 ARG VERSION=latest
 
-# Label with version
 LABEL version=$VERSION
 
 RUN apk add --no-cache sqlite

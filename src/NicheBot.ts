@@ -62,7 +62,7 @@ class NicheBotClass {
     private async refreshCommands() {
         const commandData = CommandProvider.getAllCommands().map((c) => c.data.toJSON());
         log.info(`Registering ${commandData.length} commands...`);
-        const rest = new REST({version: "10"}).setToken(this.token);
+        const rest = new REST({ version: "10" }).setToken(this.token);
 
         const postCommands = rest.put(
             Routes.applicationCommands(this.appId),
@@ -165,7 +165,7 @@ class NicheBotClass {
     }
 
     public getCurrentVoiceConnection(guildId: string): VoiceConnection | null {
-        return getVoiceConnection(guildId) ?? null;
+        return getVoiceConnection(guildId) || null;
     }
 
     /* Connect to a voice channel.
@@ -294,7 +294,7 @@ class NicheBotClass {
         try {
             const channel = await this.getChannel(channelId);
             const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-            await channel.send({embeds: [nowPlaying]});
+            await channel.send({ embeds: [nowPlaying] });
             log.debug(
                 `[Guild ${guildId}] Sent now playing message to channel ${channelId}`,
             );
@@ -320,6 +320,10 @@ class NicheBotClass {
     // Public methods for commands to access guild-specific functionality
     public getGuildState(guildId: string) {
         return this.guildStatesManager.getGuildState(guildId);
+    }
+
+    public isReady(): boolean {
+        return this.client.isReady();
     }
 
     public getUptime(): number {
