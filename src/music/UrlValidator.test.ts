@@ -63,10 +63,7 @@ describe("UrlValidator", () => {
         });
 
         it("should throw error for invalid YouTube URLs", () => {
-            const invalidUrls = [
-                "https://example.com",
-                "https://vimeo.com/12345",
-            ];
+            const invalidUrls = ["https://example.com", "https://vimeo.com/12345"];
 
             for (const urlString of invalidUrls) {
                 const url = new URL(urlString);

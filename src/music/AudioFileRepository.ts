@@ -1,4 +1,4 @@
-import {log} from "../logging";
+import { log } from "../logging";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -61,7 +61,7 @@ export default class AudioFileRepository {
             log.info("Audio repository folder exists.");
         } catch (_e) {
             log.warn("Audio repository folder does not exist. Creating...");
-            fs.mkdirSync(AudioFileRepository.audioFolderPath, {recursive: true});
+            fs.mkdirSync(AudioFileRepository.audioFolderPath, { recursive: true });
             log.info("Audio repository folder created.");
         }
         this.loadVideosFromDisk();

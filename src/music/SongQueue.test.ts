@@ -1,4 +1,4 @@
-import SongQueue, {LoopType} from "./SongQueue";
+import SongQueue, { LoopType } from "./SongQueue";
 
 interface TestSong {
     id: number;
@@ -9,7 +9,7 @@ describe("SongQueue", () => {
     let queue: SongQueue<TestSong>;
     let songChangeCallbacks: TestSong[] = [];
 
-    const createSong = (id: number): TestSong => ({id, title: `Song ${id}`});
+    const createSong = (id: number): TestSong => ({ id, title: `Song ${id}` });
 
     beforeEach(() => {
         songChangeCallbacks = [];
@@ -92,8 +92,12 @@ describe("SongQueue", () => {
         it("should throw error for invalid index", () => {
             queue.addSongs([createSong(1)]);
 
-            expect(() => queue.addSongsAt([createSong(2)], -1)).toThrow("Invalid index for queue insertion");
-            expect(() => queue.addSongsAt([createSong(2)], 2)).toThrow("Invalid index for queue insertion");
+            expect(() => queue.addSongsAt([createSong(2)], -1)).toThrow(
+                "Invalid index for queue insertion"
+            );
+            expect(() => queue.addSongsAt([createSong(2)], 2)).toThrow(
+                "Invalid index for queue insertion"
+            );
         });
 
         it("should handle adding to empty queue", () => {
@@ -201,8 +205,12 @@ describe("SongQueue", () => {
 
     describe("skipSongs", () => {
         it("should throw error for non-positive skip count", () => {
-            expect(() => queue.skipSongs(0)).toThrow("Number of songs to skip must be positive");
-            expect(() => queue.skipSongs(-1)).toThrow("Number of songs to skip must be positive");
+            expect(() => queue.skipSongs(0)).toThrow(
+                "Number of songs to skip must be positive"
+            );
+            expect(() => queue.skipSongs(-1)).toThrow(
+                "Number of songs to skip must be positive"
+            );
         });
 
         it("should handle skip on empty queue", () => {
@@ -299,7 +307,7 @@ describe("SongQueue", () => {
         });
 
         it("should keep current song in position 0", () => {
-            const songs = Array.from({length: 10}, (_, i) => createSong(i + 1));
+            const songs = Array.from({ length: 10 }, (_, i) => createSong(i + 1));
             queue.addSongs(songs);
 
             queue.shuffle();
@@ -308,7 +316,7 @@ describe("SongQueue", () => {
         });
 
         it("should shuffle remaining songs", () => {
-            const songs = Array.from({length: 10}, (_, i) => createSong(i + 1));
+            const songs = Array.from({ length: 10 }, (_, i) => createSong(i + 1));
             queue.addSongs(songs);
 
             const originalOrder = queue.getQueue().slice(1);
@@ -323,7 +331,7 @@ describe("SongQueue", () => {
         });
 
         it("should handle shuffle with current song not at index 0", () => {
-            queue.addSongs(Array.from({length: 10}, (_, i) => createSong(i + 1)));
+            queue.addSongs(Array.from({ length: 10 }, (_, i) => createSong(i + 1)));
             queue.notifyCurrentSongFinished(); // Move to song 2
 
             queue.shuffle();

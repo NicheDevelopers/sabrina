@@ -1,4 +1,4 @@
-import QueryParser, {QueryKind} from "./QueryParser";
+import QueryParser, { QueryKind } from "./QueryParser";
 
 describe("QueryParser", () => {
     describe("parse", () => {

@@ -1,5 +1,5 @@
-import {Message, VoiceState} from "discord.js";
-import {log} from "../logging";
+import { Message, VoiceState } from "discord.js";
+import { log } from "../logging";
 
 interface UserStateChange {
     id: string;
