@@ -8,7 +8,7 @@
     "dev": "source .env && tsx watch src/main.ts",
     "start": "node --env-file=.env dist/main.js",
     "test": "source .env && jest",
-    "docker-build": "docker build --build-arg VERSION=$(cat VERSION) -t sabrina:$(cat VERSION) -t sabrina:latest .",
+    "docker-build": "docker build --build-arg VERSION=$(jq -r '.version' package.json) -t sabrina:$(jq -r '.version' package.json) -t sabrina:latest .",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",

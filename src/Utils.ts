@@ -1,7 +1,8 @@
 import {ChatInputCommandInteraction, GuildMember, VoiceChannel} from "discord.js";
 import * as fs from "fs";
 
-const version = fs.readFileSync("VERSION", "utf-8").trim();
+const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
+const version = packageJson.version;
 
 export default class Utils {
     /* Returns the voice channel of the member who initiated the interaction. */

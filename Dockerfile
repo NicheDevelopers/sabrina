@@ -8,13 +8,11 @@ LABEL version=$VERSION
 RUN apk update && apk add --no-cache \
 sqlite \
 yt-dlp-core \
-ffmpeg
+ffmpeg \
+jq
 
 # Set working directory
 WORKDIR /app
-
-# Copy version file
-COPY VERSION ./
 
 # Copy package files
 COPY package*.json ./
@@ -32,8 +30,8 @@ RUN npm run build
 # Remove devDependencies after build to reduce image size
 RUN npm prune --production
 
-# Store version in container for runtime access
-RUN echo "Version: $VERSION" > /app/version.txt
+# Store version in container for runtime access (read from package.json)
+RUN echo "Version: $(jq -r '.version' package.json)" > /app/version.txt
 
 # Create logs directory
 RUN mkdir -p /app/logs
