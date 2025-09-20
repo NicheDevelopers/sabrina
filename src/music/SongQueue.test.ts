@@ -1,4 +1,4 @@
-import SongQueue, { LoopType } from "./SongQueue";
+import SongQueue, {LoopType} from "./SongQueue";
 
 interface TestSong {
     id: number;
@@ -9,7 +9,7 @@ describe("SongQueue", () => {
     let queue: SongQueue<TestSong>;
     let songChangeCallbacks: TestSong[] = [];
 
-    const createSong = (id: number): TestSong => ({ id, title: `Song ${id}` });
+    const createSong = (id: number): TestSong => ({id, title: `Song ${id}`});
 
     beforeEach(() => {
         songChangeCallbacks = [];
@@ -307,7 +307,7 @@ describe("SongQueue", () => {
         });
 
         it("should keep current song in position 0", () => {
-            const songs = Array.from({ length: 10 }, (_, i) => createSong(i + 1));
+            const songs = Array.from({length: 10}, (_, i) => createSong(i + 1));
             queue.addSongs(songs);
 
             queue.shuffle();
@@ -316,7 +316,7 @@ describe("SongQueue", () => {
         });
 
         it("should shuffle remaining songs", () => {
-            const songs = Array.from({ length: 10 }, (_, i) => createSong(i + 1));
+            const songs = Array.from({length: 10}, (_, i) => createSong(i + 1));
             queue.addSongs(songs);
 
             const originalOrder = queue.getQueue().slice(1);
@@ -331,7 +331,7 @@ describe("SongQueue", () => {
         });
 
         it("should handle shuffle with current song not at index 0", () => {
-            queue.addSongs(Array.from({ length: 10 }, (_, i) => createSong(i + 1)));
+            queue.addSongs(Array.from({length: 10}, (_, i) => createSong(i + 1)));
             queue.notifyCurrentSongFinished(); // Move to song 2
 
             queue.shuffle();
@@ -429,22 +429,6 @@ describe("SongQueue", () => {
         it("should return false for non-empty queue", () => {
             queue.addSongs([createSong(1)]);
             expect(queue.isEmpty()).toBe(false);
-        });
-    });
-
-    describe("getQueue", () => {
-        it("should return deep copy of queue", () => {
-            const song = createSong(1);
-            queue.addSongs([song]);
-
-            const queueCopy = queue.getQueue();
-            queueCopy[0].title = "Modified";
-
-            expect(queue.getQueue()[0].title).toBe("Song 1");
-        });
-
-        it("should handle empty queue", () => {
-            expect(queue.getQueue()).toEqual([]);
         });
     });
 

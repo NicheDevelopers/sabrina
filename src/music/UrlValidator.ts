@@ -4,6 +4,7 @@ export default class UrlValidator {
         "youtu.be",
         "music.youtube.com",
         "youtube.com",
+        "m.youtube.com",
     ];
 
     static isValidHttpUrl(string: string): boolean {

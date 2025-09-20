@@ -131,79 +131,44 @@ describe("AudioFileRepository", () => {
     describe("loadVideosFromDisk", () => {
         it("should load valid audio files from disk", () => {
             const mockDirEntries = [
-                {
-                    name: "Song One [dQw4w9WgXcQ].mp3",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-                {
-                    name: "Song Two [abc123def45].m4a",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-                {
-                    name: "Song Three [xyz987test1].wav",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
+                "Song One [dQw4w9WgXcQ].mp3",
+                "Song Two [abc123def45].m4a",
+                "Song Three [xyz987test1].wav",
             ];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
+            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
-                "./downloads/youtube/Song One [dQw4w9WgXcQ].mp3"
-            );
-            expect(repository.getPath("abc123def45")).toBe(
-                "./downloads/youtube/Song Two [abc123def45].m4a"
-            );
-            expect(repository.getPath("xyz987test1")).toBe(
-                "./downloads/youtube/Song Three [xyz987test1].wav"
-            );
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Song One [dQw4w9WgXcQ].mp3");
+            expect(repository.getPath("abc123def45")).toBe("downloads/youtube/Song Two [abc123def45].m4a");
+            expect(repository.getPath("xyz987test1")).toBe("downloads/youtube/Song Three [xyz987test1].wav");
         });
 
         it("should skip directories", () => {
-            const mockDirEntries = [
-                { name: "subfolder", isFile: () => false, isDirectory: () => true },
-                {
-                    name: "Song [dQw4w9WgXcQ].mp3",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-            ];
+            const mockDirEntries = ["subfolder", "Song [dQw4w9WgXcQ].mp3"];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
+            mockFs.statSync
+                .mockReturnValueOnce({isFile: () => false} as any)  // subfolder
+                .mockReturnValueOnce({isFile: () => true} as any);   // mp3 file
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
-                "./downloads/youtube/Song [dQw4w9WgXcQ].mp3"
-            );
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Song [dQw4w9WgXcQ].mp3");
             expect((repository as any).videos.size).toBe(1);
         });
 
         it("should skip files with invalid filenames", () => {
-            const mockDirEntries = [
-                {
-                    name: "invalid-file.mp3",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-                {
-                    name: "Valid Song [dQw4w9WgXcQ].mp3",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-            ];
+            const mockDirEntries = ["invalid-file.mp3", "Valid Song [dQw4w9WgXcQ].mp3"];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
+            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
-                "./downloads/youtube/Valid Song [dQw4w9WgXcQ].mp3"
-            );
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Valid Song [dQw4w9WgXcQ].mp3");
             expect((repository as any).videos.size).toBe(1);
         });
 
@@ -218,8 +183,10 @@ describe("AudioFileRepository", () => {
 
     describe("init", () => {
         it("should create downloads directory if it doesn't exist", () => {
-            // Mock directory doesn't exist
-            mockFs.existsSync.mockReturnValue(false);
+            // Mock statSync to throw an error (directory doesn't exist)
+            mockFs.statSync.mockImplementation(() => {
+                throw new Error("Directory doesn't exist");
+            });
             mockFs.mkdirSync.mockImplementation();
             mockFs.readdirSync.mockReturnValue([]);
 
@@ -231,8 +198,8 @@ describe("AudioFileRepository", () => {
         });
 
         it("should not create directory if it already exists", () => {
-            // Mock directory exists
-            mockFs.existsSync.mockReturnValue(true);
+            // Mock statSync to return successfully (directory exists)
+            mockFs.statSync.mockReturnValue({isDirectory: () => true} as any);
             mockFs.readdirSync.mockReturnValue([]);
 
             repository.init();
@@ -242,21 +209,16 @@ describe("AudioFileRepository", () => {
 
         it("should load videos from disk after ensuring folder exists", () => {
             // Mock folder exists
-            mockFs.existsSync.mockReturnValue(true);
+            mockFs.statSync.mockReturnValue({isDirectory: () => true} as any);
 
-            const mockDirEntries = [
-                {
-                    name: "Test Song [dQw4w9WgXcQ].mp3",
-                    isFile: () => true,
-                    isDirectory: () => false,
-                },
-            ];
+            const mockDirEntries = ["Test Song [dQw4w9WgXcQ].mp3"];
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
+            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
 
             repository.init();
 
             expect(repository.getPath("dQw4w9WgXcQ")).toBe(
-                "./downloads/youtube/Test Song [dQw4w9WgXcQ].mp3"
+                "downloads/youtube/Test Song [dQw4w9WgXcQ].mp3"
             );
         });
     });

@@ -6,18 +6,11 @@ module.exports = {
     transform: {
         '^.+\\.ts$': 'ts-jest',
     },
-    coverageDirectory: 'coverage',
     collectCoverageFrom: [
         'src/**/*.ts',
         '!src/**/*.test.ts',
         '!src/**/*.spec.ts',
     ],
-    moduleNameMapping: undefined,
-    setupFilesAfterEnv: [],
-    testTimeout: 10000,
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-    testPathIgnorePatterns: [
-        '/node_modules/',
-        '/dist/',
-    ],
+    moduleFileExtensions: ['ts', 'js'],
+    verbose: true,
 };
