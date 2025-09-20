@@ -4,18 +4,11 @@ ARG VERSION=latest
 
 LABEL version=$VERSION
 
-# Install Node.js and required packages
+# Install required packages
 RUN apt-get update && apt-get install -y \
-curl \
 sqlite3 \
 yt-dlp \
-python3 \
-make \
-g++ \
-build-essential \
-&& curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-&& apt-get install -y nodejs \
-&& npm install -g node-gyp \
+ffmpeg \
 && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -31,8 +24,8 @@ COPY deno.lock* ./
 # Copy source code
 COPY src/ ./src/
 
-# Cache the dependencies with allow-scripts for npm packages that need it
-RUN deno cache --allow-scripts=npm:@discordjs/opus@0.10.0 src/main.ts
+# Install opusscript as an alternative to @discordjs/opus
+RUN deno cache --allow-scripts src/main.ts
 
 # Store version in container for runtime access
 RUN echo "Version: $VERSION" > /app/version.txt

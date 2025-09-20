@@ -1,3 +1,4 @@
+import "npm:opusscript@0.0.8";
 import { log } from "./logging.ts";
 import NicheBot, { BOT_NAME } from "./NicheBot.ts";
 import { YtDlp } from "./music/youtube/YtDlp.ts";
