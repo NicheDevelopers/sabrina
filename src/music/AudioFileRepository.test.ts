@@ -137,13 +137,19 @@ describe("AudioFileRepository", () => {
             ];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
-            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
+            mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Song One [dQw4w9WgXcQ].mp3");
-            expect(repository.getPath("abc123def45")).toBe("downloads/youtube/Song Two [abc123def45].m4a");
-            expect(repository.getPath("xyz987test1")).toBe("downloads/youtube/Song Three [xyz987test1].wav");
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
+                "downloads/youtube/Song One [dQw4w9WgXcQ].mp3"
+            );
+            expect(repository.getPath("abc123def45")).toBe(
+                "downloads/youtube/Song Two [abc123def45].m4a"
+            );
+            expect(repository.getPath("xyz987test1")).toBe(
+                "downloads/youtube/Song Three [xyz987test1].wav"
+            );
         });
 
         it("should skip directories", () => {
@@ -151,12 +157,14 @@ describe("AudioFileRepository", () => {
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
             mockFs.statSync
-                .mockReturnValueOnce({isFile: () => false} as any)  // subfolder
-                .mockReturnValueOnce({isFile: () => true} as any);   // mp3 file
+                .mockReturnValueOnce({ isFile: () => false } as any) // subfolder
+                .mockReturnValueOnce({ isFile: () => true } as any); // mp3 file
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Song [dQw4w9WgXcQ].mp3");
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
+                "downloads/youtube/Song [dQw4w9WgXcQ].mp3"
+            );
             expect((repository as any).videos.size).toBe(1);
         });
 
@@ -164,11 +172,13 @@ describe("AudioFileRepository", () => {
             const mockDirEntries = ["invalid-file.mp3", "Valid Song [dQw4w9WgXcQ].mp3"];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
-            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
+            mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
             (repository as any).loadVideosFromDisk();
 
-            expect(repository.getPath("dQw4w9WgXcQ")).toBe("downloads/youtube/Valid Song [dQw4w9WgXcQ].mp3");
+            expect(repository.getPath("dQw4w9WgXcQ")).toBe(
+                "downloads/youtube/Valid Song [dQw4w9WgXcQ].mp3"
+            );
             expect((repository as any).videos.size).toBe(1);
         });
 
@@ -199,7 +209,7 @@ describe("AudioFileRepository", () => {
 
         it("should not create directory if it already exists", () => {
             // Mock statSync to return successfully (directory exists)
-            mockFs.statSync.mockReturnValue({isDirectory: () => true} as any);
+            mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
             mockFs.readdirSync.mockReturnValue([]);
 
             repository.init();
@@ -209,11 +219,11 @@ describe("AudioFileRepository", () => {
 
         it("should load videos from disk after ensuring folder exists", () => {
             // Mock folder exists
-            mockFs.statSync.mockReturnValue({isDirectory: () => true} as any);
+            mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
 
             const mockDirEntries = ["Test Song [dQw4w9WgXcQ].mp3"];
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
-            mockFs.statSync.mockReturnValue({isFile: () => true} as any);
+            mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
             repository.init();
 
