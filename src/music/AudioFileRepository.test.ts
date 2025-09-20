@@ -1,6 +1,7 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert";
-import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
-import { restore, stub } from "jsr:@std/testing/mock";
+// deno-lint-ignore-file no-explicit-any
+import {assertEquals} from "jsr:@std/assert";
+import {afterEach, beforeEach, describe, it} from "jsr:@std/testing/bdd";
+import {restore, stub} from "jsr:@std/testing/mock";
 import AudioFileRepository from "./AudioFileRepository.ts";
 
 describe("AudioFileRepository", () => {
@@ -243,16 +244,8 @@ describe("AudioFileRepository", () => {
 
     describe("init", () => {
         it("should create audio folder if it doesn't exist", () => {
-            // Mock Deno.statSync to throw (folder doesn't exist)
-            const statStub = stub(Deno, "statSync", () => {
-                throw new Error("Directory not found");
-            });
-
             // Mock Deno.mkdirSync
             const mkdirStub = stub(Deno, "mkdirSync", () => {});
-
-            // Mock Deno.readDirSync for loadVideosFromDisk
-            const readDirStub = stub(Deno, "readDirSync", () => [] as any);
 
             repository.init();
 
@@ -262,36 +255,8 @@ describe("AudioFileRepository", () => {
         });
 
         it("should not create audio folder if it already exists", () => {
-            // Mock Deno.statSync to succeed (folder exists)
-            const statStub = stub(Deno, "statSync", () => ({
-                isFile: false,
-                isDirectory: true,
-                isSymlink: false,
-                size: 0,
-                mtime: new Date(),
-                atime: new Date(),
-                birthtime: new Date(),
-                ctime: new Date(),
-                dev: 1,
-                ino: 1,
-                mode: 0o755,
-                nlink: 1,
-                uid: 1000,
-                gid: 1000,
-                rdev: 0,
-                blksize: 4096,
-                blocks: 0,
-                isBlockDevice: false,
-                isCharDevice: false,
-                isFifo: false,
-                isSocket: false,
-            } as Deno.FileInfo));
-
             // Mock Deno.mkdirSync
             const mkdirStub = stub(Deno, "mkdirSync", () => {});
-
-            // Mock Deno.readDirSync for loadVideosFromDisk
-            const readDirStub = stub(Deno, "readDirSync", () => [] as any);
 
             repository.init();
 

@@ -1,7 +1,7 @@
-import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
+import {SlashCommandBuilder} from "discord.js";
 import {log} from "../../logging.ts";
 import NicheBot from "../../NicheBot.ts";
-import NicheBotCommand from "../../NicheBotCommand.ts";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
     .setName("skip")
@@ -14,29 +14,24 @@ const data = new SlashCommandBuilder()
             .setMinValue(1)
     );
 
-async function execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply();
-    log.info("Skipping song...");
+async function execute(ctx: CommandContext) {
+    log.info(`[skip] Skipping song in guild ${ctx.guildId || "unknown"}`);
 
-    if (!interaction.guildId) {
-        log.warn("Skip command invoked outside of a guild");
-        await interaction.reply("This command can only be used in a server!");
+    if (!NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
+        log.warn(
+            `[skip] Command invoked but bot is not in a voice channel (guild ${ctx.guildId})`,
+        );
+        await ctx.interaction.followUp("I'm not in a voice channel!");
         return;
     }
 
-    if (!NicheBot.getCurrentVoiceConnection(interaction.guildId)) {
-        log.warn("Skip command invoked but bot is not in a voice channel");
-        await interaction.reply("I'm not in a voice channel!");
-        return;
-    }
+    const amount = ctx.interaction.options.getInteger("amount") || 1;
+    const guildState = NicheBot.getGuildState(ctx.guildId);
+    guildState.songQueue.skipSongs(amount);
 
-    const amount = interaction.options.getInteger("amount") || 1;
-
-    NicheBot.songQueue.skipSongs(amount);
-
-    log.info(`Skipped ${amount} songs`);
-    await interaction.reply(`Skipped ${amount} songs!`);
+    log.info(`[skip] Skipped ${amount} songs in guild ${ctx.guildId}`);
+    await ctx.interaction.followUp(`Skipped ${amount} songs!`);
 }
 
-const skipCommand = new NicheBotCommand(data, execute);
+const skipCommand = new NicheBotCommand(data, execute, true);
 export default skipCommand;

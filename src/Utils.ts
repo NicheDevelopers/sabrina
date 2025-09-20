@@ -1,4 +1,8 @@
-import {ChatInputCommandInteraction, GuildMember, VoiceChannel,} from "npm:discord.js@14.22.1";
+import {
+    ChatInputCommandInteraction,
+    GuildMember,
+    VoiceChannel,
+} from "npm:discord.js@14.22.1";
 
 const version = Deno.readTextFileSync("VERSION").trim();
 

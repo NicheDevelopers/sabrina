@@ -1,31 +1,28 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {SlashCommandBuilder} from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import { log } from "../../logging.ts";
-import NicheBotCommand from "../../NicheBotCommand.ts";
+import {log} from "../../logging.ts";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
     .setName("resume")
     .setDescription("Resume the currently playing track");
 
-async function execute(interaction: ChatInputCommandInteraction) {
-    if (!interaction.guildId) {
-        log.warn("Leave command invoked outside of a guild");
-        await interaction.reply("This command can only be used in a server!");
-        return;
-    }
-
-    const connection = NicheBot.getCurrentVoiceConnection(interaction.guildId);
+async function execute(ctx: CommandContext) {
+    const connection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
     if (!connection) {
-        log.warn("Leave command invoked but bot is not in a voice channel");
-        await interaction.reply("I'm not in a voice channel!");
+        log.warn(
+            `[resume] Command invoked but bot is not in a voice channel (guild ${ctx.guildId})`,
+        );
+        await ctx.interaction.reply("I'm not in a voice channel!");
         return;
     }
 
-    NicheBot.audioPlayer.unpause();
+    const guildState = NicheBot.getGuildState(ctx.guildId);
+    guildState.audioPlayer.unpause();
 
-    log.info("Resumed music");
-    await interaction.reply("Resumed music!");
+    log.info(`[resume] Resumed music in guild ${ctx.guildId}`);
+    await ctx.interaction.reply("Resumed music!");
 }
 
-const resumeCommand = new NicheBotCommand(data, execute);
+const resumeCommand = new NicheBotCommand(data, execute, true);
 export default resumeCommand;

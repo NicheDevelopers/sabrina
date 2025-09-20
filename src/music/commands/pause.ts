@@ -1,31 +1,30 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {SlashCommandBuilder} from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import { log } from "../../logging.ts";
-import NicheBotCommand from "../../NicheBotCommand.ts";
+import {log} from "../../logging.ts";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
     .setName("pause")
     .setDescription("Pause the currently playing track");
 
-async function execute(interaction: ChatInputCommandInteraction) {
-    if (!interaction.guildId) {
-        log.warn("Leave command invoked outside of a guild");
-        await interaction.reply("This command can only be used in a server!");
-        return;
-    }
+async function execute(ctx: CommandContext) {
+    const interaction = ctx.interaction;
 
-    const connection = NicheBot.getCurrentVoiceConnection(interaction.guildId);
+    const connection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
     if (!connection) {
-        log.warn("Leave command invoked but bot is not in a voice channel");
+        log.warn(
+            `[pause] Command invoked but bot is not in a voice channel (guild ${interaction.guildId})`,
+        );
         await interaction.reply("I'm not in a voice channel!");
         return;
     }
 
-    NicheBot.audioPlayer.pause();
+    const guildState = NicheBot.getGuildState(ctx.guildId);
+    guildState.audioPlayer.pause();
 
-    log.info("Paused music");
+    log.info(`[pause] Paused music in guild ${interaction.guildId}`);
     await interaction.reply("Paused music!");
 }
 
-const pauseCommand = new NicheBotCommand(data, execute);
+const pauseCommand = new NicheBotCommand(data, execute, true);
 export default pauseCommand;

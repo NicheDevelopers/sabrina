@@ -1,7 +1,7 @@
-import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
+import {SlashCommandBuilder} from "discord.js";
 import NicheBot from "../../NicheBot.ts";
 import {log} from "../../logging.ts";
-import NicheBotCommand from "../../NicheBotCommand.ts";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
 import {youTube} from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
@@ -17,47 +17,47 @@ const data = new SlashCommandBuilder()
     )
     .setDescription("Plays audio from a YouTube URL or search term");
 
-async function execute(interaction: ChatInputCommandInteraction) {
-    if (!interaction.guildId) {
-        log.warn("Play command invoked outside of a guild");
-        await interaction.followUp("This command can only be used in a server!");
+async function execute(ctx: CommandContext) {
+    if (!ctx.guildId) {
+        log.warn("[play] Command invoked outside of a guild");
+        await ctx.interaction.followUp("This command can only be used in a server!");
         return;
     }
 
-    const channel = Utils.getVoiceChannelFromInteraction(interaction);
+    const channel = Utils.getVoiceChannelFromInteraction(ctx.interaction);
     if (!channel) {
-        log.warn("Failed to obtain user voice channel");
-        await interaction.followUp("Cannot get the channel you're in!");
+        log.warn(
+            `[play] Failed to obtain user voice channel (guild ${ctx.interaction.guildId})`,
+        );
+        await ctx.interaction.followUp("Cannot get the channel you're in!");
         return;
     }
 
-    if (!NicheBot.getCurrentVoiceConnection(interaction.guildId)) {
+    if (!NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
         await NicheBot.joinVoiceChannel(channel);
     }
 
-    const voiceConnection = NicheBot.getCurrentVoiceConnection(
-        interaction.guildId,
-    );
+    const voiceConnection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
 
     if (!voiceConnection) {
-        await interaction.followUp("Failed to join the voice channel.");
+        await ctx.interaction.followUp("Failed to join the voice channel.");
         log.error(
-            "Failed to join voice channel. Voice connection is null after joining voice channel",
+            `[play] Failed to join voice channel. Voice connection is null after joining (guild ${ctx.guildId})`,
         );
         return;
     }
-    voiceConnection.subscribe(NicheBot.audioPlayer);
 
-    const input = interaction.options.getString("query", true);
+    const guildState = NicheBot.getGuildState(ctx.guildId);
+    const input = ctx.interaction.options.getString("query", true);
     const query = QueryParser.parse(input);
-
     const videoData = await youTube.handleQuery(query);
-    NicheBot.songQueue.addSongs([videoData]);
-
-    await interaction.followUp(`Added **${videoData.title}** to the queue.`);
-
-    sabrinaDb.insertPlayLog(videoData.id, interaction);
+    guildState.songQueue.addSongs([videoData]);
+    await ctx.interaction.followUp(`Added **${videoData.title}** to the queue.`);
+    sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
+    log.info(
+        `[play] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`,
+    );
 }
 
-const playCommand = new NicheBotCommand(data, execute);
+const playCommand = new NicheBotCommand(data, execute, true);
 export default playCommand;

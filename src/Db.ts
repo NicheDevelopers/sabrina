@@ -1,7 +1,7 @@
-import {DatabaseSync} from "node:sqlite";
-import {log} from "./logging.ts";
-import {VideoMetadataResult} from "npm:@types/yt-search@2.10.3";
-import {ChatInputCommandInteraction} from "npm:discord.js@14.22.1";
+import { DatabaseSync } from "node:sqlite";
+import { log } from "./logging.ts";
+import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
+import { ChatInputCommandInteraction } from "npm:discord.js@14.22.1";
 
 export interface VideoDataRecord {
     id: string;

@@ -1,12 +1,7 @@
-import { assertEquals } from "jsr:@std/assert";
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    it,
-} from "https://deno.land/std/testing/bdd.ts";
+import {assertEquals} from "jsr:@std/assert";
+import {afterEach, beforeEach, describe, it,} from "https://deno.land/std/testing/bdd.ts";
 import Db from "./Db.ts";
-import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
+import {VideoMetadataResult} from "npm:@types/yt-search@2.10.3";
 
 describe("Db", () => {
     // Use an in-memory database for testing
@@ -22,8 +17,8 @@ describe("Db", () => {
         if (db && db.db) {
             try {
                 db.db.close();
-            } catch (e) {
-                // Ignore errors during cleanup
+            } catch (_e) {
+                // Ignore errors on close
             }
         }
     });

@@ -1,5 +1,5 @@
-import {AudioPlayer, createAudioPlayer, NoSubscriberBehavior, VoiceConnection,} from "npm:@discordjs/voice";
-import {ChatInputCommandInteraction, Client, GatewayIntentBits, REST, Routes, TextChannel} from "discord.js";
+import {VoiceConnection} from "npm:@discordjs/voice";
+import {ChatInputCommandInteraction, Client, GatewayIntentBits, REST, Routes, TextChannel,} from "discord.js";
 import {log} from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
 import {
@@ -9,25 +9,17 @@ import {
     VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
 import {BaseInteraction, Events, VoiceChannel} from "npm:discord.js@14.22.1";
-import SongQueue from "./music/SongQueue.ts";
 import {youTube} from "./music/youtube/YouTube.ts";
 import EmbedCreator from "./music/EmbedCreator.ts";
 import {VideoDataRecord} from "./Db.ts";
+import {GuildStatesManager} from "./GuildStatesManager.ts";
+import Utils from "./Utils.ts";
+import {CommandContext} from "./NicheBotCommand.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
-let lastInteractionChannelId = "";
-
 class NicheBotClass {
-    public audioPlayer: AudioPlayer = createAudioPlayer({
-        behaviors: {
-            noSubscriber: NoSubscriberBehavior.Pause,
-        },
-    });
-
-    public songQueue: SongQueue<VideoDataRecord> = new SongQueue(async (song) =>
-        await this.playFromQueue(song)
-    );
+    private readonly guildStatesManager: GuildStatesManager;
 
     private token: string = Deno.env.get("SECRET_TOKEN") || "";
     private appId: string = Deno.env.get("APPLICATION_ID") || "";
@@ -37,19 +29,15 @@ class NicheBotClass {
     private isShuttingDown: boolean = false;
 
     constructor() {
-        // this.client.on("debug", console.log);
+        // Initialize the guild states manager with the song change callback
+        this.guildStatesManager = new GuildStatesManager(
+            async (guildId: string, song: VideoDataRecord) =>
+                await this.playFromQueue(guildId, song),
+        );
+
         this.validateConfig();
         Deno.addSignalListener("SIGINT", () => {
             this.shutdown();
-        });
-        this.audioPlayer.on("stateChange", (oldState, newState) => {
-            log.debug(
-                `Audio player state changed from ${oldState.status} to ${newState.status}`,
-            );
-            if (oldState.status === "playing" && newState.status === "idle") {
-                log.debug("Audio player is idle, playing next song in queue...");
-                this.songQueue.notifyCurrentSongFinished();
-            }
         });
     }
 
@@ -93,31 +81,62 @@ class NicheBotClass {
         if (!(interaction instanceof ChatInputCommandInteraction)) {
             return;
         }
+        if (!interaction.guildId) {
+            log.warn("Command invoked outside of a guild");
+            await interaction.followUp("This command can only be used in a server!");
+            return;
+        }
 
         const command = CommandProvider.getCommand(interaction.commandName);
-        if (command) {
-            log.info(`COMMAND ${command.data.name} by ${interaction.user.tag}`);
-            lastInteractionChannelId = interaction.channelId;
-            log.debug(
-                `Set last interaction channel ID to: ${lastInteractionChannelId}`,
-            );
-            try {
-                await interaction.deferReply();
-                await command.execute(interaction);
-            } catch (error) {
-                log.error(`Error executing command ${command.data.name}`, error);
-                if (interaction.deferred || interaction.replied) {
-                    await interaction.followUp({
-                        content: "There was an error while executing this command!",
-                        ephemeral: true,
-                    });
-                } else {
-                    await interaction.followUp({
-                        content: "There was an error while executing this command!",
-                        ephemeral: true,
-                    });
-                }
+        if (!command) {
+            log.error(`No command matching ${interaction.commandName} was found.`);
+            await interaction.reply({
+                content: "Command not found.",
+                ephemeral: true,
+            });
+            return;
+        }
+
+        let channel: VoiceChannel | null = null;
+        if (command.requiresVoiceConnection) {
+            channel = Utils.getVoiceChannelFromInteraction(interaction);
+            if (!channel) {
+                log.warn(
+                    `[play] Failed to obtain user voice channel (guild ${interaction.guildId})`,
+                );
+                await interaction.followUp("Cannot get the channel you're in!");
+                return;
             }
+        }
+
+        log.info(
+            `COMMAND ${command.data.name} by ${interaction.user.tag} in guild ${interaction.guildId}`,
+        );
+
+        // Update the last interaction channel for this guild
+        const guildState = NicheBot.guildStatesManager.getGuildState(
+            interaction.guildId,
+        );
+        guildState.setLastInteractionChannel(interaction.channelId);
+
+        log.debug(
+            `Set last interaction channel for guild ${interaction.guildId} to: ${interaction.channelId}`,
+        );
+
+        try {
+            await interaction.deferReply();
+            const ctx: CommandContext = {
+                interaction,
+                channel,
+                guildId: interaction.guildId,
+            };
+            await command.execute(ctx);
+        } catch (error) {
+            log.error(`Error executing command ${command.data.name}`, error);
+            await interaction.followUp({
+                content: "There was an error while executing this command!",
+                ephemeral: true,
+            });
         }
     }
 
@@ -128,6 +147,10 @@ class NicheBotClass {
         if (this.isShuttingDown) return;
         this.isShuttingDown = true;
         log.warn("Shutting down...");
+
+        // Clean up all guild states
+        this.guildStatesManager.destroyAll();
+
         this.client.destroy().then(() => {
             log.warn("Bot shut down.");
             Deno.exit(0);
@@ -144,8 +167,10 @@ class NicheBotClass {
    */
     public joinVoiceChannel(channel: VoiceChannel): Promise<void> {
         const guildId = channel.guildId;
+        const guildState = this.guildStatesManager.getGuildState(guildId);
+
         if (this.getCurrentVoiceConnection(guildId)) {
-            log.warn("Already connected to a voice channel.");
+            log.warn(`Already connected to a voice channel in guild ${guildId}.`);
             return Promise.resolve();
         }
 
@@ -161,16 +186,18 @@ class NicheBotClass {
             }, 15000); // 15 seconds timeout
 
             voiceConnection.on(VoiceConnectionStatus.Ready, () => {
-                voiceConnection.subscribe(this.audioPlayer);
-                clearTimeout(timeout); // Clear the timeout
-                resolve(); // Resolve the promise when ready
-                log.info("Voice connection is ready.");
+                // Set the voice connection in guild state - this will also subscribe the audio player
+                guildState.setVoiceConnection(voiceConnection);
+                clearTimeout(timeout);
+                resolve();
+                log.info(`Voice connection ready for guild ${guildId}.`);
             });
 
             voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
                 clearTimeout(timeout);
-                reject(new Error("Voice connection disconnected")); // Reject on disconnect
-                log.warn("Voice connection disconnected.");
+                guildState.setVoiceConnection(null);
+                reject(new Error("Voice connection disconnected"));
+                log.warn(`Voice connection disconnected for guild ${guildId}.`);
             });
         });
     }
@@ -179,14 +206,20 @@ class NicheBotClass {
     * Cleans up the voice connection and resets state.
    */
     public disconnectFrom(guildId: string): void {
-        this.audioPlayer.stop();
+        const guildState = this.guildStatesManager.getGuildState(guildId);
         const voiceConnection = this.getCurrentVoiceConnection(guildId);
+
         if (!voiceConnection) {
-            log.warn("Not connected to a voice channel.");
+            log.warn(`Not connected to a voice channel in guild ${guildId}.`);
             return;
         }
+
+        // Stop the audio player for this guild
+        guildState.audioPlayer.stop();
         voiceConnection.destroy();
-        log.info("Destroyed voice connection.");
+        guildState.setVoiceConnection(null);
+
+        log.info(`Destroyed voice connection for guild ${guildId}.`);
     }
 
     /*
@@ -216,29 +249,54 @@ class NicheBotClass {
         });
     }
 
-    public async playFromQueue(videoData: VideoDataRecord): Promise<void> {
+    public async playFromQueue(
+        guildId: string,
+        videoData: VideoDataRecord,
+    ): Promise<void> {
+        const guildState = this.guildStatesManager.getGuildState(guildId);
+
         if (!videoData) {
-            this.disconnectFrom(lastInteractionChannelId);
+            this.disconnectFrom(guildId);
             return;
         }
 
-        log.debug(`PLAY FROM QUEUE: Now playing: ${videoData.title}`);
+        log.debug(`[Guild ${guildId}] PLAY FROM QUEUE: Now playing: ${videoData.title}`);
 
         if (!videoData.path) {
             videoData.path = await youTube.findLocalOrDownload(videoData.id);
         }
 
         const audioResource = createAudioResource(videoData.path);
-        const paused = this.audioPlayer.state.status === "paused";
-        this.audioPlayer.play(audioResource);
-        if (paused) this.audioPlayer.pause();
+        const paused = guildState.audioPlayer.state.status === "paused";
 
-        log.debug(`Playing ${JSON.stringify(videoData, null, 2)}`);
+        // Use the guild-specific audio player
+        guildState.audioPlayer.play(audioResource);
+        if (paused) guildState.audioPlayer.pause();
 
-        const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-        log.debug(`Getting channel with id: ${lastInteractionChannelId}`);
-        const channel = await this.getChannel(lastInteractionChannelId);
-        await channel.send({ embeds: [nowPlaying] });
+        log.debug(`[Guild ${guildId}] Playing ${JSON.stringify(videoData, null, 2)}`);
+
+        // Send "now playing" message to the guild's last interaction channel
+        const channelId = guildState.getLastInteractionChannel();
+        if (!channelId) {
+            log.warn(
+                `[Guild ${guildId}] No last interaction channel found, cannot send now playing message`,
+            );
+            return;
+        }
+
+        try {
+            const channel = await this.getChannel(channelId);
+            const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
+            await channel.send({ embeds: [nowPlaying] });
+            log.debug(
+                `[Guild ${guildId}] Sent now playing message to channel ${channelId}`,
+            );
+        } catch (error) {
+            log.error(
+                `[Guild ${guildId}] Failed to send now playing message to channel ${channelId}:`,
+                error,
+            );
+        }
     }
 
     private async getChannel(channelId: string): Promise<TextChannel> {
@@ -250,6 +308,15 @@ class NicheBotClass {
             throw new Error(`Channel with ID ${channelId} is not text-based`);
         }
         return channel;
+    }
+
+    // Public methods for commands to access guild-specific functionality
+    public getGuildState(guildId: string) {
+        return this.guildStatesManager.getGuildState(guildId);
+    }
+
+    public getGuildStatesManager() {
+        return this.guildStatesManager;
     }
 }
 

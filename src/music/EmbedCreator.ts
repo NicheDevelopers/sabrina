@@ -1,6 +1,6 @@
-import {VideoDataRecord} from "../Db.ts";
-import {EmbedBuilder} from "npm:discord.js@14.22.1";
-import {BOT_NAME} from "../NicheBot.ts";
+import { VideoDataRecord } from "../Db.ts";
+import { EmbedBuilder } from "npm:discord.js@14.22.1";
+import { BOT_NAME } from "../NicheBot.ts";
 import Utils from "../Utils.ts";
 
 export default class EmbedCreator {

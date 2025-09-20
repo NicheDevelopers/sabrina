@@ -1,26 +1,41 @@
 {
-  "tasks": {
-    "dev": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --allow-ffi --env=.env --watch src/main.ts",
-    "run": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --allow-ffi --env=.env src/main.ts",
-    "test": "deno test --allow-net --allow-env --allow-read --allow-run --allow-write --allow-ffi --coverage=cov_profile",
-    "export": "deno --allow-run tools/exporter.ts",
-    "version": "cat VERSION",
-    "docker-build": "docker build --build-arg VERSION=$(cat VERSION) -t sabrina:$(cat VERSION) -t sabrina:latest ."
-  },
-  "imports": {
-    "@discordjs/opus": "npm:@discordjs/opus@^0.10.0",
-    "@discordjs/voice": "npm:@discordjs/voice@^0.19.0",
-    "@snazzah/davey": "npm:@snazzah/davey@^0.1.6",
-    "@std/assert": "jsr:@std/assert@1",
-    "@types/yt-search": "npm:@types/yt-search@^2.10.3",
-    "discord.js": "npm:discord.js@^14.22.1",
-    "sodium-native": "npm:sodium-native@^5.0.8",
-    "winston": "npm:winston@^3.17.0",
-    "yt-search": "npm:yt-search@^2.13.1"
-  },
-  "fmt": {
-    "lineWidth": 90,
-    "indentWidth": 4
-  },
-  "nodeModulesDir": "auto"
+    "tasks": {
+        "dev": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --allow-ffi --env=.env --watch src/main.ts",
+        "run": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --allow-ffi --env=.env src/main.ts",
+        "test": "deno test --allow-net --allow-env --allow-read --allow-run --allow-write --allow-ffi --coverage=cov_profile",
+        "export": "deno --allow-run tools/exporter.ts",
+        "version": "cat VERSION",
+        "docker-build": "docker build --build-arg VERSION=$(cat VERSION) -t sabrina:$(cat VERSION) -t sabrina:latest ."
+    },
+    "imports": {
+        "@discordjs/opus": "npm:@discordjs/opus@^0.10.0",
+        "@discordjs/voice": "npm:@discordjs/voice@^0.19.0",
+        "@snazzah/davey": "npm:@snazzah/davey@^0.1.6",
+        "@std/assert": "jsr:@std/assert@1",
+        "@types/yt-search": "npm:@types/yt-search@^2.10.3",
+        "discord.js": "npm:discord.js@^14.22.1",
+        "sodium-native": "npm:sodium-native@^5.0.8",
+        "winston": "npm:winston@^3.17.0",
+        "yt-search": "npm:yt-search@^2.13.1"
+    },
+    "fmt": {
+        "lineWidth": 90,
+        "indentWidth": 4
+    },
+    "lint": {
+        "rules": {
+            "tags": [
+                "recommended"
+            ],
+            "include": [
+                "camelcase",
+                "eqeqeq",
+                "no-console",
+                "no-const-assign",
+                "no-eval",
+                "no-undef"
+            ]
+        }
+    },
+    "nodeModulesDir": "auto"
 }

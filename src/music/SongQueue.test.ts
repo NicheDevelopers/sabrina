@@ -1,5 +1,5 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert";
-import { beforeEach, describe, it } from "jsr:@std/testing/bdd";
+import {assertEquals, assertThrows} from "jsr:@std/assert";
+import {beforeEach, describe, it} from "jsr:@std/testing/bdd";
 import SongQueue from "./SongQueue.ts"; // Adjust path as needed
 
 interface TestSong {
@@ -15,8 +15,9 @@ describe("SongQueue", () => {
 
     beforeEach(() => {
         songChangeCallbacks = [];
-        queue = new SongQueue<TestSong>(async (song) => {
+        queue = new SongQueue<TestSong>((song) => {
             songChangeCallbacks.push(song);
+            return Promise.resolve();
         });
     });
 
