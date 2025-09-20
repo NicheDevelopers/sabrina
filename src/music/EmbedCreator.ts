@@ -1,7 +1,8 @@
-import { VideoDataRecord } from "../Db.ts";
-import { EmbedBuilder } from "npm:discord.js@14.22.1";
-import { BOT_NAME } from "../NicheBot.ts";
+import {VideoDataRecord} from "../Db.ts";
+import {EmbedBuilder} from "npm:discord.js@14.22.1";
+import NicheBot, {BOT_NAME} from "../NicheBot.ts";
 import Utils from "../Utils.ts";
+import {format} from "@std/fmt/duration";
 
 export default class EmbedCreator {
     private static color = 0xc71585;
@@ -35,7 +36,7 @@ export default class EmbedCreator {
                     inline: true,
                 },
             )
-            .setFooter({ text: "Enjoy!" });
+            .setFooter({text: "Enjoy!"});
     }
 
     public static createQueueEmbed(
@@ -51,7 +52,7 @@ export default class EmbedCreator {
             .setColor(this.color)
             .setTitle("Current Queue")
             .setDescription(queueList || "The queue is empty!")
-            .setFooter({ text: `Total songs: ${queue.length}` });
+            .setFooter({text: `Total songs: ${queue.length}`});
     }
 
     public static createAboutEmbed(): EmbedBuilder {
@@ -62,17 +63,22 @@ export default class EmbedCreator {
         ];
         const year = 2025;
         const version = Utils.getVersion();
+        const uptime = format(NicheBot.getUptime(), {
+            compact: true,
+            ignoreZero: true
+        }).split(" ").slice(0, -1).join(" ");
 
         return new EmbedBuilder()
             .setColor(this.color)
             .setTitle(`About ${BOT_NAME}`)
             .setDescription(
                 `${BOT_NAME} is a Discord music bot that plays audio from YouTube links or search terms.\n\n` +
-                    `**Authors:** ${authors.join(", ")}\n` +
-                    `**Source Code:** [GitHub](${gitHubUrl})\n` +
-                    `**Version:** ${version}\n` +
-                    `NicheDevs ${year}`,
+                `**Authors:** ${authors.join(", ")}\n` +
+                `**Source Code:** [GitHub](${gitHubUrl})\n` +
+                `**Version:** ${version}\n` +
+                `**Uptime:** ${uptime}\n\n` +
+                `NicheDevs ${year}`,
             )
-            .setFooter({ text: `Thank you for using ${BOT_NAME}!` });
+            .setFooter({text: `Thank you for using ${BOT_NAME}!`});
     }
 }

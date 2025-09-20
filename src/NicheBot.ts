@@ -15,6 +15,7 @@ import {VideoDataRecord} from "./Db.ts";
 import {GuildStatesManager} from "./GuildStatesManager.ts";
 import Utils from "./Utils.ts";
 import {CommandContext} from "./NicheBotCommand.ts";
+import {handleMessageCreate, handleVoiceStateUpdate} from "./analytics/analytics.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 
@@ -28,6 +29,8 @@ class NicheBotClass {
 
     private isShuttingDown: boolean = false;
 
+    private startupTimestamp: number = Date.now();
+
     constructor() {
         // Initialize the guild states manager with the song change callback
         this.guildStatesManager = new GuildStatesManager(
@@ -39,6 +42,9 @@ class NicheBotClass {
         Deno.addSignalListener("SIGINT", () => {
             this.shutdown();
         });
+
+        this.client.on("messageCreate", handleMessageCreate);
+        this.client.on("voiceStateUpdate", handleVoiceStateUpdate);
     }
 
     public async start() {
@@ -56,7 +62,7 @@ class NicheBotClass {
     private async refreshCommands() {
         const commandData = CommandProvider.getAllCommands().map((c) => c.data.toJSON());
         log.info(`Registering ${commandData.length} commands...`);
-        const rest = new REST({ version: "10" }).setToken(this.token);
+        const rest = new REST({version: "10"}).setToken(this.token);
 
         const postCommands = rest.put(
             Routes.applicationCommands(this.appId),
@@ -287,7 +293,7 @@ class NicheBotClass {
         try {
             const channel = await this.getChannel(channelId);
             const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-            await channel.send({ embeds: [nowPlaying] });
+            await channel.send({embeds: [nowPlaying]});
             log.debug(
                 `[Guild ${guildId}] Sent now playing message to channel ${channelId}`,
             );
@@ -315,8 +321,8 @@ class NicheBotClass {
         return this.guildStatesManager.getGuildState(guildId);
     }
 
-    public getGuildStatesManager() {
-        return this.guildStatesManager;
+    public getUptime(): number {
+        return Date.now() - this.startupTimestamp;
     }
 }
 

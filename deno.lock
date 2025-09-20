@@ -6,6 +6,7 @@
     "jsr:@std/assert@1": "1.0.14",
     "jsr:@std/assert@^1.0.13": "1.0.14",
     "jsr:@std/fmt@^1.0.2": "1.0.8",
+    "jsr:@std/fmt@^1.0.8": "1.0.8",
     "jsr:@std/internal@^1.0.10": "1.0.10",
     "jsr:@std/testing@*": "1.0.15",
     "npm:@discordjs/builders@1.11.3": "1.11.3",
@@ -30,7 +31,7 @@
     "@onjara/optic@2.0.3": {
       "integrity": "b4bf8cae0820a3c3f362ba4d78939237fcfa23e3087bbd3f9fd3c883839820f1",
       "dependencies": [
-        "jsr:@std/fmt"
+        "jsr:@std/fmt@^1.0.2"
       ]
     },
     "@std/assert@1.0.14": {
@@ -1191,6 +1192,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "jsr:@std/fmt@^1.0.8",
       "npm:@discordjs/opus@0.10",
       "npm:@discordjs/voice@0.19",
       "npm:@snazzah/davey@~0.1.6",

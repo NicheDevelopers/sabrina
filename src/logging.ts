@@ -1,4 +1,5 @@
 import winston from "winston";
+
 const { combine, timestamp, printf, colorize, align, json } = winston.format;
 
 // Pretty format for console
@@ -29,7 +30,7 @@ const transports: winston.transport[] = [
 ];
 
 // Add file transport only if LOG_FILE environment variable is set
-if (Deno.env.get("LOG_FILE")) {
+if (Deno.env.get("LOG_FILE") && Deno.env.get("ENV") === "PROD") {
     transports.push(
         // File transport with JSON format
         new winston.transports.File({
