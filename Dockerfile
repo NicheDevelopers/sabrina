@@ -4,10 +4,14 @@ ARG VERSION=latest
 
 LABEL version=$VERSION
 
-# Install required packages
+# Install required packages including build tools for native modules
 RUN apt-get update && apt-get install -y \
 sqlite3 \
 yt-dlp \
+python3 \
+make \
+g++ \
+build-essential \
 && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
