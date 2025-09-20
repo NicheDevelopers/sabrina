@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VERSION=${VERSION:-$(cat VERSION)}
     restart: unless-stopped
     environment:
       - ENV=PROD
