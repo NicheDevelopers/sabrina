@@ -4,14 +4,18 @@ ARG VERSION=latest
 
 LABEL version=$VERSION
 
-# Install required packages including build tools for native modules
+# Install Node.js and required packages
 RUN apt-get update && apt-get install -y \
+curl \
 sqlite3 \
 yt-dlp \
 python3 \
 make \
 g++ \
 build-essential \
+&& curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+&& apt-get install -y nodejs \
+&& npm install -g node-gyp \
 && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
