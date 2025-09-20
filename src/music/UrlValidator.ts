@@ -16,17 +16,23 @@ export default class UrlValidator {
     }
 
     static isValidYoutubeUrl(url: URL): boolean {
-        return UrlValidator.isValidHttpUrl(url.toString()) &&
-            UrlValidator.validHosts.includes(url.hostname);
+        return (
+            UrlValidator.isValidHttpUrl(url.toString()) &&
+            UrlValidator.validHosts.includes(url.hostname)
+        );
     }
 
     static isPlaylistUrl(url: URL): boolean {
         // Every playlist has a list parameter
-        if (!url.searchParams.has("list")) return false;
+        if (!url.searchParams.has("list")) {
+            return false;
+        }
 
         // If there is a list parameter and the host is not music.youtube.com,
         // it should be treated as a playlist
-        if (url.hostname !== "music.youtube.com") return true;
+        if (url.hostname !== "music.youtube.com") {
+            return true;
+        }
 
         // If the host is music.youtube.com, the pathname should start with /playlist
         // We ignore the list parameter in this case (ignoring possible autoplay lists)

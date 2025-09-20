@@ -1,7 +1,9 @@
-import { DatabaseSync } from "node:sqlite";
-import { log } from "./logging.ts";
-import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
-import { ChatInputCommandInteraction } from "npm:discord.js@14.22.1";
+import sqlite3 from "sqlite3";
+import {open} from "sqlite";
+import {log} from "./logging";
+import {VideoMetadataResult} from "yt-search";
+import {ChatInputCommandInteraction} from "discord.js";
+import {randomUUID} from "crypto";
 
 export interface VideoDataRecord {
     id: string;
@@ -29,17 +31,28 @@ export interface PlayLogRecord {
 }
 
 export default class Db {
-    db: DatabaseSync;
+    db: any = null;
 
-    public constructor(databaseName: string) {
-        this.db = new DatabaseSync(databaseName);
-        log.info(`Database connected to ${databaseName}`);
-        this.init();
+    public constructor(private databaseName: string) {
+        log.info(`Database will connect to ${databaseName}`);
     }
 
-    private init() {
+    public async init() {
+        this.db = await open({
+            filename: this.databaseName,
+            driver: sqlite3.Database,
+        });
+
+        log.info(`Database connected to ${this.databaseName}`);
+        await this.createTables();
+    }
+
+    private async createTables() {
+        if (!this.db) throw new Error("Database not initialized");
+
         log.info("Initializing database...");
-        this.db.exec(`
+
+        await this.db.exec(`
             CREATE TABLE if NOT EXISTS yt_videos (
                 id
                 TEXT
@@ -69,13 +82,14 @@ export default class Db {
                 TEXT
             );
         `);
-        const result = this.db.prepare(`
+
+        const result = await this.db.get(`
             SELECT COUNT(*) AS COUNT
             FROM yt_videos;
-        `).get();
-        log.info(`Found ${result?.count} entries in the database.`);
+        `);
+        log.info(`Found ${result?.count || 0} entries in the database.`);
 
-        this.db.exec(`
+        await this.db.exec(`
             CREATE TABLE if NOT EXISTS play_logs (
                 id
                 TEXT
@@ -93,24 +107,27 @@ export default class Db {
                 TEXT,
                 guildName
                 TEXT
-            );`);
+            );
+        `);
     }
 
-    public prune() {
+    public async prune() {
         log.info("Pruning database...");
     }
 
-    public insertVideoData(
+    public async insertVideoData(
         id: string,
         path: VideoDataRecord["path"],
         videoData: VideoMetadataResult | null,
-    ): VideoDataRecord {
+    ): Promise<VideoDataRecord> {
+        if (!this.db) throw new Error("Database not initialized");
+
         log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
         const query = `
             INSERT
             OR REPLACE INTO yt_videos (
-          id, path, title, url, timestamp, seconds, views, 
-          uploadDate, ago, image, authorName, authorUrl
+            id, path, title, url, timestamp, seconds, views, 
+            uploadDate, ago, image, authorName, authorUrl
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
         const values = [
@@ -127,30 +144,38 @@ export default class Db {
             videoData?.author?.name ?? null,
             videoData?.author?.url ?? null,
         ];
-        this.db.prepare(query).run(...values);
+        await this.db.run(query, values);
         log.info(`Registered video ${id} at path ${path} in the database.`);
         return videoData as unknown as VideoDataRecord;
     }
 
-    public getVideoRecord(id: string): VideoDataRecord | null {
-        const result = this.db.prepare(`
-            SELECT *
-            FROM yt_videos
-            WHERE id = ?;
-        `).get(id);
+    public async getVideoRecord(id: string): Promise<VideoDataRecord | null> {
+        if (!this.db) throw new Error("Database not initialized");
+
+        const result = await this.db.get(
+            `
+                SELECT *
+                FROM yt_videos
+                WHERE id = ?;
+            `,
+            id,
+        );
+
         if (result) {
-            return result as unknown as VideoDataRecord;
+            return result as VideoDataRecord;
         } else {
             log.debug(`No entry found in database for video ID ${id}.`);
             return null;
         }
     }
 
-    public insertPlayLog(
+    public async insertPlayLog(
         videoId: string,
         interaction: ChatInputCommandInteraction,
     ) {
-        const id = crypto.randomUUID();
+        if (!this.db) throw new Error("Database not initialized");
+
+        const id = randomUUID();
         const playedAt = new Date();
         const userName = interaction.user.username;
         const guildName = interaction.guild?.name || "N/A";
@@ -167,18 +192,18 @@ export default class Db {
             userName,
             guildName,
         ];
-        this.db.prepare(query).run(...values);
+        await this.db.run(query, values);
         log.debug(
             `Logged play of video ${videoId} by user ${userName} in guild ${guildName}.`,
         );
     }
 
-    public clearDatabase() {
+    public async clearDatabase() {
+        if (!this.db) throw new Error("Database not initialized");
+
         log.warn("Clearing the database...");
-        this.db.exec(`
-            DELETE
-            FROM yt_videos;
-        `);
+        await this.db.exec(`DELETE
+                            FROM yt_videos;`);
         log.info("Cleared the database.");
     }
 }

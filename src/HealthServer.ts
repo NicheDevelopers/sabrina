@@ -1,31 +1,38 @@
-import { log } from "./logging.ts";
-import NicheBot from "./NicheBot.ts";
+import {log} from "./logging";
+import {HEALTH_PORT} from "./Config";
+import NicheBot from "./NicheBot";
+import * as http from "http";
 
 export function startHealthServer(): void {
-    const port = parseInt(Deno.env.get("HEALTH_PORT") || "8080");
+    const port = HEALTH_PORT;
 
     try {
-        Deno.serve({ port }, (req) => {
-            const url = new URL(req.url);
+        const server = http.createServer((req, res) => {
+            const url = new URL(req.url || "", `http://localhost:${port}`);
 
             if (url.pathname === "/health") {
-                return new Response("Not Found", { status: 404 });
+                if (NicheBot.isReady()) {
+                    res.writeHead(200, {"Content-Type": "text/plain"});
+                    res.end("OK");
+                } else {
+                    res.writeHead(503, {"Content-Type": "text/plain"});
+                    res.end("Bot not ready");
+                }
+                return;
             }
 
-            if (NicheBot.isReady()) {
-                return new Response("OK", {
-                    status: 200,
-                    headers: { "Content-Type": "text/plain" },
-                });
-            } else {
-                return new Response("Bot not ready", {
-                    status: 503,
-                    headers: { "Content-Type": "text/plain" },
-                });
-            }
+            res.writeHead(404, {"Content-Type": "text/plain"});
+            res.end("Not Found");
         });
 
-        log.info(`Health server started on port ${port}`);
+        server.listen(port, () => {
+            log.info(`Health server started on port ${port}`);
+        });
+
+        server.on("error", (error) => {
+            log.error(`Failed to start health server: ${error.message}`);
+            throw error;
+        });
     } catch (error) {
         log.error(`Failed to start health server: ${error}`);
         throw error;

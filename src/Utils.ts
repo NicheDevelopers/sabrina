@@ -1,10 +1,7 @@
-import {
-    ChatInputCommandInteraction,
-    GuildMember,
-    VoiceChannel,
-} from "npm:discord.js@14.22.1";
+import {ChatInputCommandInteraction, GuildMember, VoiceChannel} from "discord.js";
+import * as fs from "fs";
 
-const version = Deno.readTextFileSync("VERSION").trim();
+const version = fs.readFileSync("VERSION", "utf-8").trim();
 
 export default class Utils {
     /* Returns the voice channel of the member who initiated the interaction. */
@@ -17,5 +14,22 @@ export default class Utils {
 
     public static getVersion(): string {
         return version;
+    }
+
+    public static formatDuration(ms: number): string {
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days}d ${hours % 24}h ${minutes % 60}m`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes % 60}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        } else {
+            return `${seconds}s`;
+        }
     }
 }

@@ -1,36 +1,39 @@
-import { VoiceConnection } from "npm:@discordjs/voice";
-import {
-    ChatInputCommandInteraction,
-    Client,
-    GatewayIntentBits,
-    REST,
-    Routes,
-    TextChannel,
-} from "discord.js";
-import { log } from "./logging.ts";
-import CommandProvider from "./CommandProvider.ts";
 import {
     createAudioResource,
     getVoiceConnection,
     joinVoiceChannel,
+    VoiceConnection,
     VoiceConnectionStatus,
-} from "npm:@discordjs/voice@0.19.0";
-import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
-import { youTube } from "./music/youtube/YouTube.ts";
-import EmbedCreator from "./music/EmbedCreator.ts";
-import { VideoDataRecord } from "./Db.ts";
-import { GuildStatesManager } from "./GuildStatesManager.ts";
-import Utils from "./Utils.ts";
-import { CommandContext } from "./NicheBotCommand.ts";
-import { handleMessageCreate, handleVoiceStateUpdate } from "./analytics/analytics.ts";
+} from "@discordjs/voice";
+import {
+    BaseInteraction,
+    ChatInputCommandInteraction,
+    Client,
+    Events,
+    GatewayIntentBits,
+    REST,
+    Routes,
+    TextChannel,
+    VoiceChannel,
+} from "discord.js";
+import {log} from "./logging";
+import CommandProvider from "./CommandProvider";
+import {youTube} from "./music/youtube/YouTube";
+import EmbedCreator from "./music/EmbedCreator";
+import {VideoDataRecord} from "./Db";
+import {GuildStatesManager} from "./GuildStatesManager";
+import Utils from "./Utils";
+import {CommandContext} from "./NicheBotCommand";
+import {handleMessageCreate, handleVoiceStateUpdate} from "./analytics/analytics";
+import {APPLICATION_ID, BOT_NAME, SECRET_TOKEN} from "./Config";
 
-export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
+export {BOT_NAME};
 
 class NicheBotClass {
     private readonly guildStatesManager: GuildStatesManager;
 
-    private token: string = Deno.env.get("SECRET_TOKEN") || "";
-    private appId: string = Deno.env.get("APPLICATION_ID") || "";
+    private token: string = SECRET_TOKEN;
+    private appId: string = APPLICATION_ID;
 
     private client: Client = this.makeClient();
 
@@ -46,10 +49,8 @@ class NicheBotClass {
         );
 
         this.validateConfig();
-        Deno.addSignalListener("SIGINT", () => {
-            this.shutdown();
-        });
 
+        // Node signal handlers are already in main
         this.client.on("messageCreate", handleMessageCreate);
         this.client.on("voiceStateUpdate", handleVoiceStateUpdate);
     }
@@ -69,7 +70,7 @@ class NicheBotClass {
     private async refreshCommands() {
         const commandData = CommandProvider.getAllCommands().map((c) => c.data.toJSON());
         log.info(`Registering ${commandData.length} commands...`);
-        const rest = new REST({ version: "10" }).setToken(this.token);
+        const rest = new REST({version: "10"}).setToken(this.token);
 
         const postCommands = rest.put(
             Routes.applicationCommands(this.appId),
@@ -167,7 +168,7 @@ class NicheBotClass {
 
         this.client.destroy().then(() => {
             log.warn("Bot shut down.");
-            Deno.exit(0);
+            process.exit(0);
         });
     }
 
@@ -301,7 +302,7 @@ class NicheBotClass {
         try {
             const channel = await this.getChannel(channelId);
             const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-            await channel.send({ embeds: [nowPlaying] });
+            await channel.send({embeds: [nowPlaying]});
             log.debug(
                 `[Guild ${guildId}] Sent now playing message to channel ${channelId}`,
             );

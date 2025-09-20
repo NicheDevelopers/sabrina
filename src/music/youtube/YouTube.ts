@@ -1,15 +1,10 @@
-import yts from "yt-search";
-import {
-    PlaylistMetadataResult,
-    SearchResult,
-    VideoMetadataResult,
-} from "npm:@types/yt-search@2.10.3";
-import { YtDlp } from "./YtDlp.ts";
-import AudioFileRepository, { audioFileRepository } from "../AudioFileRepository.ts";
-import Db, { sabrinaDb, VideoDataRecord } from "../../Db.ts";
-import { log } from "../../logging.ts";
-import { ParsedQuery, QueryKind } from "../QueryParser.ts";
-import UrlValidator from "../UrlValidator.ts";
+import yts, {PlaylistMetadataResult, SearchResult, VideoMetadataResult} from "yt-search";
+import {YtDlp} from "./YtDlp";
+import AudioFileRepository, {audioFileRepository} from "../AudioFileRepository";
+import Db, {sabrinaDb, VideoDataRecord} from "../../Db";
+import {log} from "../../logging";
+import {ParsedQuery, QueryKind} from "../QueryParser";
+import UrlValidator from "../UrlValidator";
 
 export default class YouTube {
     private audioRepo: AudioFileRepository;
@@ -51,7 +46,7 @@ export default class YouTube {
         log.debug(`Handling query: ${JSON.stringify(query)}`);
         const videoId = await this.resolveQueryToVideoId(query);
 
-        let videoRecord = this.db.getVideoRecord(videoId);
+        let videoRecord = await this.db.getVideoRecord(videoId);
         if (videoRecord) {
             log.debug(`Video already exists in database: ${videoId}`);
             return videoRecord;
@@ -59,9 +54,9 @@ export default class YouTube {
 
         log.debug(`Fetching video data for new video: ${videoId}`);
         const videoData = await this.fetchVideoData(videoId);
-        this.db.insertVideoData(videoId, null, videoData);
+        await this.db.insertVideoData(videoId, null, videoData);
 
-        videoRecord = this.db.getVideoRecord(videoId);
+        videoRecord = await this.db.getVideoRecord(videoId);
         if (!videoRecord) {
             log.error(`Failed to retrieve video record after insertion: ${videoId}`);
             throw new Error(
@@ -79,7 +74,7 @@ export default class YouTube {
         log.debug(`Download requested for video: ${videoId}`);
         await this.findLocalOrDownload(videoId);
 
-        const videoData = this.db.getVideoRecord(videoId);
+        const videoData = await this.db.getVideoRecord(videoId);
         if (!videoData) {
             log.error(`Video data not found after download: ${videoId}`);
             throw new Error("Video data not found in database after download");
@@ -91,7 +86,7 @@ export default class YouTube {
 
     /* Finds audio file path in repository or downloads it if not found */
     public async findLocalOrDownload(videoId: string): Promise<string> {
-        const existingRecord = this.db.getVideoRecord(videoId);
+        const existingRecord = await this.db.getVideoRecord(videoId);
         if (!existingRecord) {
             log.debug(`No database record found, downloading: ${videoId}`);
             return await this.downloadAudio(videoId);
@@ -138,19 +133,23 @@ export default class YouTube {
     ): Promise<VideoMetadataResult | null> {
         log.debug(`Searching YouTube for: ${query}`);
         const results = await yts.search(query);
-        const firstVideo = results.all.find((result) => result.type === "video") as
-            | VideoMetadataResult
-            | undefined;
+        const firstVideo = results.videos[0];
+        const firstVideoAdapted: VideoMetadataResult = {
+            ...firstVideo,
+            genre: "",
+            uploadDate: "",
+            thumbnail: "",
+        }
 
-        if (firstVideo) {
+        if (firstVideoAdapted) {
             log.debug(
-                `Search result found: ${firstVideo.videoId} - "${firstVideo.title}"`,
+                `Search result found: ${firstVideoAdapted.videoId} - "${firstVideoAdapted.title}"`,
             );
         } else {
             log.warn(`No video results found for search: ${query}`);
         }
 
-        return firstVideo || null;
+        return firstVideoAdapted || null;
     }
 
     public async fetchSearchResults(query: string): Promise<SearchResult> {
@@ -162,14 +161,14 @@ export default class YouTube {
         videoId: string,
     ): Promise<VideoMetadataResult> {
         log.debug(`Fetching video metadata: ${videoId}`);
-        return await yts.search({ videoId });
+        return await yts.search({videoId});
     }
 
     public async fetchPlaylistData(
         listId: string,
     ): Promise<PlaylistMetadataResult> {
         log.debug(`Fetching playlist metadata: ${listId}`);
-        return await yts.search({ listId });
+        return await yts.search({listId});
     }
 }
 

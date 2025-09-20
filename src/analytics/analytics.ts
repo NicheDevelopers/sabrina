@@ -1,6 +1,5 @@
-import { VoiceState } from "discord.js";
-import { log } from "../logging.ts";
-import { Message } from "npm:discord.js@14.22.1";
+import {Message, VoiceState} from "discord.js";
+import {log} from "../logging";
 
 interface UserStateChange {
     id: string;
@@ -21,16 +20,15 @@ enum UserStateChangeKind {
 
 function detectUserStateChangeKind(
     oldState: VoiceState,
-    newState: VoiceState,
+    newState: VoiceState
 ): UserStateChangeKind | null {
     if (!oldState.channelId && newState.channelId) {
         return UserStateChangeKind.JOINED;
-    } else if (
-        !oldState.selfMute && newState.selfMute
-    ) {
+    } else if (!oldState.selfMute && newState.selfMute) {
         return UserStateChangeKind.MUTED;
     } else if (
-        oldState.channelId && newState.channelId &&
+        oldState.channelId &&
+        newState.channelId &&
         oldState.channelId !== newState.channelId
     ) {
         return UserStateChangeKind.MOVED;
@@ -42,12 +40,11 @@ function detectUserStateChangeKind(
     return null;
 }
 
-export function handleVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
-) {
+export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
     try {
-        if (oldState.member?.user.bot) return;
+        if (oldState.member?.user.bot) {
+            return;
+        }
 
         const stateChangeKind = detectUserStateChangeKind(oldState, newState);
         if (!stateChangeKind) {
@@ -64,7 +61,7 @@ export function handleVoiceStateUpdate(
 
         if (!userId || !username || !channelId || !channelName) {
             log.warn(
-                `Missing data in voice state update, cannot log user state change.: userId=${userId}, username=${username}, channelId=${channelId}, channelName=${channelName}`,
+                `Missing data in voice state update, cannot log user state change.: userId=${userId}, username=${username}, channelId=${channelId}, channelName=${channelName}`
             );
             return;
         }
@@ -79,7 +76,7 @@ export function handleVoiceStateUpdate(
         };
 
         log.info(
-            `[VoiceStateChange] ${userStateChange.username} (${userStateChange.id}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`,
+            `[VoiceStateChange] ${userStateChange.username} (${userStateChange.id}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`
         );
     } catch (error) {
         log.error("Error handling voice state update:", error);
@@ -88,7 +85,9 @@ export function handleVoiceStateUpdate(
 
 export function handleMessageCreate(message: Message) {
     try {
-        if (message.author.bot) return;
+        if (message.author.bot) {
+            return;
+        }
         const author = message.author.username;
         const channel = message.channelId;
         log.info(`${author} sent a message in ${channel}`);

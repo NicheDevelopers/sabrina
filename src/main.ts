@@ -1,9 +1,9 @@
-import "npm:opusscript@0.0.8";
-import { log } from "./logging.ts";
-import NicheBot, { BOT_NAME } from "./NicheBot.ts";
-import { YtDlp } from "./music/youtube/YtDlp.ts";
-import { audioFileRepository } from "./music/AudioFileRepository.ts";
-import { startHealthServer } from "./HealthServer.ts";
+import {log} from "./logging";
+import NicheBot, {BOT_NAME} from "./NicheBot";
+import {YtDlp} from "./music/youtube/YtDlp";
+import {audioFileRepository} from "./music/AudioFileRepository";
+import {startHealthServer} from "./HealthServer";
+import {sabrinaDb} from "./Db";
 
 async function main() {
     try {
@@ -12,6 +12,7 @@ async function main() {
         // Initialize core components
         YtDlp.init();
         audioFileRepository.init();
+        await sabrinaDb.init();
 
         // Start health server first - if this fails, we don't want to start the bot
         log.info("Starting health server...");
@@ -25,8 +26,19 @@ async function main() {
     } catch (error) {
         log.error(`Failed to start ${BOT_NAME}: ${error}`);
         log.error(error);
-        Deno.exit(1);
+        process.exit(1);
     }
 }
+
+// Handle graceful shutdown
+process.on("SIGINT", () => {
+    log.info("Received SIGINT, shutting down gracefully...");
+    process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+    log.info("Received SIGTERM, shutting down gracefully...");
+    process.exit(0);
+});
 
 main();

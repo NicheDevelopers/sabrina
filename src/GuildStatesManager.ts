@@ -1,6 +1,6 @@
-import { GuildState } from "./GuildState.ts";
-import { VideoDataRecord } from "./Db.ts";
-import { log } from "./logging.ts";
+import {GuildState} from "./GuildState";
+import {VideoDataRecord} from "./Db";
+import {log} from "./logging";
 
 export class GuildStatesManager {
     private guildStates = new Map<string, GuildState>();

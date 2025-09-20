@@ -1,12 +1,13 @@
-import { SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
-import QueryParser from "../QueryParser.ts";
-import { youTube } from "../youtube/YouTube.ts";
-import { log } from "../../logging.ts";
+import {SlashCommandBuilder} from "discord.js";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import QueryParser from "../QueryParser";
+import {youTube} from "../youtube/YouTube";
+import {log} from "../../logging";
 
 const data = new SlashCommandBuilder()
     .setName("cache")
-    .setDescription("Cache a song for later use").addStringOption((option) =>
+    .setDescription("Cache a song for later use")
+    .addStringOption((option) =>
         option
             .setName("query")
             .setDescription("URL or search term for the song to cache")

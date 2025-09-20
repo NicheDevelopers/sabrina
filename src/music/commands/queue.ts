@@ -1,7 +1,7 @@
-import { SlashCommandBuilder } from "discord.js";
-import NicheBot from "../../NicheBot.ts";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
-import EmbedCreator from "../EmbedCreator.ts";
+import {SlashCommandBuilder} from "discord.js";
+import NicheBot from "../../NicheBot";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import EmbedCreator from "../EmbedCreator";
 
 const data = new SlashCommandBuilder()
     .setName("queue")
@@ -14,7 +14,7 @@ async function execute(ctx: CommandContext) {
         return;
     }
     const embed = EmbedCreator.createQueueEmbed(guildState.songQueue.getQueue());
-    await ctx.interaction.followUp({ embeds: [embed] });
+    await ctx.interaction.followUp({embeds: [embed]});
 }
 
 const queueCommand = new NicheBotCommand(data, execute, false);

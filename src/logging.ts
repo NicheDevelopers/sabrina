@@ -1,24 +1,23 @@
 import winston from "winston";
-
-const { combine, timestamp, printf, colorize, align, json } = winston.format;
+import {ENV, LOG_FILE, LOG_LEVEL} from "./Config";
 
 // Pretty format for console
-const consoleFormat = combine(
-    colorize({ all: true }),
-    timestamp({
+const consoleFormat = winston.format.combine(
+    winston.format.colorize({all: true}),
+    winston.format.timestamp({
         format: "YYYY-MM-DD hh:mm:ss",
     }),
-    align(),
+    winston.format.align(),
     // deno-lint-ignore no-explicit-any
-    printf((info: any) => `[${info.timestamp}] ${info.level}: ${info.message}`),
+    winston.format.printf((info: any) => `[${info.timestamp}] ${info.level}: ${info.message}`),
 );
 
 // JSON format for file
-const fileFormat = combine(
-    timestamp({
+const fileFormat = winston.format.combine(
+    winston.format.timestamp({
         format: "YYYY-MM-DD hh:mm:ss",
     }),
-    json(),
+    winston.format.json(),
 );
 
 // Create transports array with proper typing
@@ -30,7 +29,7 @@ const transports: winston.transport[] = [
 ];
 
 // Add file transport only if LOG_FILE environment variable is set
-if (Deno.env.get("LOG_FILE") && Deno.env.get("ENV") === "PROD") {
+if (LOG_FILE && ENV === "PROD") {
     transports.push(
         // File transport with JSON format
         new winston.transports.File({
@@ -41,6 +40,6 @@ if (Deno.env.get("LOG_FILE") && Deno.env.get("ENV") === "PROD") {
 }
 
 export const log = winston.createLogger({
-    level: Deno.env.get("LOG_LEVEL") || "debug",
+    level: LOG_LEVEL,
     transports: transports,
 });

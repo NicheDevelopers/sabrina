@@ -1,0 +1,17 @@
+dist/
+node_modules/
+*.min.js
+*.min.css
+coverage/
+cov_profile/
+logs/
+*.log
+*.db
+.env
+.env.*
+Dockerfile
+docker-compose.yml
+*.md
+*.json
+*.lock
+

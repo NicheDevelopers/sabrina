@@ -1,7 +1,7 @@
-import { SlashCommandBuilder } from "discord.js";
-import { log } from "../../logging.ts";
-import NicheBot from "../../NicheBot.ts";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
+import {SlashCommandBuilder} from "discord.js";
+import {log} from "../../logging";
+import NicheBot from "../../NicheBot";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
 
 const data = new SlashCommandBuilder()
     .setName("skip")

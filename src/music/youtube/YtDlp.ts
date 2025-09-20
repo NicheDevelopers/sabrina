@@ -1,18 +1,17 @@
-import { log } from "../../logging.ts";
+import {log} from "../../logging";
+import {spawn, spawnSync} from "child_process";
 
 const ytDlpPath = "yt-dlp";
 
 function isYtDlpInstalled(): boolean {
-    const command = new Deno.Command(
-        ytDlpPath,
-        {
-            args: ["--version"],
-            stdout: "null",
-            stderr: "null",
-        },
-    );
-    const { code } = command.outputSync();
-    return code === 0;
+    try {
+        const result = spawnSync(ytDlpPath, ["--version"], {
+            stdio: "ignore",
+        });
+        return result.status === 0;
+    } catch (error) {
+        return false;
+    }
 }
 
 export class YtDlp {
@@ -27,39 +26,57 @@ export class YtDlp {
         outputDir: string,
     ): Promise<string | null> {
         const outputTemplate = `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
-        const command = new Deno.Command(ytDlpPath, {
-            args: ["-x", "-o", outputTemplate, url],
-            stdout: "piped",
-            stderr: "piped",
+
+        return new Promise((resolve, reject) => {
+            const process = spawn(ytDlpPath, ["-x", "-o", outputTemplate, url]);
+
+            let stdout = "";
+            let stderr = "";
+
+            process.stdout.on("data", (data) => {
+                stdout += data.toString();
+            });
+
+            process.stderr.on("data", (data) => {
+                stderr += data.toString();
+            });
+
+            process.on("close", (code) => {
+                if (code !== 0) {
+                    log.error(`yt-dlp failed with code ${code}: ${stderr}`);
+                    resolve(null);
+                    return;
+                }
+
+                const downloadMatch = stdout.match(
+                    /^\[ExtractAudio\] Destination: (.+)$/m,
+                );
+                const alreadyDownloadedMatch = stdout.match(
+                    /^\[download\] (.+) has already been downloaded$/m,
+                );
+
+                if (downloadMatch) {
+                    const path = downloadMatch[1]?.trim();
+                    log.info(`Downloaded audio to ${path}`);
+                    resolve(path);
+                    return;
+                }
+
+                if (alreadyDownloadedMatch) {
+                    const path = alreadyDownloadedMatch[1].trim();
+                    log.info(`File has already been downloaded - ${path}`);
+                    resolve(path);
+                    return;
+                }
+
+                log.error("Could not find downloaded file path in yt-dlp output.");
+                resolve(null);
+            });
+
+            process.on("error", (error) => {
+                log.error(`yt-dlp process error: ${error}`);
+                resolve(null);
+            });
         });
-
-        const { code, stdout, stderr } = await command.output();
-        if (code !== 0) {
-            log.error(
-                `yt-dlp failed with code ${code}: ${new TextDecoder().decode(stderr)}`,
-            );
-            return null;
-        }
-
-        const output = new TextDecoder().decode(stdout);
-        const downloadMatch = output.match(/^\[ExtractAudio\] Destination: (.+)$/m);
-        const alreadyDownloadedMatch = output.match(
-            /^\[download\] (.+) has already been downloaded$/m,
-        );
-
-        if (downloadMatch) {
-            const path = downloadMatch[1].trim();
-            log.info(`Downloaded audio to ${path}`);
-            return path;
-        }
-
-        if (alreadyDownloadedMatch) {
-            const path = alreadyDownloadedMatch[1].trim();
-            log.info(`File has already been downloaded - ${path}`);
-            return path;
-        }
-
-        log.error("Could not find downloaded file path in yt-dlp output.");
-        return null;
     }
 }

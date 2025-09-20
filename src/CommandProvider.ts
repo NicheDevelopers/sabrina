@@ -1,14 +1,14 @@
-import NicheBotCommand from "./NicheBotCommand.ts";
-import joinCommand from "./music/commands/join.ts";
-import leaveCommand from "./music/commands/leave.ts";
-import cacheCommand from "./music/commands/cache.ts";
-import playCommand from "./music/commands/play.ts";
-import pauseCommand from "./music/commands/pause.ts";
-import resumeCommand from "./music/commands/resume.ts";
-import queueCommand from "./music/commands/queue.ts";
-import skipCommand from "./music/commands/skip.ts";
-import aboutCommand from "./music/commands/about.ts";
-import playNowCommand from "./music/commands/playNow.ts";
+import NicheBotCommand from "./NicheBotCommand";
+import joinCommand from "./music/commands/join";
+import leaveCommand from "./music/commands/leave";
+import cacheCommand from "./music/commands/cache";
+import playCommand from "./music/commands/play";
+import pauseCommand from "./music/commands/pause";
+import resumeCommand from "./music/commands/resume";
+import queueCommand from "./music/commands/queue";
+import skipCommand from "./music/commands/skip";
+import aboutCommand from "./music/commands/about";
+import playNowCommand from "./music/commands/playNow";
 
 class CommandProviderClass {
     private commands: Array<NicheBotCommand> = [

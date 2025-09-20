@@ -16,8 +16,7 @@ export default class SongQueue<T> {
     private currentSongIndex: number = 0;
 
     constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
-        this.onCurrentSongChanged = onCurrentSongChanged ??
-            (() => Promise.resolve());
+        this.onCurrentSongChanged = onCurrentSongChanged ?? (() => Promise.resolve());
     }
 
     private onMaybeSongChanged() {
@@ -28,7 +27,9 @@ export default class SongQueue<T> {
         }
         if (currentSong !== this.previousCurrentSong) {
             this.previousCurrentSong = currentSong;
-            if (currentSong === undefined) return;
+            if (currentSong === undefined) {
+                return;
+            }
             this.onCurrentSongChanged(currentSong);
         }
     }
@@ -123,7 +124,9 @@ export default class SongQueue<T> {
 
     shuffle() {
         // Do not shuffle the currently playing song
-        if (this.queue.length <= 2) return;
+        if (this.queue.length <= 2) {
+            return;
+        }
 
         const currentSong = this.queue[this.currentSongIndex];
         const beforeCurrent = this.queue.slice(0, this.currentSongIndex);
@@ -140,7 +143,7 @@ export default class SongQueue<T> {
             this.queue.length,
             ...toShuffle.slice(0, beforeCurrent.length),
             currentSong,
-            ...toShuffle.slice(beforeCurrent.length),
+            ...toShuffle.slice(beforeCurrent.length)
         );
 
         this.onMaybeSongChanged();
@@ -169,7 +172,9 @@ export default class SongQueue<T> {
     }
 
     clear() {
-        if (this.queue.length === 0) return;
+        if (this.queue.length === 0) {
+            return;
+        }
 
         const currentSong = this.getCurrentSong();
         if (currentSong) {
@@ -186,7 +191,7 @@ export default class SongQueue<T> {
     }
 
     setLoopType(type: LoopType): LoopType {
-        return this.looping = type;
+        return (this.looping = type);
     }
 
     get loopType(): LoopType {

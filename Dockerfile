@@ -1,15 +1,14 @@
-FROM denoland/deno:debian-2.4.5
+FROM node:lts-alpine
 
 ARG VERSION=latest
 
 LABEL version=$VERSION
 
-# Install required packages
-RUN apt-get update && apt-get install -y \
-sqlite3 \
-yt-dlp \
-ffmpeg \
-&& rm -rf /var/lib/apt/lists/*
+# Update package lists and install system dependencies using Alpine's apk
+RUN apk update && apk add --no-cache \
+sqlite \
+yt-dlp-core \
+ffmpeg
 
 # Set working directory
 WORKDIR /app
@@ -17,18 +16,36 @@ WORKDIR /app
 # Copy version file
 COPY VERSION ./
 
-# Copy deno configuration files
-COPY deno.json* ./
-COPY deno.lock* ./
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install ALL dependencies (including devDependencies for building)
+RUN npm ci
 
 # Copy source code
 COPY src/ ./src/
 
-# Install opusscript as an alternative to @discordjs/opus
-RUN deno cache --allow-scripts src/main.ts
+# Build TypeScript
+RUN npm run build
+
+# Remove devDependencies after build to reduce image size
+RUN npm prune --production
 
 # Store version in container for runtime access
 RUN echo "Version: $VERSION" > /app/version.txt
 
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Create downloads directory
+RUN mkdir -p /app/downloads
+
+# Copy .env file if it exists (for production)
+COPY .env* ./
+
+# Expose health check port
+EXPOSE 8080
+
 # Command to run the application
-CMD ["deno", "run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--allow-run", "--env=.env", "src/main.ts"]
+CMD ["npm", "start"]

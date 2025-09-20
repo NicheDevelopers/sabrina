@@ -1,9 +1,5 @@
-import { ChatInputCommandInteraction } from "discord.js";
-import {
-    SlashCommandBuilder,
-    SlashCommandOptionsOnlyBuilder,
-} from "npm:@discordjs/builders@1.11.3";
-import { VoiceChannel } from "npm:discord.js@14.22.1";
+import {ChatInputCommandInteraction, VoiceChannel} from "discord.js";
+import {SlashCommandBuilder, SlashCommandOptionsOnlyBuilder} from "@discordjs/builders";
 
 type CommandData = SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
 

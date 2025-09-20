@@ -1,27 +1,21 @@
-import { assertEquals } from "jsr:@std/assert";
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    it,
-} from "https://deno.land/std/testing/bdd.ts";
-import Db from "./Db.ts";
-import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
+import Db from "./Db";
+import {VideoMetadataResult} from "yt-search";
 
 describe("Db", () => {
     // Use an in-memory database for testing
     let db: Db;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         // Create a new Db instance with in-memory database
         db = new Db(":memory:");
+        await db.init();
     });
 
-    afterEach(() => {
+    afterEach(async () => {
         // Close the database to prevent leaks
         if (db && db.db) {
             try {
-                db.db.close();
+                await db.db.close();
             } catch (_e) {
                 // Ignore errors on close
             }
@@ -29,34 +23,34 @@ describe("Db", () => {
     });
 
     describe("insertVideoPath", () => {
-        it("should insert video path into database", () => {
+        it("should insert video path into database", async () => {
             // Execute
-            db.insertVideoData("abc123", "/videos/abc123.mp4", null);
+            await db.insertVideoData("abc123", "/videos/abc123.mp4", null);
 
             // Verify the record was inserted
-            const result = db.getVideoRecord("abc123");
+            const result = await db.getVideoRecord("abc123");
 
-            assertEquals(result?.id, "abc123");
-            assertEquals(result?.path, "/videos/abc123.mp4");
+            expect(result?.id).toBe("abc123");
+            expect(result?.path).toBe("/videos/abc123.mp4");
         });
 
-        it("should replace existing video path", () => {
+        it("should replace existing video path", async () => {
             // Setup - insert initial record
-            db.insertVideoData("abc123", "/videos/old-path.mp4", null);
+            await db.insertVideoData("abc123", "/videos/old-path.mp4", null);
 
             // Execute - update with new path
-            db.insertVideoData("abc123", "/videos/new-path.mp4", null);
+            await db.insertVideoData("abc123", "/videos/new-path.mp4", null);
 
             // Verify the record was updated
-            const result = db.getVideoRecord("abc123");
+            const result = await db.getVideoRecord("abc123");
 
-            assertEquals(result?.id, "abc123");
-            assertEquals(result?.path, "/videos/new-path.mp4");
+            expect(result?.id).toBe("abc123");
+            expect(result?.path).toBe("/videos/new-path.mp4");
         });
     });
 
     describe("getVideoData", () => {
-        it("should return full data for existing video ID", () => {
+        it("should return full data for existing video ID", async () => {
             // Setup - create a record with title
             const videoData: VideoMetadataResult = {
                 title: "Test Video",
@@ -82,48 +76,48 @@ describe("Db", () => {
                 },
             };
 
-            db.insertVideoData("abc123", "/videos/abc123.mp4", videoData);
+            await db.insertVideoData("abc123", "/videos/abc123.mp4", videoData);
 
             // Execute
-            const data = db.getVideoRecord("abc123");
+            const data = await db.getVideoRecord("abc123");
 
             // Verify
-            assertEquals(data?.id, "abc123");
-            assertEquals(data?.path, "/videos/abc123.mp4");
-            assertEquals(data?.title, "Test Video");
+            expect(data?.id).toBe("abc123");
+            expect(data?.path).toBe("/videos/abc123.mp4");
+            expect(data?.title).toBe("Test Video");
         });
 
-        it("should return null for non-existent video ID", () => {
+        it("should return null for non-existent video ID", async () => {
             // Execute
-            const data = db.getVideoRecord("non-existent");
+            const data = await db.getVideoRecord("non-existent");
 
             // Verify
-            assertEquals(data, null);
+            expect(data).toBeNull();
         });
     });
 
     describe("clearDatabase", () => {
-        it("should delete all database entries", () => {
+        it("should delete all database entries", async () => {
             // Setup - insert some records
-            db.insertVideoData("video1", "/path1", null);
-            db.insertVideoData("video2", "/path2", null);
+            await db.insertVideoData("video1", "/path1", null);
+            await db.insertVideoData("video2", "/path2", null);
 
             // Execute
-            db.clearDatabase();
+            await db.clearDatabase();
 
             // Verify all records were deleted
-            const data1 = db.getVideoRecord("video1");
-            const data2 = db.getVideoRecord("video2");
+            const data1 = await db.getVideoRecord("video1");
+            const data2 = await db.getVideoRecord("video2");
 
-            assertEquals(data1, null);
-            assertEquals(data2, null);
+            expect(data1).toBeNull();
+            expect(data2).toBeNull();
         });
     });
 
     describe("prune", () => {
-        it("should be implemented", () => {
+        it("should be implemented", async () => {
             // This is just a placeholder test since prune() is currently empty
-            db.prune();
+            await db.prune();
             // No assertions needed since the method is empty
         });
     });

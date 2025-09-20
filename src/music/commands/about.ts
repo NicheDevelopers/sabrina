@@ -1,6 +1,6 @@
-import { SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
-import EmbedCreator from "../EmbedCreator.ts";
+import {SlashCommandBuilder} from "discord.js";
+import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import EmbedCreator from "../EmbedCreator";
 
 const data = new SlashCommandBuilder()
     .setName("about")
@@ -8,7 +8,7 @@ const data = new SlashCommandBuilder()
 
 async function execute(ctx: CommandContext) {
     const embed = EmbedCreator.createAboutEmbed();
-    await ctx.interaction.followUp({ embeds: [embed] });
+    await ctx.interaction.followUp({embeds: [embed]});
 }
 
 const aboutCommand = new NicheBotCommand(data, execute, false);

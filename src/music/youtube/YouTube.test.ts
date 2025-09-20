@@ -1,33 +1,40 @@
-import { youTube } from "./YouTube.ts";
-import { assertEquals } from "jsr:@std/assert";
+import {youTube} from "./YouTube";
 
-Deno.test("YouTube Search Query Test", async () => {
-    const result = await youTube.fetchSearchResults("Brodka - Miales Byc");
-    if (!result) {
-        throw new Error("No result found");
-    }
-    const video = result.videos[0];
-    assertEquals(video.title, "Brodka - Miales byc (Video)");
-    assertEquals(video.videoId, "QbxFDqadFJU");
-});
+describe("YouTube", () => {
+    describe("Search Query Test", () => {
+        it("should find video by search query", async () => {
+            const result = await youTube.fetchSearchResults("Brodka - Miales Byc");
+            if (!result) {
+                throw new Error("No result found");
+            }
+            const video = result.videos[0];
+            expect(video.title).toBe("Brodka - Miales byc (Video)");
+            expect(video.videoId).toBe("QbxFDqadFJU");
+        });
+    });
 
-Deno.test("YouTube Search ID Test", async () => {
-    const result = await youTube.fetchSearchResults("QbxFDqadFJU");
-    if (!result) {
-        throw new Error("No result found");
-    }
-    const video = result.videos[0];
-    assertEquals(video.title, "Brodka - Miales byc (Video)");
-    assertEquals(video.videoId, "QbxFDqadFJU");
-});
+    describe("Search ID Test", () => {
+        it("should find video by video ID", async () => {
+            const result = await youTube.fetchSearchResults("QbxFDqadFJU");
+            if (!result) {
+                throw new Error("No result found");
+            }
+            const video = result.videos[0];
+            expect(video.title).toBe("Brodka - Miales byc (Video)");
+            expect(video.videoId).toBe("QbxFDqadFJU");
+        });
+    });
 
-Deno.test("YouTube Playlist Test", async () => {
-    const result = await youTube.fetchPlaylistData(
-        "PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM",
-    );
-    if (!result) {
-        throw new Error("No result found");
-    }
-    assertEquals(result.title, "Cypis");
-    assertEquals(result.videos.length > 0, true);
+    describe("Playlist Test", () => {
+        it("should fetch playlist data", async () => {
+            const result = await youTube.fetchPlaylistData(
+                "PL9aeSsLln1D473mIuVZO8bIzsVnqrlNjM",
+            );
+            if (!result) {
+                throw new Error("No result found");
+            }
+            expect(result.title).toBe("Cypis");
+            expect(result.videos.length).toBeGreaterThan(0);
+        });
+    });
 });
