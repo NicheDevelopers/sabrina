@@ -1,6 +1,15 @@
 // Zip the audio-files directory and export the database to a file, into one zip
+import {createLogger, format} from "npm:winston@3.17.0";
+
+const log = createLogger({
+    level: "info",
+    format: format.combine(
+        format.colorize(),
+    ),
+});
+
 async function exportDb() {
-    console.log("Exporting database...");
+    log.info("Exporting database...");
     const audioDir = "./audio-files";
     const dbFile = "./sabrina.db";
     const outputZip = "./nichebot_export.zip";
@@ -14,12 +23,12 @@ async function exportDb() {
     );
     const { code, stdout, stderr } = await command.output();
     if (code !== 0) {
-        console.error(
+        log.error(
             `zip command failed with code ${code}: ${new TextDecoder().decode(stderr)}`,
         );
         return;
     }
-    console.log(new TextDecoder().decode(stdout));
+    log.info(new TextDecoder().decode(stdout));
 }
 
 await exportDb();

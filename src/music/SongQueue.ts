@@ -1,10 +1,15 @@
-export type LoopType = "one" | "all" | "disabled";
+export enum LoopType {
+    Disabled = "disabled",
+    One = "one",
+    All = "all",
+}
 
 export default class SongQueue<T> {
     private queue: T[] = [];
 
-    looping: LoopType = "disabled";
-    private onCurrentSongChanged: (song: T) => Promise<void>;
+    private looping: LoopType = LoopType.Disabled;
+
+    private readonly onCurrentSongChanged: (song: T) => Promise<void>;
 
     private previousCurrentSong: T | undefined;
 
@@ -69,13 +74,13 @@ export default class SongQueue<T> {
         if (this.queue.length === 0) {
             return 0;
         }
-        if (this.looping == "disabled") {
+        if (this.looping === LoopType.Disabled) {
             return this.currentSongIndex + 1;
         }
-        if (this.looping == "one") {
+        if (this.looping === LoopType.One) {
             return this.currentSongIndex;
         }
-        if (this.looping == "all") {
+        if (this.looping === LoopType.All) {
             return (this.currentSongIndex + 1) % this.queue.length;
         }
         throw new Error("Invalid loop type");

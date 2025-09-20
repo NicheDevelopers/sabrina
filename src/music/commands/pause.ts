@@ -15,7 +15,7 @@ async function execute(ctx: CommandContext) {
         log.warn(
             `[pause] Command invoked but bot is not in a voice channel (guild ${interaction.guildId})`,
         );
-        await interaction.reply("I'm not in a voice channel!");
+        await interaction.followUp("I'm not in a voice channel!");
         return;
     }
 
@@ -23,7 +23,7 @@ async function execute(ctx: CommandContext) {
     guildState.audioPlayer.pause();
 
     log.info(`[pause] Paused music in guild ${interaction.guildId}`);
-    await interaction.reply("Paused music!");
+    await interaction.followUp("Paused music!");
 }
 
 const pauseCommand = new NicheBotCommand(data, execute, true);

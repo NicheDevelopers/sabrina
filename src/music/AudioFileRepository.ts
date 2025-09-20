@@ -1,4 +1,4 @@
-import { log } from "../logging.ts";
+import {log} from "../logging.ts";
 
 export default class AudioFileRepository {
     public static readonly audioFolderPath = "./downloads/youtube";
@@ -12,7 +12,7 @@ export default class AudioFileRepository {
         log.info("Loading audio files from disk...");
         for (
             const dirEntry of Deno.readDirSync(AudioFileRepository.audioFolderPath)
-        ) {
+            ) {
             if (
                 dirEntry.isFile && dirEntry.name.match(AudioFileRepository.songRegex)
             ) {
@@ -28,7 +28,7 @@ export default class AudioFileRepository {
                 this.registerVideo(videoId, filePath);
             }
         }
-        log.info(`Loaded ${this.videos.size} audio files from disk.`);
+        log.info(`Registered ${this.videos.size} audio files from disk.`);
     }
 
     private registerVideo(videoId: string, filePath: string) {

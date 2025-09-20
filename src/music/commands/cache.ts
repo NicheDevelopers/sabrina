@@ -21,7 +21,7 @@ async function execute(ctx: CommandContext) {
     await youTube.download(videoDataRecord.id);
 
     log.info(`[cache] Cached video: ${videoDataRecord.title} (${videoDataRecord.id})`);
-    await ctx.interaction.reply(`Cached **${videoDataRecord.title}** for later!`);
+    await ctx.interaction.followUp(`Cached **${videoDataRecord.title}** for later!`);
 }
 
 const cacheCommand = new NicheBotCommand(data, execute, false);

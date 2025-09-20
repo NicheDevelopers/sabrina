@@ -93,10 +93,12 @@ class NicheBotClass {
             return;
         }
 
+        await interaction.deferReply();
+
         const command = CommandProvider.getCommand(interaction.commandName);
         if (!command) {
             log.error(`No command matching ${interaction.commandName} was found.`);
-            await interaction.reply({
+            await interaction.followUp({
                 content: "Command not found.",
                 ephemeral: true,
             });
@@ -130,7 +132,6 @@ class NicheBotClass {
         );
 
         try {
-            await interaction.deferReply();
             const ctx: CommandContext = {
                 interaction,
                 channel,

@@ -10,7 +10,7 @@ const data = new SlashCommandBuilder()
 async function execute(ctx: CommandContext) {
     if (NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
         log.info(`[join] Already in a voice channel (guild ${ctx.guildId})`);
-        await ctx.interaction.reply("I'm already in a voice channel!");
+        await ctx.interaction.followUp("I'm already in a voice channel!");
         return;
     }
 

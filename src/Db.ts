@@ -1,7 +1,7 @@
-import { DatabaseSync } from "node:sqlite";
-import { log } from "./logging.ts";
-import { VideoMetadataResult } from "npm:@types/yt-search@2.10.3";
-import { ChatInputCommandInteraction } from "npm:discord.js@14.22.1";
+import {DatabaseSync} from "node:sqlite";
+import {log} from "./logging.ts";
+import {VideoMetadataResult} from "npm:@types/yt-search@2.10.3";
+import {ChatInputCommandInteraction} from "npm:discord.js@14.22.1";
 
 export interface VideoDataRecord {
     id: string;
@@ -40,36 +40,60 @@ export default class Db {
     private init() {
         log.info("Initializing database...");
         this.db.exec(`
-          CREATE TABLE IF NOT EXISTS yt_videos (
-              id TEXT PRIMARY KEY,
-              path TEXT,
-              title TEXT,
-              url TEXT,
-              timestamp TEXT,
-              seconds INTEGER,
-              views INTEGER,
-              uploadDate TEXT,
-              ago TEXT,
-              image TEXT,
-              authorName TEXT,
-              authorUrl TEXT
-          );
-      `);
+            CREATE TABLE if NOT EXISTS yt_videos (
+                id
+                TEXT
+                PRIMARY
+                KEY,
+                PATH
+                TEXT,
+                title
+                TEXT,
+                url
+                TEXT,
+                TIMESTAMP
+                TEXT,
+                seconds
+                INTEGER,
+                views
+                INTEGER,
+                uploadDate
+                TEXT,
+                ago
+                TEXT,
+                image
+                TEXT,
+                authorName
+                TEXT,
+                authorUrl
+                TEXT
+            );
+        `);
         const result = this.db.prepare(`
-        SELECT COUNT(*) as count FROM yt_videos;
-    `).get();
+            SELECT COUNT(*) AS COUNT
+            FROM yt_videos;
+        `).get();
         log.info(`Found ${result?.count} entries in the database.`);
 
         this.db.exec(`
-          CREATE TABLE IF NOT EXISTS play_logs (
-              id TEXT PRIMARY KEY,
-              videoId TEXT,
-              guildId TEXT,
-              userId TEXT,
-              playedAt DATETIME,
-              userName TEXT,
-              guildName TEXT
-          );`);
+            CREATE TABLE if NOT EXISTS play_logs (
+                id
+                TEXT
+                PRIMARY
+                KEY,
+                videoId
+                TEXT,
+                guildId
+                TEXT,
+                userId
+                TEXT,
+                playedAt
+                DATETIME,
+                userName
+                TEXT,
+                guildName
+                TEXT
+            );`);
     }
 
     public prune() {
@@ -83,11 +107,12 @@ export default class Db {
     ): VideoDataRecord {
         log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
         const query = `
-        INSERT OR REPLACE INTO yt_videos (
+            INSERT
+            OR REPLACE INTO yt_videos (
           id, path, title, url, timestamp, seconds, views, 
           uploadDate, ago, image, authorName, authorUrl
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
+        `;
         const values = [
             id,
             path,
@@ -109,8 +134,10 @@ export default class Db {
 
     public getVideoRecord(id: string): VideoDataRecord | null {
         const result = this.db.prepare(`
-    SELECT * FROM yt_videos WHERE id = ?;
-  `).get(id);
+            SELECT *
+            FROM yt_videos
+            WHERE id = ?;
+        `).get(id);
         if (result) {
             return result as unknown as VideoDataRecord;
         } else {
@@ -125,13 +152,12 @@ export default class Db {
     ) {
         const id = crypto.randomUUID();
         const playedAt = new Date();
-        const userName = interaction.user.displayName;
+        const userName = interaction.user.username;
         const guildName = interaction.guild?.name || "N/A";
         const query = `
-        INSERT INTO play_logs (
-          id, videoId, guildId, userId, playedAt, userName, guildName
-        ) VALUES (?, ?, ?, ?, ?, ?, ?);
-    `;
+            INSERT INTO play_logs (id, videoid, guildid, userid, playedat, username, guildname)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        `;
         const values = [
             id,
             videoId,
@@ -150,8 +176,9 @@ export default class Db {
     public clearDatabase() {
         log.warn("Clearing the database...");
         this.db.exec(`
-    DELETE FROM yt_videos;
-  `);
+            DELETE
+            FROM yt_videos;
+        `);
         log.info("Cleared the database.");
     }
 }

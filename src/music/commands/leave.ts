@@ -13,7 +13,7 @@ async function execute(ctx: CommandContext) {
         log.warn(
             `[leave] Command invoked but bot is not in a voice channel (guild ${ctx.guildId})`,
         );
-        await ctx.interaction.reply("I'm not in a voice channel!");
+        await ctx.interaction.followUp("I'm not in a voice channel!");
         return;
     }
 
@@ -21,7 +21,7 @@ async function execute(ctx: CommandContext) {
     NicheBot.disconnectFrom(ctx.guildId);
     log.info(`[leave] Left voice channel in guild ${ctx.guildId}`);
 
-    await ctx.interaction.reply("Left voice channel!");
+    await ctx.interaction.followUp("Left voice channel!");
 }
 
 const leaveCommand = new NicheBotCommand(data, execute, false);
