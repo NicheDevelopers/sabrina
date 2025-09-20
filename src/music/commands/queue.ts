@@ -1,6 +1,6 @@
-import {SlashCommandBuilder} from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
 import EmbedCreator from "../EmbedCreator.ts";
 
 const data = new SlashCommandBuilder()

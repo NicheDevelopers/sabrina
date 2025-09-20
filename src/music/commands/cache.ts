@@ -1,8 +1,8 @@
-import {SlashCommandBuilder} from "discord.js";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
+import { SlashCommandBuilder } from "discord.js";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
 import QueryParser from "../QueryParser.ts";
-import {youTube} from "../youtube/YouTube.ts";
-import {log} from "../../logging.ts";
+import { youTube } from "../youtube/YouTube.ts";
+import { log } from "../../logging.ts";
 
 const data = new SlashCommandBuilder()
     .setName("cache")

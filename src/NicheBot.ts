@@ -1,6 +1,13 @@
-import {VoiceConnection} from "npm:@discordjs/voice";
-import {ChatInputCommandInteraction, Client, GatewayIntentBits, REST, Routes, TextChannel,} from "discord.js";
-import {log} from "./logging.ts";
+import { VoiceConnection } from "npm:@discordjs/voice";
+import {
+    ChatInputCommandInteraction,
+    Client,
+    GatewayIntentBits,
+    REST,
+    Routes,
+    TextChannel,
+} from "discord.js";
+import { log } from "./logging.ts";
 import CommandProvider from "./CommandProvider.ts";
 import {
     createAudioResource,
@@ -8,14 +15,14 @@ import {
     joinVoiceChannel,
     VoiceConnectionStatus,
 } from "npm:@discordjs/voice@0.19.0";
-import {BaseInteraction, Events, VoiceChannel} from "npm:discord.js@14.22.1";
-import {youTube} from "./music/youtube/YouTube.ts";
+import { BaseInteraction, Events, VoiceChannel } from "npm:discord.js@14.22.1";
+import { youTube } from "./music/youtube/YouTube.ts";
 import EmbedCreator from "./music/EmbedCreator.ts";
-import {VideoDataRecord} from "./Db.ts";
-import {GuildStatesManager} from "./GuildStatesManager.ts";
+import { VideoDataRecord } from "./Db.ts";
+import { GuildStatesManager } from "./GuildStatesManager.ts";
 import Utils from "./Utils.ts";
-import {CommandContext} from "./NicheBotCommand.ts";
-import {handleMessageCreate, handleVoiceStateUpdate} from "./analytics/analytics.ts";
+import { CommandContext } from "./NicheBotCommand.ts";
+import { handleMessageCreate, handleVoiceStateUpdate } from "./analytics/analytics.ts";
 
 export const BOT_NAME = Deno.env.get("BOT_NAME") || "NicheBot";
 

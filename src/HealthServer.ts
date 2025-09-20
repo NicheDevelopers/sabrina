@@ -1,4 +1,4 @@
-import {log} from "./logging.ts";
+import { log } from "./logging.ts";
 import NicheBot from "./NicheBot.ts";
 
 export function startHealthServer(): void {

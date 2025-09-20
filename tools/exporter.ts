@@ -1,5 +1,5 @@
 // Zip the audio-files directory and export the database to a file, into one zip
-import {createLogger, format} from "npm:winston@3.17.0";
+import { createLogger, format } from "npm:winston@3.17.0";
 
 const log = createLogger({
     level: "info",

@@ -1,23 +1,28 @@
 services:
-  nichebot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - VERSION=${VERSION:-$(cat VERSION)}
-    restart: unless-stopped
-    environment:
-      - ENV=PROD
-      - HEALTH_PORT=4747
-    env_file:
-      - .env
-    volumes:
-      - ./downloads/youtube:/app/downloads/youtube
-      - ./sabrina.db:/app/sabrina.db
-      - ./logs:/app/logs
-    healthcheck:
-      test: [ "CMD", "sh", "-c", "curl -f http://localhost:$${HEALTH_PORT:-4747}/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    nichebot:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - VERSION=${VERSION:-$(cat VERSION)}
+        restart: unless-stopped
+        environment:
+            - ENV=PROD
+            - HEALTH_PORT=4747
+        env_file:
+            - .env
+        volumes:
+            - ./downloads/youtube:/app/downloads/youtube
+            - ./sabrina.db:/app/sabrina.db
+            - ./logs:/app/logs
+        healthcheck:
+            test: [
+                "CMD",
+                "sh",
+                "-c",
+                "curl -f http://localhost:$${HEALTH_PORT:-4747}/health",
+            ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s

@@ -1,6 +1,6 @@
-import {assertEquals, assertThrows} from "jsr:@std/assert";
-import {beforeEach, describe, it} from "jsr:@std/testing/bdd";
-import SongQueue from "./SongQueue.ts"; // Adjust path as needed
+import { assertEquals, assertThrows } from "jsr:@std/assert";
+import { beforeEach, describe, it } from "jsr:@std/testing/bdd";
+import SongQueue, { LoopType } from "./SongQueue.ts";
 
 interface TestSong {
     id: number;
@@ -28,7 +28,7 @@ describe("SongQueue", () => {
         });
 
         it("should initialize with disabled looping", () => {
-            assertEquals(queue.looping, "disabled");
+            assertEquals(queue.loopType, LoopType.Disabled);
         });
 
         it("should work without callback", () => {
@@ -173,7 +173,7 @@ describe("SongQueue", () => {
         describe("with looping one", () => {
             it("should stay on same song", () => {
                 queue.addSongs([createSong(1), createSong(2)]);
-                queue.setLoopType("one");
+                queue.setLoopType(LoopType.One);
 
                 queue.notifyCurrentSongFinished();
                 assertEquals(queue.getCurrentSong()?.id, 1);
@@ -184,7 +184,7 @@ describe("SongQueue", () => {
 
             it("should not trigger callback when song doesn't change", () => {
                 queue.addSongs([createSong(1)]);
-                queue.setLoopType("one");
+                queue.setLoopType(LoopType.One);
                 songChangeCallbacks = [];
 
                 queue.notifyCurrentSongFinished();
@@ -195,7 +195,7 @@ describe("SongQueue", () => {
         describe("with looping all", () => {
             it("should loop back to start", () => {
                 queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-                queue.setLoopType("all");
+                queue.setLoopType(LoopType.All);
 
                 queue.notifyCurrentSongFinished();
                 assertEquals(queue.getCurrentSong()?.id, 2);
@@ -261,7 +261,7 @@ describe("SongQueue", () => {
         describe("with looping one", () => {
             it("should behave like disabled looping", () => {
                 queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-                queue.setLoopType("one");
+                queue.setLoopType(LoopType.One);
                 queue.skipSongs(1);
 
                 assertEquals(queue.getCurrentSong()?.id, 2);
@@ -270,7 +270,7 @@ describe("SongQueue", () => {
 
             it("should reset when skipping past end", () => {
                 queue.addSongs([createSong(1), createSong(2)]);
-                queue.setLoopType("one");
+                queue.setLoopType(LoopType.One);
 
                 queue.skipSongs(5);
                 assertEquals(queue.getCurrentSong()?.id, undefined);
@@ -281,7 +281,7 @@ describe("SongQueue", () => {
         describe("with looping all", () => {
             it("should wrap around without removing songs", () => {
                 queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-                queue.setLoopType("all");
+                queue.setLoopType(LoopType.All);
 
                 queue.skipSongs(2);
                 assertEquals(queue.getCurrentSong()?.id, 3);
@@ -293,7 +293,7 @@ describe("SongQueue", () => {
 
             it("should handle skip larger than queue length", () => {
                 queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-                queue.setLoopType("all");
+                queue.setLoopType(LoopType.All);
 
                 queue.skipSongs(7); // Skip 7 in queue of 3
                 assertEquals(queue.getCurrentSong()?.id, 2); // (0 + 7) % 3 = 1
@@ -420,14 +420,14 @@ describe("SongQueue", () => {
 
     describe("setLoopType", () => {
         it("should set loop type and return it", () => {
-            assertEquals(queue.setLoopType("one"), "one");
-            assertEquals(queue.looping, "one");
+            assertEquals(queue.setLoopType(LoopType.One), LoopType.One);
+            assertEquals(queue.loopType, LoopType.One);
 
-            assertEquals(queue.setLoopType("all"), "all");
-            assertEquals(queue.looping, "all");
+            assertEquals(queue.setLoopType(LoopType.All), LoopType.All);
+            assertEquals(queue.loopType, LoopType.All);
 
-            assertEquals(queue.setLoopType("disabled"), "disabled");
-            assertEquals(queue.looping, "disabled");
+            assertEquals(queue.setLoopType(LoopType.Disabled), LoopType.Disabled);
+            assertEquals(queue.loopType, LoopType.Disabled);
         });
     });
 
@@ -467,15 +467,15 @@ describe("SongQueue", () => {
             queue.addSongs([createSong(1), createSong(2), createSong(3)]);
 
             // Disabled
-            queue.setLoopType("disabled");
+            queue.setLoopType(LoopType.Disabled);
             assertEquals(queue.nextSongIndexValue(), 1);
 
             // One
-            queue.setLoopType("one");
+            queue.setLoopType(LoopType.One);
             assertEquals(queue.nextSongIndexValue(), 0);
 
             // All
-            queue.setLoopType("all");
+            queue.setLoopType(LoopType.All);
             assertEquals(queue.nextSongIndexValue(), 1);
 
             // All at end
@@ -534,7 +534,7 @@ describe("SongQueue", () => {
             assertEquals(queue.getCurrentSong()?.id, 2); // Index adjusted correctly
 
             // Enable loop all
-            queue.setLoopType("all");
+            queue.setLoopType(LoopType.All);
 
             // Skip multiple songs
             queue.skipSongs(3);

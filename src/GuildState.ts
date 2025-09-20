@@ -1,7 +1,12 @@
-import {AudioPlayer, createAudioPlayer, NoSubscriberBehavior, VoiceConnection,} from "npm:@discordjs/voice";
+import {
+    AudioPlayer,
+    createAudioPlayer,
+    NoSubscriberBehavior,
+    VoiceConnection,
+} from "npm:@discordjs/voice";
 import SongQueue from "./music/SongQueue.ts";
-import {VideoDataRecord} from "./Db.ts";
-import {log} from "./logging.ts";
+import { VideoDataRecord } from "./Db.ts";
+import { log } from "./logging.ts";
 
 export class GuildState {
     public readonly guildId: string;

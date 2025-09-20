@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import {assertEquals} from "jsr:@std/assert";
-import {afterEach, beforeEach, describe, it} from "jsr:@std/testing/bdd";
-import {restore, stub} from "jsr:@std/testing/mock";
+import { assertEquals } from "jsr:@std/assert";
+import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
+import { restore, stub } from "jsr:@std/testing/mock";
 import AudioFileRepository from "./AudioFileRepository.ts";
 
 describe("AudioFileRepository", () => {

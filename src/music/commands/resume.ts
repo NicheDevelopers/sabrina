@@ -1,7 +1,7 @@
-import {SlashCommandBuilder} from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import {log} from "../../logging.ts";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
+import { log } from "../../logging.ts";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
 
 const data = new SlashCommandBuilder()
     .setName("resume")

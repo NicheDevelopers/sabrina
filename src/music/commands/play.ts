@@ -1,11 +1,11 @@
-import {SlashCommandBuilder} from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot.ts";
-import {log} from "../../logging.ts";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
+import { log } from "../../logging.ts";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
 import Utils from "../../Utils.ts";
-import {youTube} from "../youtube/YouTube.ts";
+import { youTube } from "../youtube/YouTube.ts";
 import QueryParser from "../QueryParser.ts";
-import {sabrinaDb} from "../../Db.ts";
+import { sabrinaDb } from "../../Db.ts";
 
 const data = new SlashCommandBuilder()
     .setName("play")

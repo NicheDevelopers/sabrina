@@ -99,10 +99,10 @@ export default class SongQueue<T> {
             return;
         }
 
-        if (this.looping === "disabled" || this.looping === "one") {
+        if (this.looping === LoopType.Disabled || this.looping === LoopType.One) {
             this.currentSongIndex += n;
             if (this.currentSongIndex >= this.queue.length) {
-                if (this.looping === "disabled") {
+                if (this.looping === LoopType.Disabled) {
                     this.queue = [];
                     this.currentSongIndex = 0;
                 } else {
@@ -114,7 +114,7 @@ export default class SongQueue<T> {
             }
         }
 
-        if (this.looping === "all") {
+        if (this.looping === LoopType.All) {
             this.currentSongIndex = (this.currentSongIndex + n) % this.queue.length;
         }
 
@@ -187,6 +187,10 @@ export default class SongQueue<T> {
 
     setLoopType(type: LoopType): LoopType {
         return this.looping = type;
+    }
+
+    get loopType(): LoopType {
+        return this.looping;
     }
 
     getQueue(): readonly T[] {

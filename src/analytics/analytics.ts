@@ -1,6 +1,6 @@
-import {VoiceState} from "discord.js";
-import {log} from "../logging.ts";
-import {Message} from "npm:discord.js@14.22.1";
+import { VoiceState } from "discord.js";
+import { log } from "../logging.ts";
+import { Message } from "npm:discord.js@14.22.1";
 
 interface UserStateChange {
     id: string;

@@ -1,4 +1,4 @@
-import {YtDlp} from "./YtDlp.ts";
+import { YtDlp } from "./YtDlp.ts";
 
 Deno.test("YtDlp Download MP3 Audio Test", async () => {
     const testUrl = "https://www.youtube.com/watch?v=Q470grlq0yQ";

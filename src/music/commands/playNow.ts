@@ -1,10 +1,10 @@
-import {SlashCommandBuilder} from "npm:@discordjs/builders@1.11.3";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand.ts";
+import { SlashCommandBuilder } from "npm:@discordjs/builders@1.11.3";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand.ts";
 import NicheBot from "../../NicheBot.ts";
-import {log} from "../../logging.ts";
+import { log } from "../../logging.ts";
 import QueryParser from "../QueryParser.ts";
-import {youTube} from "../youtube/YouTube.ts";
-import {sabrinaDb} from "../../Db.ts";
+import { youTube } from "../youtube/YouTube.ts";
+import { sabrinaDb } from "../../Db.ts";
 
 const data = new SlashCommandBuilder()
     .setName("playnow")

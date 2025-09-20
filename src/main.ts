@@ -1,8 +1,8 @@
-import {log} from "./logging.ts";
-import NicheBot, {BOT_NAME} from "./NicheBot.ts";
-import {YtDlp} from "./music/youtube/YtDlp.ts";
-import {audioFileRepository} from "./music/AudioFileRepository.ts";
-import {startHealthServer} from "./HealthServer.ts";
+import { log } from "./logging.ts";
+import NicheBot, { BOT_NAME } from "./NicheBot.ts";
+import { YtDlp } from "./music/youtube/YtDlp.ts";
+import { audioFileRepository } from "./music/AudioFileRepository.ts";
+import { startHealthServer } from "./HealthServer.ts";
 
 async function main() {
     try {
