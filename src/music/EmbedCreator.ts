@@ -1,6 +1,6 @@
-import { VideoDataRecord } from "../Db";
-import { EmbedBuilder } from "discord.js";
-import NicheBot, { BOT_NAME } from "../NicheBot";
+import {VideoDataRecord} from "../Db";
+import {EmbedBuilder} from "discord.js";
+import NicheBot, {BOT_NAME} from "../NicheBot";
 import Utils from "../Utils";
 
 export default class EmbedCreator {
@@ -33,7 +33,7 @@ export default class EmbedCreator {
                     inline: true,
                 }
             )
-            .setFooter({ text: "Enjoy!" });
+            .setFooter({text: "Enjoy!"});
     }
 
     public static createQueueEmbed(queue: readonly VideoDataRecord[]): EmbedBuilder {
@@ -49,11 +49,12 @@ export default class EmbedCreator {
             .setColor(this.color)
             .setTitle("Current Queue")
             .setDescription(queueList || "The queue is empty!")
-            .setFooter({ text: `Total songs: ${queue.length}` });
+            .setFooter({text: `Total songs: ${queue.length}`});
     }
 
     public static createAboutEmbed(): EmbedBuilder {
         const gitHubUrl = "https://github.com/NicheDevs/Sabrina";
+        const issuesUrl = "https://github.com/NicheDevelopers/sabrina/issues";
         const authors = ["Michał Miłek", "Artur Gulik"];
         const year = 2025;
         const version = Utils.getVersion();
@@ -64,12 +65,12 @@ export default class EmbedCreator {
             .setTitle(`About ${BOT_NAME}`)
             .setDescription(
                 `${BOT_NAME} is a Discord music bot that plays audio from YouTube links or search terms.\n\n` +
-                    `**Authors:** ${authors.join(", ")}\n` +
-                    `**Source Code:** [GitHub](${gitHubUrl})\n` +
-                    `**Version:** ${version}\n` +
-                    `**Uptime:** ${uptime}\n\n` +
-                    `NicheDevs ${year}`
+                `**Authors:** ${authors.join(", ")}\n` +
+                `**Source Code:** [GitHub](${gitHubUrl})\n` +
+                `**Version:** ${version}\n` +
+                `**Uptime:** ${uptime}\n\n` +
+                `NicheDevs ${year}`
             )
-            .setFooter({ text: `Thank you for using ${BOT_NAME}!` });
+            .setFooter({text: `Thank you for using ${BOT_NAME}! Report bugs on GitHub.`});
     }
 }

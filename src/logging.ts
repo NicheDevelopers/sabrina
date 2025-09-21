@@ -33,7 +33,7 @@ if (LOG_FILE && ENV === "PROD") {
     transports.push(
         // File transport with JSON format
         new winston.transports.File({
-            filename: "logs/nichebot.log",
+            filename: LOG_FILE,
             format: fileFormat,
         }),
     );

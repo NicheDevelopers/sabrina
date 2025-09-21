@@ -1,8 +1,6 @@
 import {ChatInputCommandInteraction, GuildMember, VoiceChannel} from "discord.js";
 import * as fs from "fs";
 
-const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
-const version = packageJson.version;
 
 export default class Utils {
     /* Returns the voice channel of the member who initiated the interaction. */
@@ -14,7 +12,13 @@ export default class Utils {
     }
 
     public static getVersion(): string {
-        return version;
+        try {
+            const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
+            return packageJson.version;
+        } catch (error) {
+            console.error("Error reading package.json:", error);
+            return "unknown";
+        }
     }
 
     public static formatDuration(ms: number): string {

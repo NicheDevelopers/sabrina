@@ -1,6 +1,6 @@
 FROM node:lts-alpine
 
-ARG VERSION=latest
+ARG VERSION=$(npm pkg get version | tr -d '"')
 
 LABEL version=$VERSION
 
@@ -29,9 +29,6 @@ RUN npm run build
 
 # Remove devDependencies after build to reduce image size
 RUN npm prune --production
-
-# Store version in container for runtime access (read from package.json)
-RUN echo "Version: $(jq -r '.version' package.json)" > /app/version.txt
 
 # Create logs directory
 RUN mkdir -p /app/logs

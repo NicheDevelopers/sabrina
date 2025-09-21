@@ -1,13 +1,15 @@
 services:
-  nichebot:
+  bot:
+    image: sabrina:${VERSION}
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - VERSION=$(jq -r '.version' package.json)
+        - VERSION=${VERSION}
     restart: unless-stopped
     environment:
       - ENV=PROD
+      - LOG_FILE=/app/logs/sabrina.log
       - HEALTH_PORT=4747
     env_file:
       - .env
