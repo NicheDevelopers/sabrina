@@ -6,6 +6,16 @@ import Utils from "../Utils";
 export default class EmbedCreator {
     private static color = 0xc71585;
 
+    private static formatThousands(num: number): string {
+        if (num >= 1_000_000) {
+            return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+        }
+        if (num >= 1_000) {
+            return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+        }
+        return num.toString();
+    }
+
     public static createNowPlayingEmbed(videoData: VideoDataRecord): EmbedBuilder {
         return new EmbedBuilder()
             .setColor(this.color)
@@ -19,17 +29,20 @@ export default class EmbedCreator {
             .addFields(
                 {
                     name: "Duration",
-                    value: videoData.timestamp ? `${videoData.timestamp}` : "Unknown",
+                    value: videoData.timestamp ?? "Unknown",
                     inline: true,
                 },
                 {
                     name: "Views",
-                    value: videoData.views ? videoData.views.toString() : "Unknown",
+                    value:
+                        videoData.views !== null
+                            ? this.formatThousands(videoData.views)
+                            : "Unknown",
                     inline: true,
                 },
                 {
                     name: "Uploaded",
-                    value: videoData.uploadDate ?? "Unknown",
+                    value: videoData.ago ?? "Unknown",
                     inline: true,
                 }
             )

@@ -1,9 +1,10 @@
 import sqlite3 from "sqlite3";
-import {open} from "sqlite";
-import {log} from "./logging";
-import {VideoMetadataResult} from "yt-search";
-import {ChatInputCommandInteraction} from "discord.js";
-import {randomUUID} from "crypto";
+import { open } from "sqlite";
+import { log } from "./logging";
+import { VideoMetadataResult } from "yt-search";
+import { ChatInputCommandInteraction } from "discord.js";
+import { randomUUID } from "crypto";
+import { VoiceStateChange } from "./analytics/analytics";
 
 export interface VideoDataRecord {
     id: string;
@@ -52,10 +53,10 @@ export default class Db {
 
         log.info("Initializing database...");
 
-        await this.db.exec(
-            `CREATE TABLE if NOT EXISTS yt_videos (
+        await this.db.exec(`
+            CREATE TABLE IF NOT EXISTS yt_videos (
                 id TEXT PRIMARY KEY,
-                path TEXT, 
+                path TEXT,
                 title TEXT,
                 url TEXT,
                 timestamp TEXT,
@@ -67,32 +68,37 @@ export default class Db {
                 authorName TEXT,
                 authorUrl TEXT
             );
-            `);
+        `);
 
         const result = await this.db.get(`
-            SELECT COUNT(*) AS COUNT
+            SELECT COUNT(*) AS count
             FROM yt_videos;
         `);
         log.info(`Found ${result?.count || 0} entries in the database.`);
 
         await this.db.exec(`
-            CREATE TABLE if NOT EXISTS play_logs (
-                id
-                TEXT
-                PRIMARY
-                KEY,
-                videoId
-                TEXT,
-                guildId
-                TEXT,
-                userId
-                TEXT,
-                playedAt
-                DATETIME,
-                userName
-                TEXT,
-                guildName
-                TEXT
+            CREATE TABLE IF NOT EXISTS play_analytics (
+                id TEXT PRIMARY KEY,
+                videoId TEXT,
+                guildId TEXT,
+                userId TEXT,
+                playedAt DATETIME,
+                userName TEXT,
+                guildName TEXT
+            );
+        `);
+
+        await this.db.exec(`
+            CREATE TABLE IF NOT EXISTS voice_state_analytics (
+                id TEXT PRIMARY KEY,
+                userId TEXT,
+                username TEXT,
+                kind TEXT,
+                channelId TEXT,
+                channelName TEXT,
+                guildId TEXT,
+                guildName TEXT,
+                timestamp DATETIME
             );
         `);
     }
@@ -104,7 +110,7 @@ export default class Db {
     public async insertVideoData(
         id: string,
         path: VideoDataRecord["path"],
-        videoData: VideoMetadataResult | null,
+        videoData: VideoMetadataResult | null
     ): Promise<VideoDataRecord> {
         if (!this.db) throw new Error("Database not initialized");
 
@@ -144,7 +150,7 @@ export default class Db {
                 FROM yt_videos
                 WHERE id = ?;
             `,
-            id,
+            id
         );
 
         if (result) {
@@ -157,16 +163,16 @@ export default class Db {
 
     public async insertPlayLog(
         videoId: string,
-        interaction: ChatInputCommandInteraction,
+        interaction: ChatInputCommandInteraction
     ) {
         if (!this.db) throw new Error("Database not initialized");
 
         const id = randomUUID();
         const playedAt = new Date();
         const userName = interaction.user.username;
-        const guildName = interaction.guild?.name || "N/A";
+        const guildName = interaction.guild?.name || "unknown";
         const query = `
-            INSERT INTO play_logs (id, videoid, guildid, userid, playedat, username, guildname)
+            INSERT INTO play_analytics (id, videoId, guildId, userId, playedAt, userName, guildName)
             VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
         const values = [
@@ -180,7 +186,33 @@ export default class Db {
         ];
         await this.db.run(query, values);
         log.debug(
-            `Logged play of video ${videoId} by user ${userName} in guild ${guildName}.`,
+            `Logged play of video ${videoId} by user ${userName} in guild ${guildName}.`
+        );
+    }
+
+    public async insertVoiceStateLog(voiceStateChange: VoiceStateChange) {
+        if (!this.db) throw new Error("Database not initialized");
+
+        voiceStateChange.id = randomUUID();
+        const query = `
+            INSERT INTO voice_state_analytics (id, userId, username, kind, channelId, channelName, guildId, guildName, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        const values = [
+            voiceStateChange.id,
+            voiceStateChange.userId,
+            voiceStateChange.username,
+            voiceStateChange.kind,
+            voiceStateChange.channelId,
+            voiceStateChange.channelName,
+            voiceStateChange.guildId,
+            voiceStateChange.guildName,
+            voiceStateChange.timestamp.toISOString(),
+        ];
+        await this.db.run(query, values);
+
+        log.debug(
+            `Logged voice state change of user ${voiceStateChange.username} (${voiceStateChange.userId}) - ${voiceStateChange.kind} in channel ${voiceStateChange.channelName} (${voiceStateChange.channelId})`
         );
     }
 

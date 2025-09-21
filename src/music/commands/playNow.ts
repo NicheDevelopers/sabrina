@@ -1,25 +1,19 @@
-import {SlashCommandBuilder} from "@discordjs/builders";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 import NicheBot from "../../NicheBot";
-import {log} from "../../logging";
+import { log } from "../../logging";
 import QueryParser from "../QueryParser";
-import {youTube} from "../youtube/YouTube";
-import {sabrinaDb} from "../../Db";
+import { youTube } from "../youtube/YouTube";
+import { sabrinaDb } from "../../Db";
 
 const data = new SlashCommandBuilder()
     .setName("playnow")
     .setDescription("Play a song immediately")
-    .addStringOption((option) =>
-        option
-            .setName("query")
-            .setDescription("The song to play")
-            .setRequired(true)
+    .addStringOption(option =>
+        option.setName("query").setDescription("The song to play").setRequired(true)
     )
-    .addBooleanOption((option) =>
-        option
-            .setName("skip")
-            .setDescription("Skip the current song")
-            .setRequired(false)
+    .addBooleanOption(option =>
+        option.setName("skip").setDescription("Skip the current song").setRequired(false)
     );
 
 async function execute(ctx: CommandContext) {
@@ -27,13 +21,11 @@ async function execute(ctx: CommandContext) {
         await NicheBot.joinVoiceChannel(ctx.channel!);
     }
 
-    const voiceConnection = NicheBot.getCurrentVoiceConnection(
-        ctx.guildId,
-    );
+    const voiceConnection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
     if (!voiceConnection) {
         await ctx.interaction.followUp("Failed to join the voice channel.");
         log.error(
-            `[playnow] Failed to join voice channel. Voice connection is null after joining (guild ${ctx.guildId})`,
+            `[playnow] Failed to join voice channel. Voice connection is null after joining (guild ${ctx.guildId})`
         );
         return;
     }
@@ -47,9 +39,9 @@ async function execute(ctx: CommandContext) {
         guildState.songQueue.skipSongs(1);
     }
     await ctx.interaction.followUp(`Added **${videoData.title}** to the queue.`);
-    sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
+    await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
     log.info(
-        `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`,
+        `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
     );
 }
 

@@ -1,16 +1,20 @@
 import { Message, VoiceState } from "discord.js";
 import { log } from "../logging";
+import { sabrinaDb } from "../Db";
 
-interface UserStateChange {
-    id: string;
+export interface VoiceStateChange {
+    id?: string;
+    userId: string;
     username: string;
-    kind: UserStateChangeKind;
+    kind: string; // Changed from VoiceStateChangeKind to string to match database
     channelId: string;
     channelName: string;
+    guildId: string;
+    guildName: string;
     timestamp: Date;
 }
 
-enum UserStateChangeKind {
+enum VoiceStateChangeKind {
     JOINED = "joined",
     MOVED = "moved",
     MUTED = "self-muted",
@@ -21,21 +25,21 @@ enum UserStateChangeKind {
 function detectUserStateChangeKind(
     oldState: VoiceState,
     newState: VoiceState
-): UserStateChangeKind | null {
+): VoiceStateChangeKind | null {
     if (!oldState.channelId && newState.channelId) {
-        return UserStateChangeKind.JOINED;
+        return VoiceStateChangeKind.JOINED;
     } else if (!oldState.selfMute && newState.selfMute) {
-        return UserStateChangeKind.MUTED;
+        return VoiceStateChangeKind.MUTED;
     } else if (
         oldState.channelId &&
         newState.channelId &&
         oldState.channelId !== newState.channelId
     ) {
-        return UserStateChangeKind.MOVED;
+        return VoiceStateChangeKind.MOVED;
     } else if (!oldState.streaming && newState.streaming) {
-        return UserStateChangeKind.STREAMING_STARTED;
+        return VoiceStateChangeKind.STREAMING_STARTED;
     } else if (!oldState.selfDeaf && newState.selfDeaf) {
-        return UserStateChangeKind.DEAFENED;
+        return VoiceStateChangeKind.DEAFENED;
     }
     return null;
 }
@@ -52,32 +56,48 @@ export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceStat
         }
 
         const userId = newState.member?.user.id || oldState.member?.user.id;
-
         const username = newState.member?.user.username || oldState.member?.user.username;
-
+        const guildId = newState.guild.id || oldState.guild.id;
+        const guildName = newState.guild.name || oldState.guild.name;
         const channelName = newState.channel?.name || oldState.channel?.name;
-
         const channelId = newState.channelId || oldState.channelId;
 
-        if (!userId || !username || !channelId || !channelName) {
+        if (
+            !userId ||
+            !username ||
+            !channelId ||
+            !channelName ||
+            !guildId ||
+            !guildName
+        ) {
             log.warn(
-                `Missing data in voice state update, cannot log user state change.: userId=${userId}, username=${username}, channelId=${channelId}, channelName=${channelName}`
+                `Missing data in voice state update, cannot log user state change.: userId=${userId}, username=${username}, channelId=${channelId}, channelName=${channelName} guildId=${guildId}, guildName=${guildName}`
             );
             return;
         }
 
-        const userStateChange: UserStateChange = {
-            id: userId,
+        const userStateChange: VoiceStateChange = {
+            userId,
             username,
             kind: stateChangeKind,
-            channelId: channelId,
-            channelName: channelName,
+            guildId,
+            guildName,
+            channelId,
+            channelName,
             timestamp: new Date(),
         };
 
         log.info(
             `[VoiceStateChange] ${userStateChange.username} (${userStateChange.id}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`
         );
+        sabrinaDb
+            .insertVoiceStateLog(userStateChange)
+            .then(() => {
+                log.debug("Voice state change logged to database.");
+            })
+            .catch((err: unknown) => {
+                log.error("Failed to log voice state change to database:", err);
+            });
     } catch (error) {
         log.error("Error handling voice state update:", error);
     }

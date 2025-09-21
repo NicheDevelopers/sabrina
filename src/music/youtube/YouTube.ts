@@ -1,9 +1,13 @@
-import yts, {PlaylistMetadataResult, SearchResult, VideoMetadataResult} from "yt-search";
-import {YtDlp} from "./YtDlp";
-import AudioFileRepository, {audioFileRepository} from "../AudioFileRepository";
-import Db, {sabrinaDb, VideoDataRecord} from "../../Db";
-import {log} from "../../logging";
-import {ParsedQuery, QueryKind} from "../QueryParser";
+import yts, {
+    PlaylistMetadataResult,
+    SearchResult,
+    VideoMetadataResult,
+} from "yt-search";
+import { YtDlp } from "./YtDlp";
+import AudioFileRepository, { audioFileRepository } from "../AudioFileRepository";
+import Db, { sabrinaDb, VideoDataRecord } from "../../Db";
+import { log } from "../../logging";
+import { ParsedQuery, QueryKind } from "../QueryParser";
 import UrlValidator from "../UrlValidator";
 
 export default class YouTube {
@@ -15,9 +19,7 @@ export default class YouTube {
         this.db = Db;
     }
 
-    private async resolveQueryToVideoId(
-        query: ParsedQuery,
-    ): Promise<string> {
+    private async resolveQueryToVideoId(query: ParsedQuery): Promise<string> {
         log.debug(`Resolving query to video ID: ${JSON.stringify(query)}`);
         let videoId: string | null = null;
 
@@ -25,7 +27,6 @@ export default class YouTube {
             videoId = UrlValidator.extractVideoId(new URL(query.payload));
             log.debug(`Extracted video ID from URL: ${videoId}`);
         } else if (query.type === QueryKind.YT_SEARCH) {
-            log.debug(`Performing YouTube search for: ${query.payload}`);
             const video = await this.fetchFirstVideoBySearch(query.payload);
             videoId = video?.videoId || null;
             if (videoId) {
@@ -34,16 +35,13 @@ export default class YouTube {
         }
 
         if (!videoId) {
-            log.error(
-                `Failed to resolve query to video ID: ${JSON.stringify(query)}`,
-            );
+            log.error(`Failed to resolve query to video ID: ${JSON.stringify(query)}`);
             throw new Error("Could not resolve query to a video ID");
         }
         return videoId;
     }
 
     public async handleQuery(query: ParsedQuery): Promise<VideoDataRecord> {
-        log.debug(`Handling query: ${JSON.stringify(query)}`);
         const videoId = await this.resolveQueryToVideoId(query);
 
         let videoRecord = await this.db.getVideoRecord(videoId);
@@ -60,12 +58,12 @@ export default class YouTube {
         if (!videoRecord) {
             log.error(`Failed to retrieve video record after insertion: ${videoId}`);
             throw new Error(
-                "Giga, unrecoverable error, SQLite failed, fucking panic sell everything right now ~ Warren Buffett",
+                "Giga, unrecoverable error, SQLite failed, fucking panic sell everything right now ~ Warren Buffett"
             );
         }
 
         log.info(
-            `Successfully handled query for video: ${videoId} - "${videoData.title}" by ${videoData.author.name}`,
+            `Successfully handled query for video: ${videoId} - "${videoData.title}" by ${videoData.author.name}`
         );
         return videoRecord;
     }
@@ -110,12 +108,12 @@ export default class YouTube {
         const videoData = await this.fetchVideoData(videoId);
 
         log.info(
-            `Starting audio download: ${videoId} - "${videoData.title}" by ${videoData.author.name} (${videoData.duration.timestamp})`,
+            `Starting audio download: ${videoId} - "${videoData.title}" by ${videoData.author.name} (${videoData.duration.timestamp})`
         );
 
         const filePath = await YtDlp.downloadAudio(
             url,
-            AudioFileRepository.audioFolderPath,
+            AudioFileRepository.audioFolderPath
         );
 
         if (!filePath) {
@@ -129,7 +127,7 @@ export default class YouTube {
     }
 
     private async fetchFirstVideoBySearch(
-        query: string,
+        query: string
     ): Promise<VideoMetadataResult | null> {
         log.debug(`Searching YouTube for: ${query}`);
         const results = await yts.search(query);
@@ -139,11 +137,11 @@ export default class YouTube {
             genre: "",
             uploadDate: "",
             thumbnail: "",
-        }
+        };
 
         if (firstVideoAdapted) {
             log.debug(
-                `Search result found: ${firstVideoAdapted.videoId} - "${firstVideoAdapted.title}"`,
+                `Search result found: ${firstVideoAdapted.videoId} - "${firstVideoAdapted.title}"`
             );
         } else {
             log.warn(`No video results found for search: ${query}`);
@@ -157,18 +155,14 @@ export default class YouTube {
         return await yts.search(query);
     }
 
-    public async fetchVideoData(
-        videoId: string,
-    ): Promise<VideoMetadataResult> {
+    public async fetchVideoData(videoId: string): Promise<VideoMetadataResult> {
         log.debug(`Fetching video metadata: ${videoId}`);
-        return await yts.search({videoId});
+        return await yts.search({ videoId });
     }
 
-    public async fetchPlaylistData(
-        listId: string,
-    ): Promise<PlaylistMetadataResult> {
+    public async fetchPlaylistData(listId: string): Promise<PlaylistMetadataResult> {
         log.debug(`Fetching playlist metadata: ${listId}`);
-        return await yts.search({listId});
+        return await yts.search({ listId });
     }
 }
 

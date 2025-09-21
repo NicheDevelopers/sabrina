@@ -1,9 +1,9 @@
-import {log} from "./logging";
-import NicheBot, {BOT_NAME} from "./NicheBot";
-import {YtDlp} from "./music/youtube/YtDlp";
-import {audioFileRepository} from "./music/AudioFileRepository";
-import {startHealthServer} from "./HealthServer";
-import {sabrinaDb} from "./Db";
+import { log } from "./logging";
+import NicheBot, { BOT_NAME } from "./NicheBot";
+import { YtDlp } from "./music/youtube/YtDlp";
+import { audioFileRepository } from "./music/AudioFileRepository";
+import { startHealthServer } from "./HealthServer";
+import { sabrinaDb } from "./Db";
 
 async function main() {
     try {
@@ -18,11 +18,7 @@ async function main() {
         log.info("Starting health server...");
         startHealthServer();
 
-        // Only start the bot after health server is confirmed working
-        log.info("Starting Discord bot...");
         await NicheBot.start();
-
-        log.info(`${BOT_NAME} started successfully!`);
     } catch (error) {
         log.error(`Failed to start ${BOT_NAME}: ${error}`);
         log.error(error);
