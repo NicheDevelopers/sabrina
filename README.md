@@ -5,11 +5,12 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 ## Roadmap
 
 ### v1.1
-
 - [ ] Fix queue bugs
 - [ ] Add more audio sources (Spotify, SoundCloud, etc.)
 - [ ] More embeds and emojis
-- [ ] Support for Polish
+- [ ] Support for Polish language
+- [ ] Add more commands (e.g., lyrics, shuffle, repeat)
+- [ ] Improve logging
 
 ## Configuration
 
