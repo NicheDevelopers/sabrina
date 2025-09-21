@@ -9,7 +9,8 @@ RUN apk update && apk add --no-cache \
 sqlite \
 yt-dlp-core \
 ffmpeg \
-jq
+jq \
+curl
 
 # Set working directory
 WORKDIR /app

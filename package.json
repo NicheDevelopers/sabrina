@@ -9,7 +9,7 @@
     "start": "node --env-file=.env dist/main.js",
     "test": "jest",
     "docker-build": "VERSION=$(jq -r '.version' package.json) docker build --build-arg VERSION=$(jq -r '.version' package.json) -t sabrina:$(jq -r '.version' package.json) -t sabrina:latest .",
-    "docker-up": "VERSION=$(jq -r '.version' package.json) docker-compose up -d --build",
+    "docker-up": "VERSION=$(jq -r '.version' package.json) docker-compose up --build",
     "docker-down": "docker-compose down",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
