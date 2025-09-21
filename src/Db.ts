@@ -52,36 +52,22 @@ export default class Db {
 
         log.info("Initializing database...");
 
-        await this.db.exec(`
-            CREATE TABLE if NOT EXISTS yt_videos (
-                id
-                TEXT
-                PRIMARY
-                KEY,
-                PATH
-                TEXT,
-                title
-                TEXT,
-                url
-                TEXT,
-                TIMESTAMP
-                TEXT,
-                seconds
-                INTEGER,
-                views
-                INTEGER,
-                uploadDate
-                TEXT,
-                ago
-                TEXT,
-                image
-                TEXT,
-                authorName
-                TEXT,
-                authorUrl
-                TEXT
+        await this.db.exec(
+            `CREATE TABLE if NOT EXISTS yt_videos (
+                id TEXT PRIMARY KEY,
+                path TEXT, 
+                title TEXT,
+                url TEXT,
+                timestamp TEXT,
+                seconds INTEGER,
+                views INTEGER,
+                uploadDate TEXT,
+                ago TEXT,
+                image TEXT,
+                authorName TEXT,
+                authorUrl TEXT
             );
-        `);
+            `);
 
         const result = await this.db.get(`
             SELECT COUNT(*) AS COUNT

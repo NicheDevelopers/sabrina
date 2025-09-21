@@ -1,6 +1,16 @@
 import Db from "./Db";
 import {VideoMetadataResult} from "yt-search";
 
+// Mock the logging module to prevent log output during tests
+jest.mock("./logging", () => ({
+    log: {
+        info: jest.fn(),
+        debug: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+    },
+}));
+
 describe("Db", () => {
     // Use an in-memory database for testing
     let db: Db;
