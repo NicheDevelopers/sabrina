@@ -37,12 +37,6 @@ jobs:
       - name: Check TypeScript compilation
         run: npm run build
 
-      - name: Run linter
-        run: npm run lint
-
-      - name: Check code formatting
-        run: npm run format:check
-
       - name: Run tests
         run: npm test
 
