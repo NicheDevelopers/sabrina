@@ -61,4 +61,4 @@ jobs:
         run: npm run build
 
       - name: Test Docker build
-        run: npm run docker-build
+        run: npm run docker:build
