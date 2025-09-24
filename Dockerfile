@@ -1,8 +1,5 @@
 FROM node:lts-alpine
 
-ARG VERSION=$(npm pkg get version | tr -d '"')
-
-LABEL version=$VERSION
 
 # Update package lists and install system dependencies using Alpine's apk
 RUN apk update && apk add --no-cache \
@@ -11,6 +8,8 @@ yt-dlp-core \
 ffmpeg \
 jq \
 curl
+
+RUN yt-dlp --update
 
 # Set working directory
 WORKDIR /app

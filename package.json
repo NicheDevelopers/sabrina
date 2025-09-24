@@ -1,6 +1,6 @@
 {
   "name": "sabrina",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Discord music bot that plays audio from YouTube",
   "main": "dist/main.js",
   "scripts": {
@@ -8,8 +8,8 @@
     "dev": "tsx watch src/main.ts",
     "start": "node --env-file=.env dist/main.js",
     "test": "jest",
-    "docker-build": "VERSION=$(jq -r '.version' package.json) docker build --build-arg VERSION=$(jq -r '.version' package.json) -t sabrina:$(jq -r '.version' package.json) -t sabrina:latest .",
-    "docker-up": "VERSION=$(jq -r '.version' package.json) docker-compose up --build",
+    "docker-build": "docker build -t sabrina:latest .",
+    "docker-up": "docker-compose up --build",
     "docker-down": "docker-compose down",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",

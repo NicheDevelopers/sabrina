@@ -6,7 +6,7 @@ export default class AudioFileRepository {
     public static readonly audioFolderPath = "./downloads/youtube";
 
     private static readonly songRegex =
-        /\[([a-zA-Z0-9_-]{11})\]\.(mp3|m4a|wav|ogg|flac)$/;
+        /\[([a-zA-Z0-9_-]{11})\]\.(mp3|m4a|wav|ogg|flac|opus)$/;
 
     private videos: Map<string, string> = new Map(); // videoId -> filePath
 

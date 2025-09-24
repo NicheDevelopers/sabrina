@@ -2,15 +2,6 @@ name: Build and Push Docker Image
 
 on:
   workflow_dispatch:
-    inputs:
-      push_latest:
-        description: 'Also push as latest tag'
-        required: false
-        default: true
-        type: boolean
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io
@@ -56,15 +47,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.package-version.outputs.version }}
-            type=raw,value=latest
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -74,16 +56,14 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ steps.package-version.outputs.version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Output image details
         run: |
           echo "🐳 Docker image built and pushed successfully!"
-          echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}"
+          echo "📦 Version: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}"
           echo "📦 Latest: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-          echo "🔗 View at: https://github.com/${{ github.repository }}/pkgs/container/${{ github.repository_owner }}%2F${{ github.event.repository.name }}"

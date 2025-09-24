@@ -94,7 +94,7 @@ export default class YouTube {
         const pathFromDisk = this.audioRepo.getPath(existingRecord.id);
 
         if (!pathFromDisk) {
-            log.warn(`Audio file missing from disk, re-downloading: ${videoId}`);
+            log.warn(`Audio file missing from disk, downloading: ${videoId}`);
             return await this.downloadAudio(videoId);
         }
 

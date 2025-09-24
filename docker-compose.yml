@@ -1,11 +1,9 @@
 services:
   bot:
-    image: sabrina:${VERSION}
+    image: sabrina:latest
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - VERSION=${VERSION}
     restart: unless-stopped
     environment:
       - ENV=PROD
