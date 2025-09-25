@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/main.ts",
-    "start": "node --env-file=.env dist/main.js",
+    "start": "node dist/main.js",
     "test": "jest",
     "docker:build": "docker build -t sabrina:latest .",
     "docker:up": "docker-compose up --build",
