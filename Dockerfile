@@ -43,4 +43,4 @@ COPY .env* ./
 EXPOSE 8080
 
 # Command to run the application
-CMD ["npm", "start"]
+CMD ["node", "dist/main.js"]
