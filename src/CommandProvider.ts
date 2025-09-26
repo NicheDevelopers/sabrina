@@ -11,6 +11,7 @@ import aboutCommand from "./music/commands/about";
 import playNowCommand from "./music/commands/playNow";
 import dumpLogsCommand from "./music/commands/dumpLogs";
 import shuffleCommand from "./music/commands/shuffle";
+import loopCommand from "./music/commands/loop";
 
 class CommandProviderClass {
     private commands: Array<NicheBotCommand> = [
@@ -26,6 +27,7 @@ class CommandProviderClass {
         playNowCommand,
         dumpLogsCommand,
         shuffleCommand,
+        loopCommand,
     ];
 
     public getCommand(name: string): NicheBotCommand | undefined {
