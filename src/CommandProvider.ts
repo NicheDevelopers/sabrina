@@ -23,11 +23,11 @@ class CommandProviderClass {
         skipCommand,
         aboutCommand,
         playNowCommand,
-        dumpLogsCommand
+        dumpLogsCommand,
     ];
 
     public getCommand(name: string): NicheBotCommand | undefined {
-        return this.commands.find((cmd) => cmd.data.name === name);
+        return this.commands.find(cmd => cmd.data.name === name);
     }
 
     public getAllCommands(): Array<NicheBotCommand> {

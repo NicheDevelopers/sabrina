@@ -6,6 +6,7 @@ import Utils from "../../Utils";
 import { youTube } from "../youtube/YouTube";
 import QueryParser from "../QueryParser";
 import { sabrinaDb } from "../../Db";
+import YouTubeQueryResolver from "../youtube/YouTubeQueryResolver";
 
 const data = new SlashCommandBuilder()
     .setName("play")
@@ -50,13 +51,29 @@ async function execute(ctx: CommandContext) {
     const guildState = NicheBot.getGuildState(ctx.guildId);
     const input = ctx.interaction.options.getString("query", true);
     const query = QueryParser.parse(input);
-    const videoData = await youTube.handleQuery(query);
-    guildState.songQueue.addSongs([videoData]);
-    await ctx.interaction.followUp(`Added **${videoData.title}** to the queue.`);
-    await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
-    log.info(
-        `[play] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
-    );
+
+    const { videos, errors } = await youTube.handleQuery(query);
+    guildState.songQueue.addSongs(videos);
+
+    if (videos.length === 0) {
+        await ctx.interaction.followUp(`No results found for query: "${input}"`);
+    } else if (videos.length === 1) {
+        await ctx.interaction.followUp(`Added **${videos[0].title}** to the queue.`);
+        await sabrinaDb.insertPlayLog(videos[0].id, ctx.interaction);
+        log.info(
+            `[play] Added video ${videos[0].title} (${videos[0].id}) to queue in guild ${ctx.guildId}`
+        );
+    } else {
+        await ctx.interaction.followUp(`Added ${videos.length} songs to the queue`);
+        await Promise.all(
+            videos.map(data => {
+                log.info(
+                    `[play] Added video ${data.title} (${data.id}) to queue in guild ${ctx.guildId}`
+                );
+                sabrinaDb.insertPlayLog(data.id, ctx.interaction);
+            })
+        );
+    }
 }
 
 const playCommand = new NicheBotCommand(data, execute, true);

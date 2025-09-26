@@ -25,15 +25,27 @@ describe("QueryParser", () => {
                 "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 "https://youtu.be/dQw4w9WgXcQ",
                 "https://music.youtube.com/watch?v=dQw4w9WgXcQ",
-                "https://www.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
                 "https://youtu.be/dQw4w9WgXcQ?t=30",
-                "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
             ];
 
             for (const url of testUrls) {
                 const result = QueryParser.parse(url);
                 expect(result.type).toBe(QueryKind.YT_URL);
                 expect(result.payload).toBe(url);
+            }
+        });
+
+        it("should resolve valid YouTube playlist URLs as YouTube playlist queries", () => {
+            const testPlaylistUrls = [
+                {
+                    input: "https://www.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+                    expectedPayload: "PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
+                },
+            ];
+            for (const testCase of testPlaylistUrls) {
+                const result = QueryParser.parse(testCase.input);
+                expect(result.type).toBe(QueryKind.YT_PLAYLIST);
+                expect(result.payload).toBe(testCase.expectedPayload);
             }
         });
 
