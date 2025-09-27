@@ -5,9 +5,9 @@ const ytDlpPath = "yt-dlp";
 
 export class YtDlp {
     public static init() {
-        !YtDlp.isAvailable()
-            ? log.error("yt-dlp is not installed.")
-            : log.info("yt-dlp is installed.");
+        YtDlp.isAvailable()
+            ? log.info("yt-dlp is installed.")
+            : log.error("yt-dlp is not installed.");
     }
 
     private static isAvailable(): boolean {

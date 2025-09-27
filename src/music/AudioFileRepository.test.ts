@@ -1,8 +1,8 @@
 import AudioFileRepository from "./AudioFileRepository";
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 // Mock fs module
-jest.mock("fs");
+jest.mock("node:fs");
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe("AudioFileRepository", () => {
