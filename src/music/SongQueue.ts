@@ -10,37 +10,54 @@ export default class SongQueue<T> {
     private looping: LoopType = LoopType.Disabled;
 
     private readonly onCurrentSongChanged: (song: T) => Promise<void>;
+    private readonly onQueueEmpty: () => Promise<void>;
 
-    private previousCurrentSong: T | undefined;
+    private previousSong: T | undefined;
 
     private currentSongIndex: number = 0;
 
-    constructor(onCurrentSongChanged?: (song: T) => Promise<void>) {
-        this.onCurrentSongChanged = onCurrentSongChanged ?? (() => Promise.resolve());
+    constructor(
+        onCurrentSongChanged?: (song: T) => Promise<void>,
+        onQueueEmpty?: () => Promise<void>
+    ) {
+        this.onCurrentSongChanged = onCurrentSongChanged ?? (async () => {});
+        this.onQueueEmpty = onQueueEmpty ?? (async () => {});
     }
 
+    /* Checks if the current song has changed and calls the callback if it has */
     private onMaybeSongChanged() {
         const currentSong = this.getCurrentSong();
-        if (!currentSong && this.previousCurrentSong !== undefined) {
-            this.previousCurrentSong = undefined;
+        // No current song, nothing to do
+        if (!currentSong) {
             return;
         }
-        if (currentSong !== this.previousCurrentSong) {
-            this.previousCurrentSong = currentSong;
-            if (currentSong === undefined) {
-                return;
-            }
+
+        const isDifferentThanPrevious = currentSong !== this.previousSong;
+
+        // Only keep the entire queue if looping all
+        if (this.looping === LoopType.Disabled || this.looping === LoopType.One) {
+            this.removeSongsBeforeCurrent();
+        }
+
+        // Queue ended
+        if (!currentSong && this.previousSong !== undefined) {
+            this.reset();
+            return;
+        }
+
+        const shouldContinuePlaying =
+            isDifferentThanPrevious || this.looping !== LoopType.Disabled;
+
+        if (shouldContinuePlaying) {
+            this.previousSong = currentSong;
             this.onCurrentSongChanged(currentSong);
         }
     }
 
     /* Call this method when the current song has finished playing */
     notifyCurrentSongFinished() {
-        const nextIndex = this.nextSongIndexValue();
-        if (nextIndex !== this.currentSongIndex) {
-            this.currentSongIndex = nextIndex;
-            this.onMaybeSongChanged();
-        }
+        this.currentSongIndex = this.nextSongIndexValue();
+        this.onMaybeSongChanged();
     }
 
     /* Adds a song or an array of songs to the end of the queue */
@@ -64,7 +81,6 @@ export default class SongQueue<T> {
             this.currentSongIndex += song.length;
         }
         this.queue.splice(index, 0, ...song);
-        this.onMaybeSongChanged();
     }
 
     getCurrentSong(): T | undefined {
@@ -72,7 +88,8 @@ export default class SongQueue<T> {
     }
 
     nextSongIndexValue(): number {
-        if (this.queue.length === 0) {
+        if (this.isEmpty()) {
+            this.reset();
             return 0;
         }
         if (this.looping === LoopType.Disabled) {
@@ -100,25 +117,22 @@ export default class SongQueue<T> {
             return;
         }
 
-        if (this.looping === LoopType.Disabled || this.looping === LoopType.One) {
-            this.currentSongIndex += n;
-            if (this.currentSongIndex >= this.queue.length) {
-                if (this.looping === LoopType.Disabled) {
-                    this.queue = [];
-                    this.currentSongIndex = 0;
-                } else {
-                    this.reset();
-                }
-            } else {
-                this.queue = this.queue.slice(this.currentSongIndex);
-                this.currentSongIndex = 0;
-            }
-        }
-
         if (this.looping === LoopType.All) {
             this.currentSongIndex = (this.currentSongIndex + n) % this.queue.length;
+            this.onMaybeSongChanged();
+            return;
         }
 
+        this.currentSongIndex += n;
+
+        if (this.currentSongIndex >= this.queue.length) {
+            this.reset();
+            this.onMaybeSongChanged();
+            return;
+        }
+
+        this.removeSongsBeforeCurrent();
+        this.currentSongIndex = 0;
         this.onMaybeSongChanged();
     }
 
@@ -153,7 +167,10 @@ export default class SongQueue<T> {
         if (index < 0 || index >= this.queue.length) {
             throw new Error("Invalid index for queue removal");
         }
-
+        if (index === this.currentSongIndex && this.queue.length === 1) {
+            this.reset();
+            return;
+        }
         if (index < this.currentSongIndex) {
             this.currentSongIndex--;
         } else if (
@@ -164,7 +181,6 @@ export default class SongQueue<T> {
         }
 
         this.queue.splice(index, 1);
-        this.onMaybeSongChanged();
     }
 
     isEmpty() {
@@ -185,9 +201,19 @@ export default class SongQueue<T> {
         }
     }
 
+    private removeSongsBeforeCurrent() {
+        if (this.queue.length === 0) {
+            return;
+        }
+        this.queue = this.queue.slice(this.currentSongIndex);
+        this.currentSongIndex = 0;
+    }
+
     private reset() {
+        this.previousSong = undefined;
         this.currentSongIndex = 0;
         this.queue = [];
+        this.onQueueEmpty();
     }
 
     setLoopType(type: LoopType): LoopType {

@@ -66,11 +66,11 @@ async function execute(ctx: CommandContext) {
     } else {
         await ctx.interaction.followUp(`Added ${videos.length} songs to the queue`);
         await Promise.all(
-            videos.map(data => {
+            videos.map(async data => {
                 log.info(
                     `[play] Added video ${data.title} (${data.id}) to queue in guild ${ctx.guildId}`
                 );
-                sabrinaDb.insertPlayLog(data.id, ctx.interaction);
+                await sabrinaDb.insertPlayLog(data.id, ctx.interaction);
             })
         );
     }

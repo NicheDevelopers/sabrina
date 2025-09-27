@@ -36,9 +36,6 @@ RUN mkdir -p /app/logs
 # Create downloads directory
 RUN mkdir -p /app/downloads
 
-# Copy .env file if it exists (for production)
-COPY .env* ./
-
 # Expose health check port
 EXPOSE 8080
 

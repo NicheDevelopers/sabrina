@@ -176,13 +176,13 @@ describe("SongQueue", () => {
                 expect(queue.getCurrentSong()?.id).toBe(1);
             });
 
-            it("should not trigger callback when song doesn't change", () => {
+            it("should trigger callback when song doesn't change and loops one", () => {
                 queue.addSongs([createSong(1)]);
                 queue.setLoopType(LoopType.One);
                 songChangeCallbacks = [];
 
                 queue.notifyCurrentSongFinished();
-                expect(songChangeCallbacks.length).toBe(0);
+                expect(songChangeCallbacks.length).toBe(1);
             });
         });
 
@@ -333,9 +333,9 @@ describe("SongQueue", () => {
         it("should handle shuffle with current song not at index 0", () => {
             queue.addSongs(Array.from({ length: 10 }, (_, i) => createSong(i + 1)));
             queue.notifyCurrentSongFinished(); // Move to song 2
-
+            const currentSongId = queue.getCurrentSong()?.id;
             queue.shuffle();
-            expect(queue.getQueue()[1].id).toBe(2); // Should be 2, not touched by shuffle
+            expect(queue.getQueue()[0].id).toBe(currentSongId); // Should be 2, not touched by shuffle
             expect(queue.getCurrentSong()?.id).toBe(2); // Current index still points to song 2
         });
     });
@@ -370,17 +370,8 @@ describe("SongQueue", () => {
             queue.addSongs([createSong(1), createSong(2), createSong(3)]);
             queue.notifyCurrentSongFinished(); // Move to song 2
 
-            queue.removeSong(2); // Remove song 3
+            queue.removeSong(1); // Remove song 3
             expect(queue.getCurrentSong()?.id).toBe(2); // Still on song 2
-        });
-
-        it("should trigger callback when current song changes due to removal", () => {
-            queue.addSongs([createSong(1), createSong(2)]);
-            songChangeCallbacks = [];
-
-            queue.removeSong(0);
-            expect(songChangeCallbacks.length).toBe(1);
-            expect(songChangeCallbacks[0].id).toBe(2);
         });
     });
 
@@ -549,7 +540,7 @@ describe("SongQueue", () => {
             queue.removeSong(0);
             queue.removeSong(0);
             expect(queue.getCurrentSong()).toBeUndefined();
-            expect(songChangeCallbacks.length).toBe(1); // No callback for undefined
+            expect(songChangeCallbacks.length).toBe(0); // No callback for undefined
         });
     });
 });

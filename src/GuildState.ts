@@ -1,7 +1,12 @@
-import {AudioPlayer, createAudioPlayer, NoSubscriberBehavior, VoiceConnection,} from "@discordjs/voice";
+import {
+    AudioPlayer,
+    createAudioPlayer,
+    NoSubscriberBehavior,
+    VoiceConnection,
+} from "@discordjs/voice";
 import SongQueue from "./music/SongQueue";
-import {VideoDataRecord} from "./Db";
-import {log} from "./logging";
+import { VideoDataRecord } from "./Db";
+import { log } from "./logging";
 
 export class GuildState {
     public readonly guildId: string;
@@ -12,7 +17,7 @@ export class GuildState {
 
     constructor(
         guildId: string,
-        onSongChange: (guildId: string, song: VideoDataRecord) => Promise<void>,
+        onSongChange: (guildId: string, song: VideoDataRecord) => Promise<void>
     ) {
         this.guildId = guildId;
         this.audioPlayer = createAudioPlayer({
@@ -21,9 +26,14 @@ export class GuildState {
             },
         });
 
-        this.songQueue = new SongQueue<VideoDataRecord>(async (song) => {
+        const onQueueEmpty = async () => {
+            log.debug(`[Guild ${this.guildId}] Song queue is empty.`);
+            this.audioPlayer.stop();
+        };
+
+        this.songQueue = new SongQueue<VideoDataRecord>(async song => {
             await onSongChange(this.guildId, song);
-        });
+        }, onQueueEmpty);
 
         this.setupAudioPlayerEvents();
     }
@@ -31,18 +41,18 @@ export class GuildState {
     private setupAudioPlayerEvents(): void {
         this.audioPlayer.on("stateChange", (oldState, newState) => {
             log.debug(
-                `[Guild ${this.guildId}] Audio player state changed from ${oldState.status} to ${newState.status}`,
+                `[Guild ${this.guildId}] Audio player state changed from ${oldState.status} to ${newState.status}`
             );
 
             if (oldState.status === "playing" && newState.status === "idle") {
                 log.debug(
-                    `[Guild ${this.guildId}] Audio player is idle, playing next song in queue...`,
+                    `[Guild ${this.guildId}] Audio player is idle, playing next song in queue...`
                 );
                 this.songQueue.notifyCurrentSongFinished();
             }
         });
 
-        this.audioPlayer.on("error", (error) => {
+        this.audioPlayer.on("error", error => {
             log.error(`[Guild ${this.guildId}] Audio player error:`, error);
         });
     }
@@ -56,9 +66,11 @@ export class GuildState {
     }
 
     public hasActiveVoiceConnection(): boolean {
-        return this.voiceConnection !== null &&
+        return (
+            this.voiceConnection !== null &&
             this.voiceConnection.state.status !== "destroyed" &&
-            this.voiceConnection.state.status !== "disconnected";
+            this.voiceConnection.state.status !== "disconnected"
+        );
     }
 
     public setVoiceConnection(connection: VoiceConnection | null): void {

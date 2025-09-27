@@ -6,9 +6,10 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 
 ### v1.1
 - [x] Add playlist support
-- [ ] Add more commands - /shuffle, /loop
+- [x] Add more commands - /shuffle, /loop
 - [ ] Fix queue bugs
 - [x] Fix Docker Compose build versioning
+- [ ] Other minor bug fixes
 
 ### v1.2
 - [ ] Auto-disconnect after inactivity

@@ -16,18 +16,19 @@ import {
     TextChannel,
     VoiceChannel,
 } from "discord.js";
-import {log} from "./logging";
+import { log } from "./logging";
 import CommandProvider from "./CommandProvider";
-import {youTube} from "./music/youtube/YouTube";
+import { youTube } from "./music/youtube/YouTube";
 import EmbedCreator from "./music/EmbedCreator";
-import {VideoDataRecord} from "./Db";
-import {GuildStatesManager} from "./GuildStatesManager";
+import { VideoDataRecord } from "./Db";
+import { GuildStatesManager } from "./GuildStatesManager";
 import Utils from "./Utils";
-import {CommandContext} from "./NicheBotCommand";
-import {handleMessageCreate, handleVoiceStateUpdate} from "./analytics/analytics";
-import {APPLICATION_ID, BOT_NAME, SECRET_TOKEN} from "./Config";
+import { CommandContext } from "./NicheBotCommand";
+import { handleMessageCreate, handleVoiceStateUpdate } from "./analytics/analytics";
+import { APPLICATION_ID, BOT_NAME, SECRET_TOKEN } from "./Config";
+import { LoopType } from "./music/SongQueue";
 
-export {BOT_NAME};
+export { BOT_NAME };
 
 class NicheBotClass {
     private readonly guildStatesManager: GuildStatesManager;
@@ -45,7 +46,7 @@ class NicheBotClass {
         // Initialize the guild states manager with the song change callback
         this.guildStatesManager = new GuildStatesManager(
             async (guildId: string, song: VideoDataRecord) =>
-                await this.playFromQueue(guildId, song),
+                await this.playFromQueue(guildId, song)
         );
 
         this.validateConfig();
@@ -57,7 +58,7 @@ class NicheBotClass {
 
     public async start() {
         await this.refreshCommands();
-        this.client.once(Events.ClientReady, (c) => {
+        this.client.once(Events.ClientReady, c => {
             log.info(`Ready! Logged in as ${c.user.tag}`);
         });
         await this.client.login(this.token);
@@ -68,16 +69,13 @@ class NicheBotClass {
      * Register slash commands with Discord API, so that the members can see them.
      */
     private async refreshCommands() {
-        const commandData = CommandProvider.getAllCommands().map((c) => c.data.toJSON());
+        const commandData = CommandProvider.getAllCommands().map(c => c.data.toJSON());
         log.info(`Registering ${commandData.length} commands...`);
-        const rest = new REST({version: "10"}).setToken(this.token);
+        const rest = new REST({ version: "10" }).setToken(this.token);
 
-        const postCommands = rest.put(
-            Routes.applicationCommands(this.appId),
-            {
-                body: commandData,
-            },
-        );
+        const postCommands = rest.put(Routes.applicationCommands(this.appId), {
+            body: commandData,
+        });
 
         log.info("Refreshing application (/) commands.");
         await Promise.all([postCommands]);
@@ -101,7 +99,12 @@ class NicheBotClass {
             return;
         }
 
-        await interaction.deferReply();
+        try {
+            await interaction.deferReply();
+        } catch (error) {
+            log.error("Failed to defer interaction reply:", error);
+            return;
+        }
 
         const command = CommandProvider.getCommand(interaction.commandName);
         if (!command) {
@@ -118,7 +121,7 @@ class NicheBotClass {
             channel = Utils.getVoiceChannelFromInteraction(interaction);
             if (!channel) {
                 log.warn(
-                    `[play] Failed to obtain user voice channel (guild ${interaction.guildId})`,
+                    `[play] Failed to obtain user voice channel (guild ${interaction.guildId})`
                 );
                 await interaction.followUp("Cannot get the channel you're in!");
                 return;
@@ -126,17 +129,15 @@ class NicheBotClass {
         }
 
         log.info(
-            `COMMAND ${command.data.name} by ${interaction.user.tag} in guild ${interaction.guildId}`,
+            `COMMAND ${command.data.name} by ${interaction.user.tag} in guild ${interaction.guildId}`
         );
 
         // Update the last interaction channel for this guild
-        const guildState = NicheBot.guildStatesManager.getGuildState(
-            interaction.guildId,
-        );
+        const guildState = NicheBot.guildStatesManager.getGuildState(interaction.guildId);
         guildState.setLastInteractionChannel(interaction.channelId);
 
         log.debug(
-            `Set last interaction channel for guild ${interaction.guildId} to: ${interaction.channelId}`,
+            `Set last interaction channel for guild ${interaction.guildId} to: ${interaction.channelId}`
         );
 
         try {
@@ -156,8 +157,8 @@ class NicheBotClass {
     }
 
     /* Gracefully shut down the bot.
-    * Cleans up resources and disconnects from Discord.
-   */
+     * Cleans up resources and disconnects from Discord.
+     */
     private shutdown() {
         if (this.isShuttingDown) return;
         this.isShuttingDown = true;
@@ -177,9 +178,9 @@ class NicheBotClass {
     }
 
     /* Connect to a voice channel.
-    * Returns a promise that resolves when the connection is ready.
-    * Rejects if the connection fails or times out.
-   */
+     * Returns a promise that resolves when the connection is ready.
+     * Rejects if the connection fails or times out.
+     */
     public joinVoiceChannel(channel: VoiceChannel): Promise<void> {
         const guildId = channel.guildId;
         const guildState = this.guildStatesManager.getGuildState(guildId);
@@ -218,8 +219,8 @@ class NicheBotClass {
     }
 
     /* Disconnect from the current voice channel.
-    * Cleans up the voice connection and resets state.
-   */
+     * Cleans up the voice connection and resets state.
+     */
     public disconnectFrom(guildId: string): void {
         const guildState = this.guildStatesManager.getGuildState(guildId);
         const voiceConnection = this.getCurrentVoiceConnection(guildId);
@@ -248,7 +249,7 @@ class NicheBotClass {
 
         if (missing.length > 0) {
             throw new Error(
-                `Missing required environment variables: ${missing.join(", ")}`,
+                `Missing required environment variables: ${missing.join(", ")}`
             );
         }
     }
@@ -266,51 +267,56 @@ class NicheBotClass {
 
     public async playFromQueue(
         guildId: string,
-        videoData: VideoDataRecord,
+        videoData: VideoDataRecord
     ): Promise<void> {
-        const guildState = this.guildStatesManager.getGuildState(guildId);
-
-        if (!videoData) {
-            this.disconnectFrom(guildId);
-            return;
-        }
-
-        log.debug(`[Guild ${guildId}] PLAY FROM QUEUE: Now playing: ${videoData.title}`);
-
-        if (!videoData.path) {
-            videoData.path = await youTube.findLocalOrDownload(videoData.id);
-        }
-
-        const audioResource = createAudioResource(videoData.path);
-        const paused = guildState.audioPlayer.state.status === "paused";
-
-        // Use the guild-specific audio player
-        guildState.audioPlayer.play(audioResource);
-        if (paused) guildState.audioPlayer.pause();
-
-        log.debug(`[Guild ${guildId}] Playing ${JSON.stringify(videoData, null, 2)}`);
-
-        // Send "now playing" message to the guild's last interaction channel
-        const channelId = guildState.getLastInteractionChannel();
-        if (!channelId) {
-            log.warn(
-                `[Guild ${guildId}] No last interaction channel found, cannot send now playing message`,
-            );
-            return;
-        }
-
         try {
-            const channel = await this.getChannel(channelId);
-            const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
-            await channel.send({embeds: [nowPlaying]});
+            const guildState = this.guildStatesManager.getGuildState(guildId);
+
+            if (!videoData) {
+                this.disconnectFrom(guildId);
+                return;
+            }
+
             log.debug(
-                `[Guild ${guildId}] Sent now playing message to channel ${channelId}`,
+                `[Guild ${guildId}] PLAY FROM QUEUE: Now playing: ${videoData.title}`
             );
+
+            // Immediately stop any current playback
+            guildState.audioPlayer.stop();
+
+            if (!videoData.path) {
+                videoData.path = await youTube.findLocalOrDownload(videoData.id);
+            }
+
+            const audioResource = createAudioResource(videoData.path);
+            const isPaused = guildState.audioPlayer.state.status === "paused";
+
+            // Use the guild-specific audio player
+            guildState.audioPlayer.play(audioResource);
+            if (isPaused) guildState.audioPlayer.pause();
+
+            log.debug(`[Guild ${guildId}] Playing ${JSON.stringify(videoData, null, 2)}`);
+
+            // Send "now playing" message to the guild's last interaction channel
+            const channelId = guildState.getLastInteractionChannel();
+            if (!channelId) {
+                log.warn(
+                    `[Guild ${guildId}] No last interaction channel found, cannot send now playing message`
+                );
+                return;
+            }
+
+            const channel = await this.getChannel(channelId);
+            if (guildState.songQueue.loopType === LoopType.One) {
+                const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
+                await channel.send({ embeds: [nowPlaying] });
+                log.debug(
+                    `[Guild ${guildId}] Sent now playing message to channel ${channelId}`
+                );
+            }
         } catch (error) {
-            log.error(
-                `[Guild ${guildId}] Failed to send now playing message to channel ${channelId}:`,
-                error,
-            );
+            log.error(`[Guild ${guildId}] Error in playFromQueue:`, error);
+            return;
         }
     }
 
