@@ -9,8 +9,6 @@ ffmpeg \
 jq \
 curl
 
-RUN yt-dlp --update
-
 # Set working directory
 WORKDIR /app
 
