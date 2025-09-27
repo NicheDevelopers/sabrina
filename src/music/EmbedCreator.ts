@@ -2,9 +2,10 @@ import { VideoDataRecord } from "../Db";
 import { EmbedBuilder } from "discord.js";
 import NicheBot, { BOT_NAME } from "../NicheBot";
 import Utils from "../Utils";
+import { YtDlp } from "./youtube/YtDlp";
 
 export default class EmbedCreator {
-    private static color = 0xc71585;
+    private static readonly color = 0xc71585;
 
     private static formatThousands(num: number): string {
         if (num >= 1_000_000) {
@@ -81,6 +82,7 @@ export default class EmbedCreator {
                     `**Source Code:** [GitHub](${gitHubUrl})\n` +
                     `**Version:** ${version}\n` +
                     `**Uptime:** ${uptime}\n\n` +
+                    `**yt-dlp version:** ${YtDlp.getVersion()}\n` +
                     `NicheDevs ${year}`
             )
             .setFooter({

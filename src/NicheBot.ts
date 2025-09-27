@@ -33,14 +33,14 @@ export { BOT_NAME };
 class NicheBotClass {
     private readonly guildStatesManager: GuildStatesManager;
 
-    private token: string = SECRET_TOKEN;
-    private appId: string = APPLICATION_ID;
+    private readonly token: string = SECRET_TOKEN;
+    private readonly appId: string = APPLICATION_ID;
 
-    private client: Client = this.makeClient();
+    private readonly client: Client = this.makeClient();
 
     private isShuttingDown: boolean = false;
 
-    private startupTimestamp: number = Date.now();
+    private readonly startupTimestamp: number = Date.now();
 
     constructor() {
         // Initialize the guild states manager with the song change callback

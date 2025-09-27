@@ -1,16 +1,16 @@
-import {GuildState} from "./GuildState";
-import {VideoDataRecord} from "./Db";
-import {log} from "./logging";
+import { GuildState } from "./GuildState";
+import { VideoDataRecord } from "./Db";
+import { log } from "./logging";
 
 export class GuildStatesManager {
     private guildStates = new Map<string, GuildState>();
-    private onSongChangeCallback: (
+    private readonly onSongChangeCallback: (
         guildId: string,
-        song: VideoDataRecord,
+        song: VideoDataRecord
     ) => Promise<void>;
 
     constructor(
-        onSongChangeCallback: (guildId: string, song: VideoDataRecord) => Promise<void>,
+        onSongChangeCallback: (guildId: string, song: VideoDataRecord) => Promise<void>
     ) {
         this.onSongChangeCallback = onSongChangeCallback;
     }

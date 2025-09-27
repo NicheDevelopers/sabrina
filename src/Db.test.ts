@@ -1,5 +1,5 @@
 import Db from "./Db";
-import {VideoMetadataResult} from "yt-search";
+import { VideoMetadataResult } from "yt-search";
 
 // Mock the logging module to prevent log output during tests
 jest.mock("./logging", () => ({
@@ -26,8 +26,8 @@ describe("Db", () => {
         if (db && db.db) {
             try {
                 await db.db.close();
-            } catch (_e) {
-                // Ignore errors on close
+            } catch (error) {
+                console.error("Failed to close the database after test", error);
             }
         }
     });

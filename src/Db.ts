@@ -3,7 +3,7 @@ import { open } from "sqlite";
 import { log } from "./logging";
 import { VideoMetadataResult } from "yt-search";
 import { ChatInputCommandInteraction } from "discord.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { VoiceStateChange } from "./analytics/analytics";
 
 export interface VideoDataRecord {
@@ -34,7 +34,7 @@ export interface PlayLogRecord {
 export default class Db {
     db: any = null;
 
-    public constructor(private databaseName: string) {
+    public constructor(private readonly databaseName: string) {
         log.info(`Database will connect to ${databaseName}`);
     }
 

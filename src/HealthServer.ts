@@ -1,9 +1,10 @@
 import { log } from "./logging";
-import * as http from "http";
+import * as http from "node:http";
 import NicheBot from "./NicheBot";
+import { HEALTH_PORT } from "./Config";
 
 export function startHealthServer(): void {
-    const port = parseInt(process.env["HEALTH_PORT"] || "8080");
+    const port = HEALTH_PORT;
     try {
         const server = http.createServer((req, res) => {
             const url = new URL(req.url || "", `http://localhost:${port}`);

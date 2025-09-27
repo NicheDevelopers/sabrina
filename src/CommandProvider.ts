@@ -14,7 +14,7 @@ import shuffleCommand from "./music/commands/shuffle";
 import loopCommand from "./music/commands/loop";
 
 class CommandProviderClass {
-    private commands: Array<NicheBotCommand> = [
+    private readonly commands: Array<NicheBotCommand> = [
         joinCommand,
         leaveCommand,
         cacheCommand,
