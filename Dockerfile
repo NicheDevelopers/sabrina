@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:22-alpine
 
 
 # Update package lists and install system dependencies using Alpine's apk
