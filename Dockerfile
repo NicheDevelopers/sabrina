@@ -1,41 +1,35 @@
-FROM node:22-alpine
+FROM node:22
 
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    ffmpeg \
+    jq \
+    wget \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Update package lists and install system dependencies using Alpine's apk
-RUN apk update && apk add --no-cache \
-sqlite \
-yt-dlp-core \
-ffmpeg \
-jq \
-curl
+RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+    && chmod a+rx yt-dlp \
+    && mv yt-dlp /usr/local/bin/yt-dlp \
+    && yt-dlp --update-to master
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install ALL dependencies (including devDependencies for building)
 RUN npm ci
 
-# Copy source code
 COPY src/ ./src/
 
-# Build TypeScript
 RUN npm run build
 
-# Remove devDependencies after build to reduce image size
 RUN npm prune --production
 
-# Create logs directory
 RUN mkdir -p /app/logs
 
-# Create downloads directory
 RUN mkdir -p /app/downloads
 
-# Expose health check port
 EXPOSE 8080
 
-# Command to run the application
 CMD ["node", "dist/main.js"]
