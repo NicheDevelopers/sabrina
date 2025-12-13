@@ -285,7 +285,36 @@ class NicheBotClass {
             guildState.audioPlayer.stop();
 
             if (!videoData.path) {
-                videoData.path = await youTube.findLocalOrDownload(videoData.id);
+                try {
+                    videoData.path = await youTube.findLocalOrDownload(videoData.id);
+                } catch (downloadError) {
+                    log.error(
+                        `[Guild ${guildId}] Failed to download video ${videoData.id}:`,
+                        downloadError
+                    );
+
+                    const channelId = guildState.getLastInteractionChannel();
+                    if (channelId) {
+                        try {
+                            const channel = await this.getChannel(channelId);
+                            const errorMessage =
+                                downloadError instanceof Error
+                                    ? downloadError.message
+                                    : String(downloadError);
+                            await channel.send(
+                                `Failed to download video: **${videoData.title}**\nError: ${errorMessage}\nSkipping to next song...`
+                            );
+                        } catch (channelError) {
+                            log.error(
+                                `[Guild ${guildId}] Failed to send download error message:`,
+                                channelError
+                            );
+                        }
+                    }
+
+                    guildState.songQueue.skipSongs(1);
+                    return;
+                }
             }
 
             const audioResource = createAudioResource(videoData.path);

@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g deno
+
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
     && chmod a+rx yt-dlp \
     && mv yt-dlp /usr/local/bin/yt-dlp \
