@@ -1,5 +1,6 @@
 services:
-  bot:
+  sabrina:
+    container_name: sabrina
     image: sabrina:latest
     build:
       context: .
