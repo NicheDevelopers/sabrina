@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
 import { enqueueFromQuery } from "./enqueueFromQuery";
 
 const data = new SlashCommandBuilder()

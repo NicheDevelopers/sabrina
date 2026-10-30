@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, Message, MessageType, VoiceState } from "discord.js";
 import { log } from "../logging";
 import { sabrinaDb } from "../Db";
-import { MessageLogRecord, VideoDataRecord } from "../Db";
+import type { MessageLogRecord, VideoDataRecord } from "../Db";
 import { randomUUID } from "node:crypto";
 
 export interface VoiceStateChange {
@@ -16,13 +16,15 @@ export interface VoiceStateChange {
   timestamp: Date;
 }
 
-enum VoiceStateChangeKind {
-  JOINED = "joined",
-  MOVED = "moved",
-  MUTED = "self-muted",
-  STREAMING_STARTED = "started streaming",
-  DEAFENED = "self-deafened",
-}
+const VoiceStateChangeKind = {
+  JOINED: "joined",
+  MOVED: "moved",
+  MUTED: "self-muted",
+  STREAMING_STARTED: "started streaming",
+  DEAFENED: "self-deafened",
+} as const;
+
+type VoiceStateChangeKind = (typeof VoiceStateChangeKind)[keyof typeof VoiceStateChangeKind];
 
 function detectUserStateChangeKind(
   oldState: VoiceState,
@@ -47,19 +49,17 @@ function detectUserStateChangeKind(
 }
 
 /* Failing to record a play should never fail the command that started it */
-export async function logPlays(
+export function logPlays(
   videos: readonly VideoDataRecord[],
   interaction: ChatInputCommandInteraction,
-): Promise<void> {
-  await Promise.all(
-    videos.map(async (video) => {
-      try {
-        await sabrinaDb.insertPlayLog(video.id, interaction);
-      } catch (error) {
-        log.error(`Failed to log play of video ${video.id}:`, error);
-      }
-    }),
-  );
+): void {
+  for (const video of videos) {
+    try {
+      sabrinaDb.insertPlayLog(video.id, interaction);
+    } catch (error) {
+      log.error(`Failed to log play of video ${video.id}:`, error);
+    }
+  }
 }
 
 export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
@@ -101,14 +101,7 @@ export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceStat
     log.info(
       `[VoiceStateChange] ${userStateChange.username} (${userStateChange.userId}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`,
     );
-    sabrinaDb
-      .insertVoiceStateLog(userStateChange)
-      .then(() => {
-        log.debug("Voice state change logged to database.");
-      })
-      .catch((err: unknown) => {
-        log.error("Failed to log voice state change to database:", err);
-      });
+    sabrinaDb.insertVoiceStateLog(userStateChange);
   } catch (error) {
     log.error("Error handling voice state update:", error);
   }
@@ -174,14 +167,7 @@ export function handleMessageCreate(message: Message) {
       `[Message] ${record.userName} in #${record.channelName} (${record.guildName}) - ${record.contentLength} chars`,
     );
 
-    sabrinaDb
-      .insertMessageLog(record)
-      .then(() => {
-        log.debug("Message logged to database.");
-      })
-      .catch((err: unknown) => {
-        log.error("Failed to log message to database:", err);
-      });
+    sabrinaDb.insertMessageLog(record);
   } catch (error) {
     log.error("Error handling message create:", error);
   }

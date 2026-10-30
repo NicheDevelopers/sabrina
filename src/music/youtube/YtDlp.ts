@@ -1,4 +1,4 @@
-import { VideoMetadata } from "../../Db";
+import type { VideoMetadata } from "../../Db";
 import { log } from "../../logging";
 import { spawn, spawnSync } from "child_process";
 
@@ -40,180 +40,175 @@ function toVideoMetadata(video: YtDlpVideo): VideoMetadata {
   };
 }
 
-export class YtDlp {
-  public static init() {
-    if (YtDlp.isAvailable()) {
-      log.info("yt-dlp is installed.");
-    } else {
-      log.error("yt-dlp is not installed.");
-    }
+export function init() {
+  if (isAvailable()) {
+    log.info("yt-dlp is installed.");
+  } else {
+    log.error("yt-dlp is not installed.");
   }
+}
 
-  private static isAvailable(): boolean {
-    try {
-      const result = spawnSync(ytDlpPath, ["--version"], {
-        stdio: "ignore",
-      });
-      return result.status === 0;
-    } catch {
-      return false;
-    }
-  }
-
-  /* Keeps yt-dlp current without blocking startup, since YouTube changes often break old versions */
-  public static startAutoUpdate() {
-    void YtDlp.update();
-    setInterval(() => void YtDlp.update(), UPDATE_INTERVAL_MS).unref();
-  }
-
-  public static update(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const updater = spawn(ytDlpPath, ["--update-to", "master"], {
-        timeout: UPDATE_TIMEOUT_MS,
-      });
-
-      let output = "";
-      updater.stdout.on("data", (data) => {
-        output += data.toString();
-      });
-      updater.stderr.on("data", (data) => {
-        output += data.toString();
-      });
-
-      updater.on("close", (code) => {
-        if (code === 0) {
-          log.info(`yt-dlp update check finished: ${output.trim()}`);
-        } else {
-          log.warn(`yt-dlp update failed with code ${code}: ${output.trim()}`);
-        }
-        resolve(code === 0);
-      });
-
-      updater.on("error", (error) => {
-        log.warn(`yt-dlp update failed: ${error}`);
-        resolve(false);
-      });
+function isAvailable(): boolean {
+  try {
+    const result = spawnSync(ytDlpPath, ["--version"], {
+      stdio: "ignore",
     });
+    return result.status === 0;
+  } catch {
+    return false;
   }
+}
 
-  public static async fetchVideo(url: string): Promise<VideoMetadata> {
-    const [video] = await YtDlp.fetchMetadata(["--no-playlist", url]);
-    if (!video) {
-      throw new Error(`yt-dlp returned no video for ${url}`);
-    }
-    return video;
-  }
+/* Keeps yt-dlp current without blocking startup, since YouTube changes often break old versions */
+export function startAutoUpdate() {
+  void update();
+  setInterval(() => void update(), UPDATE_INTERVAL_MS).unref();
+}
 
-  public static search(query: string): Promise<VideoMetadata[]> {
-    return YtDlp.fetchMetadata(["--no-playlist", `ytsearch1:${query}`]);
-  }
-
-  /* Flat, so that a whole playlist takes one request instead of one per video */
-  public static fetchPlaylist(listId: string): Promise<VideoMetadata[]> {
-    return YtDlp.fetchMetadata([
-      "--flat-playlist",
-      `https://www.youtube.com/playlist?list=${listId}`,
-    ]);
-  }
-
-  private static fetchMetadata(args: string[]): Promise<VideoMetadata[]> {
-    return new Promise((resolve, reject) => {
-      const fetcher = spawn(ytDlpPath, ["--dump-json", ...args], {
-        timeout: METADATA_TIMEOUT_MS,
-      });
-
-      let stdout = "";
-      let stderr = "";
-
-      fetcher.stdout.on("data", (data) => {
-        stdout += data.toString();
-      });
-
-      fetcher.stderr.on("data", (data) => {
-        stderr += data.toString();
-      });
-
-      fetcher.on("close", (code) => {
-        if (code !== 0) {
-          reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`));
-          return;
-        }
-
-        try {
-          const lines = stdout.split("\n").filter((line) => line.trim() !== "");
-          resolve(lines.map((line) => toVideoMetadata(JSON.parse(line) as YtDlpVideo)));
-        } catch (error) {
-          reject(error as Error);
-        }
-      });
-
-      fetcher.on("error", reject);
+export function update(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const updater = spawn(ytDlpPath, ["--update-to", "master"], {
+      timeout: UPDATE_TIMEOUT_MS,
     });
-  }
 
-  public static async downloadAudio(url: string, outputDir: string): Promise<string | null> {
-    const outputTemplate = `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
-
-    return new Promise((resolve) => {
-      const process = spawn(ytDlpPath, [
-        "-x",
-        "--print",
-        "after_move:filepath",
-        "-o",
-        outputTemplate,
-        url,
-      ]);
-
-      let stdout = "";
-      let stderr = "";
-
-      process.stdout.on("data", (data) => {
-        stdout += data.toString();
-      });
-
-      process.stderr.on("data", (data) => {
-        stderr += data.toString();
-      });
-
-      process.on("close", (code) => {
-        if (code !== 0) {
-          log.error(`yt-dlp failed with code ${code}: ${stderr}`);
-          resolve(null);
-          return;
-        }
-
-        const path = stdout.trim();
-        if (!path) {
-          log.error("Could not find downloaded file path in yt-dlp output.");
-          resolve(null);
-          return;
-        }
-
-        log.info(`Downloaded audio to ${path}`);
-        resolve(path);
-      });
-
-      process.on("error", (error) => {
-        log.error(`yt-dlp process error: ${error}`);
-        resolve(null);
-      });
+    let output = "";
+    updater.stdout.on("data", (data) => {
+      output += data.toString();
     });
-  }
+    updater.stderr.on("data", (data) => {
+      output += data.toString();
+    });
 
-  public static getVersion(): string | null {
-    try {
-      const result = spawnSync(ytDlpPath, ["--version"], {
-        encoding: "utf-8",
-      });
-      if (result.status === 0) {
-        return result.stdout.trim();
+    updater.on("close", (code) => {
+      if (code === 0) {
+        log.info(`yt-dlp update check finished: ${output.trim()}`);
       } else {
-        log.error(`yt-dlp version check failed with code ${result.status}`);
-        return null;
+        log.warn(`yt-dlp update failed with code ${code}: ${output.trim()}`);
       }
-    } catch (error) {
-      log.error(`Error checking yt-dlp version: ${error}`);
+      resolve(code === 0);
+    });
+
+    updater.on("error", (error) => {
+      log.warn(`yt-dlp update failed: ${error}`);
+      resolve(false);
+    });
+  });
+}
+
+export async function fetchVideo(url: string): Promise<VideoMetadata> {
+  const [video] = await fetchMetadata(["--no-playlist", url]);
+  if (!video) {
+    throw new Error(`yt-dlp returned no video for ${url}`);
+  }
+  return video;
+}
+
+export function search(query: string): Promise<VideoMetadata[]> {
+  return fetchMetadata(["--no-playlist", `ytsearch1:${query}`]);
+}
+
+/* Flat, so that a whole playlist takes one request instead of one per video */
+export function fetchPlaylist(listId: string): Promise<VideoMetadata[]> {
+  return fetchMetadata(["--flat-playlist", `https://www.youtube.com/playlist?list=${listId}`]);
+}
+
+function fetchMetadata(args: string[]): Promise<VideoMetadata[]> {
+  return new Promise((resolve, reject) => {
+    const fetcher = spawn(ytDlpPath, ["--dump-json", ...args], {
+      timeout: METADATA_TIMEOUT_MS,
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    fetcher.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    fetcher.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    fetcher.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`));
+        return;
+      }
+
+      try {
+        const lines = stdout.split("\n").filter((line) => line.trim() !== "");
+        resolve(lines.map((line) => toVideoMetadata(JSON.parse(line) as YtDlpVideo)));
+      } catch (error) {
+        reject(error as Error);
+      }
+    });
+
+    fetcher.on("error", reject);
+  });
+}
+
+export async function downloadAudio(url: string, outputDir: string): Promise<string | null> {
+  const outputTemplate = `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
+
+  return new Promise((resolve) => {
+    const process = spawn(ytDlpPath, [
+      "-x",
+      "--print",
+      "after_move:filepath",
+      "-o",
+      outputTemplate,
+      url,
+    ]);
+
+    let stdout = "";
+    let stderr = "";
+
+    process.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    process.on("close", (code) => {
+      if (code !== 0) {
+        log.error(`yt-dlp failed with code ${code}: ${stderr}`);
+        resolve(null);
+        return;
+      }
+
+      const path = stdout.trim();
+      if (!path) {
+        log.error("Could not find downloaded file path in yt-dlp output.");
+        resolve(null);
+        return;
+      }
+
+      log.info(`Downloaded audio to ${path}`);
+      resolve(path);
+    });
+
+    process.on("error", (error) => {
+      log.error(`yt-dlp process error: ${error}`);
+      resolve(null);
+    });
+  });
+}
+
+export function getVersion(): string | null {
+  try {
+    const result = spawnSync(ytDlpPath, ["--version"], {
+      encoding: "utf-8",
+    });
+    if (result.status === 0) {
+      return result.stdout.trim();
+    } else {
+      log.error(`yt-dlp version check failed with code ${result.status}`);
       return null;
     }
+  } catch (error) {
+    log.error(`Error checking yt-dlp version: ${error}`);
+    return null;
   }
 }

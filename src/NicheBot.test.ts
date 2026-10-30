@@ -12,7 +12,7 @@ import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import {
   CategoryChannel,
-  Channel,
+  type Channel,
   ChatInputCommandInteraction,
   Client,
   InteractionContextType,
@@ -22,7 +22,7 @@ import {
 } from "discord.js";
 import * as voice from "@discordjs/voice";
 import CommandProvider from "./CommandProvider";
-import { sabrinaDb, VideoDataRecord } from "./Db";
+import { sabrinaDb, type VideoDataRecord } from "./Db";
 import NicheBot from "./NicheBot";
 import NicheBotCommand from "./NicheBotCommand";
 import { log } from "./logging";
@@ -54,7 +54,7 @@ const client = (NicheBot as unknown as { client: EventEmitter }).client;
 
 function makeInteraction(fields: object): ChatInputCommandInteraction {
   const interaction = Object.create(ChatInputCommandInteraction.prototype);
-  return Object.assign(interaction, { isCommand: () => true, ...fields });
+  return Object.assign(interaction, { isChatInputCommand: () => true, ...fields });
 }
 
 function makeGuildInteraction(followUp: Mock): ChatInputCommandInteraction {
@@ -239,7 +239,7 @@ describe("NicheBot shutdown", () => {
     (NicheBot as unknown as { isShuttingDown: boolean }).isShuttingDown = false;
     exit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
     destroyClient = vi.spyOn(discordClient, "destroy").mockResolvedValue();
-    closeDb = vi.spyOn(sabrinaDb, "close").mockResolvedValue();
+    closeDb = vi.spyOn(sabrinaDb, "close").mockImplementation(() => {});
   });
 
   afterEach(() => {

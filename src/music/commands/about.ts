@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
 import NicheBot from "../../NicheBot";
-import EmbedCreator from "../EmbedCreator";
+import * as EmbedCreator from "../EmbedCreator";
 
 const data = new SlashCommandBuilder()
   .setName("about")

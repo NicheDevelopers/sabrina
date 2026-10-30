@@ -1,9 +1,9 @@
 import AudioFileRepository, { audioFileRepository } from "../AudioFileRepository";
-import Db, { sabrinaDb, VideoDataRecord, VideoMetadata } from "../../Db";
+import Db, { sabrinaDb, type VideoDataRecord, type VideoMetadata } from "../../Db";
 import { log } from "../../logging";
-import { ParsedQuery, QueryKind } from "../QueryParser";
-import UrlValidator from "../UrlValidator";
-import { YtDlp } from "./YtDlp";
+import { type ParsedQuery, QueryKind } from "../QueryParser";
+import * as UrlValidator from "../UrlValidator";
+import * as YtDlp from "./YtDlp";
 
 export interface VideoDataFetchError {
   videoId: string;
@@ -33,7 +33,7 @@ export default class YouTube {
         ? await YtDlp.search(query.payload)
         : await YtDlp.fetchPlaylist(query.payload);
 
-    const videos = await Promise.all(results.map((video) => this.saveVideo(video)));
+    const videos = results.map((video) => this.saveVideo(video));
     return { videos, errors: [] };
   }
 
@@ -54,8 +54,8 @@ export default class YouTube {
 
     try {
       const record =
-        (await this.db.getVideoRecord(videoId)) ??
-        (await this.saveVideo(await YtDlp.fetchVideo(this.watchUrl(videoId))));
+        this.db.getVideoRecord(videoId) ??
+        this.saveVideo(await YtDlp.fetchVideo(this.watchUrl(videoId)));
       return { videos: [record], errors: [] };
     } catch (error) {
       log.error(`Error handling video ID ${videoId}:`, error);
@@ -63,10 +63,10 @@ export default class YouTube {
     }
   }
 
-  private async saveVideo(video: VideoMetadata): Promise<VideoDataRecord> {
-    await this.db.insertVideo(video);
+  private saveVideo(video: VideoMetadata): VideoDataRecord {
+    this.db.insertVideo(video);
 
-    const record = await this.db.getVideoRecord(video.id);
+    const record = this.db.getVideoRecord(video.id);
     if (!record) {
       throw new Error(`Video ${video.id} is missing after saving it`);
     }
@@ -87,7 +87,7 @@ export default class YouTube {
       throw new Error("Failed to download audio");
     }
 
-    await this.db.setVideoPath(videoId, filePath);
+    this.db.setVideoPath(videoId, filePath);
     this.audioRepo.registerVideo(videoId, filePath);
     log.info(`Audio download completed: ${videoId} saved to ${filePath}`);
     return filePath;

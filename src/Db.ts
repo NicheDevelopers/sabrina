@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { log } from "./logging";
 import { ChatInputCommandInteraction } from "discord.js";
 import { randomUUID } from "node:crypto";
-import { VoiceStateChange } from "./analytics/analytics";
+import type { VoiceStateChange } from "./analytics/analytics";
 
 export interface VideoDataRecord {
   id: string;
@@ -50,11 +50,14 @@ export interface MessageLogRecord {
 export default class Db {
   db: DatabaseSync | null = null;
 
-  public constructor(private readonly databaseName: string) {
+  private readonly databaseName: string;
+
+  public constructor(databaseName: string) {
+    this.databaseName = databaseName;
     log.info(`Database will connect to ${databaseName}`);
   }
 
-  public async init() {
+  public init() {
     this.db = new DatabaseSync(this.databaseName);
 
     log.info(`Database connected to ${this.databaseName}`);
@@ -136,7 +139,7 @@ export default class Db {
         `);
   }
 
-  public async close() {
+  public close() {
     if (!this.db) return;
 
     this.db.close();
@@ -145,7 +148,7 @@ export default class Db {
   }
 
   /* Saves a video unless it is already known, keeping any downloaded file path */
-  public async insertVideo(video: VideoMetadata): Promise<void> {
+  public insertVideo(video: VideoMetadata): void {
     if (!this.db) throw new Error("Database not initialized");
 
     const query = `
@@ -170,7 +173,7 @@ export default class Db {
     this.db.prepare(query).run(...values);
   }
 
-  public async setVideoPath(id: string, path: string): Promise<void> {
+  public setVideoPath(id: string, path: string): void {
     if (!this.db) throw new Error("Database not initialized");
 
     this.db
@@ -182,7 +185,7 @@ export default class Db {
     log.info(`Registered video ${id} at path ${path} in the database.`);
   }
 
-  public async getVideoRecord(id: string): Promise<VideoDataRecord | null> {
+  public getVideoRecord(id: string): VideoDataRecord | null {
     if (!this.db) throw new Error("Database not initialized");
 
     const result = this.db
@@ -201,7 +204,7 @@ export default class Db {
     }
   }
 
-  public async insertPlayLog(videoId: string, interaction: ChatInputCommandInteraction) {
+  public insertPlayLog(videoId: string, interaction: ChatInputCommandInteraction) {
     if (!this.db) throw new Error("Database not initialized");
 
     const id = randomUUID();
@@ -225,7 +228,7 @@ export default class Db {
     log.debug(`Logged play of video ${videoId} by user ${userName} in guild ${guildName}.`);
   }
 
-  public async insertVoiceStateLog(voiceStateChange: VoiceStateChange) {
+  public insertVoiceStateLog(voiceStateChange: VoiceStateChange) {
     if (!this.db) throw new Error("Database not initialized");
 
     voiceStateChange.id = randomUUID();
@@ -251,7 +254,7 @@ export default class Db {
     );
   }
 
-  public async insertMessageLog(record: MessageLogRecord) {
+  public insertMessageLog(record: MessageLogRecord) {
     if (!this.db) throw new Error("Database not initialized");
 
     const query = `

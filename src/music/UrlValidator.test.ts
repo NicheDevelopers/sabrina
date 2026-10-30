@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import UrlValidator from "./UrlValidator";
+import * as UrlValidator from "./UrlValidator";
 
 describe("UrlValidator", () => {
   describe("isValidHttpUrl", () => {

@@ -9,10 +9,10 @@ import {
   VoiceConnection,
   VoiceConnectionStatus,
 } from "@discordjs/voice";
-import { Channel, SendableChannels, VoiceChannel } from "discord.js";
-import { VideoDataRecord } from "./Db";
+import { type Channel, type SendableChannels, VoiceChannel } from "discord.js";
+import type { VideoDataRecord } from "./Db";
 import { log } from "./logging";
-import EmbedCreator from "./music/EmbedCreator";
+import * as EmbedCreator from "./music/EmbedCreator";
 import SongQueue, { LoopType } from "./music/SongQueue";
 import { youTube } from "./music/youtube/YouTube";
 

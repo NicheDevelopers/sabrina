@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
-import QueryParser from "../QueryParser";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
+import * as QueryParser from "../QueryParser";
 import { youTube } from "../youtube/YouTube";
 import { log } from "../../logging";
 

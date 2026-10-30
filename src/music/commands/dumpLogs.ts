@@ -1,5 +1,5 @@
 import { AttachmentBuilder, SlashCommandBuilder } from "discord.js";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
 import * as fs from "node:fs";
 import { log } from "../../logging";
 

@@ -2,7 +2,7 @@ import {
   ChatInputCommandInteraction,
   InteractionContextType,
   SlashCommandBuilder,
-  SlashCommandOptionsOnlyBuilder,
+  type SlashCommandOptionsOnlyBuilder,
   VoiceChannel,
 } from "discord.js";
 

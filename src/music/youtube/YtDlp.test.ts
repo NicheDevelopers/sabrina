@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "node:events";
 import { log } from "../../logging";
-import { YtDlp } from "./YtDlp";
+import * as YtDlp from "./YtDlp";
 
 vi.mock("child_process");
 

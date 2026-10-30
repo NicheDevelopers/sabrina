@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
-import EmbedCreator from "../EmbedCreator";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
+import * as EmbedCreator from "../EmbedCreator";
 
 const data = new SlashCommandBuilder().setName("queue").setDescription("Show the current queue");
 

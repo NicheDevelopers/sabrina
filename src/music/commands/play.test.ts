@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vite-plus/test";
 import { ChatInputCommandInteraction } from "discord.js";
-import { sabrinaDb, VideoDataRecord } from "../../Db";
+import { sabrinaDb, type VideoDataRecord } from "../../Db";
 import NicheBot from "../../NicheBot";
 import SongQueue from "../SongQueue";
-import { VideoDataFetchError, youTube } from "../youtube/YouTube";
+import { type VideoDataFetchError, youTube } from "../youtube/YouTube";
 import playCommand from "./play";
 
 vi.mock("../../NicheBot", () => ({
@@ -97,7 +97,9 @@ describe("/play", () => {
   });
 
   it("still succeeds when the play cannot be logged", async () => {
-    vi.mocked(sabrinaDb.insertPlayLog).mockRejectedValueOnce(new Error("db locked"));
+    vi.mocked(sabrinaDb.insertPlayLog).mockImplementationOnce(() => {
+      throw new Error("db locked");
+    });
 
     await expect(run([song("a")])).resolves.toBeUndefined();
 

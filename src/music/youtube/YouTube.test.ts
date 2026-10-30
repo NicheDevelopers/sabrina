@@ -1,10 +1,10 @@
 import * as fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import Db, { VideoMetadata } from "../../Db";
+import Db, { type VideoMetadata } from "../../Db";
 import AudioFileRepository from "../AudioFileRepository";
 import { QueryKind } from "../QueryParser";
 import YouTube from "./YouTube";
-import { YtDlp } from "./YtDlp";
+import * as YtDlp from "./YtDlp";
 
 vi.mock("node:fs", async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -41,10 +41,10 @@ describe("YouTube", () => {
   let repository: AudioFileRepository;
   let youTube: YouTube;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     db = new Db(":memory:");
-    await db.init();
+    db.init();
     repository = new AudioFileRepository();
     youTube = new YouTube(repository, db);
 
@@ -53,8 +53,8 @@ describe("YouTube", () => {
     vi.mocked(YtDlp.fetchVideo).mockResolvedValue(metadata(videoId));
   });
 
-  afterEach(async () => {
-    await db.close();
+  afterEach(() => {
+    db.close();
   });
 
   describe("handleQuery", () => {
@@ -70,7 +70,7 @@ describe("YouTube", () => {
     });
 
     it("should not fetch a known video again", async () => {
-      await db.insertVideo(metadata(videoId));
+      db.insertVideo(metadata(videoId));
 
       await youTube.handleQuery({ type: QueryKind.YT_URL, payload: videoUrl });
 
@@ -124,8 +124,8 @@ describe("YouTube", () => {
     });
 
     it("should keep a downloaded file when a known video is found again", async () => {
-      await db.insertVideo(metadata(videoId));
-      await db.setVideoPath(videoId, filePath);
+      db.insertVideo(metadata(videoId));
+      db.setVideoPath(videoId, filePath);
       vi.mocked(YtDlp.search).mockResolvedValue([metadata(videoId)]);
 
       const { videos } = await youTube.handleQuery({
@@ -167,11 +167,11 @@ describe("YouTube", () => {
     });
 
     it("should keep the metadata after downloading", async () => {
-      await db.insertVideo(metadata(videoId));
+      db.insertVideo(metadata(videoId));
 
       await youTube.findLocalOrDownload(videoId);
 
-      const record = await db.getVideoRecord(videoId);
+      const record = db.getVideoRecord(videoId);
       expect(record?.path).toBe(filePath);
       expect(record?.title).toBe(`Song ${videoId}`);
     });

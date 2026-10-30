@@ -1,6 +1,5 @@
 import {
   BaseInteraction,
-  ChatInputCommandInteraction,
   Client,
   Events,
   GatewayIntentBits,
@@ -14,8 +13,8 @@ import { log } from "./logging";
 import CommandProvider from "./CommandProvider";
 import { sabrinaDb } from "./Db";
 import { GuildPlayersManager } from "./GuildPlayersManager";
-import Utils from "./Utils";
-import { CommandContext } from "./NicheBotCommand";
+import * as Utils from "./Utils";
+import type { CommandContext } from "./NicheBotCommand";
 import { handleMessageCreate, handleVoiceStateUpdate } from "./analytics/analytics";
 import { APPLICATION_ID, SECRET_TOKEN } from "./Config";
 
@@ -84,10 +83,7 @@ class NicheBotClass {
    * This is where the bot responds to commands.
    */
   private async onInteractionCreate(interaction: BaseInteraction) {
-    if (!interaction.isCommand()) {
-      return;
-    }
-    if (!(interaction instanceof ChatInputCommandInteraction)) {
+    if (!interaction.isChatInputCommand()) {
       return;
     }
     if (!interaction.guildId) {
@@ -174,7 +170,7 @@ class NicheBotClass {
       this.guildPlayersManager.destroyAll();
 
       await this.client.destroy();
-      await sabrinaDb.close();
+      sabrinaDb.close();
 
       log.warn("Bot shut down.");
       process.exit(0);

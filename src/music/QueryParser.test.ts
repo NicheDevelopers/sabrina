@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import QueryParser, { QueryKind } from "./QueryParser";
+import * as QueryParser from "./QueryParser";
+import { QueryKind } from "./QueryParser";
 
 describe("QueryParser", () => {
   describe("parse", () => {

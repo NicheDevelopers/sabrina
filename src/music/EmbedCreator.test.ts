@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { VideoDataRecord } from "../Db";
-import EmbedCreator from "./EmbedCreator";
+import type { VideoDataRecord } from "../Db";
+import * as EmbedCreator from "./EmbedCreator";
 
 vi.mock("../Config", async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -8,7 +8,7 @@ vi.mock("../Config", async (importOriginal) => ({
 }));
 
 vi.mock("./youtube/YtDlp", () => ({
-  YtDlp: { getVersion: () => "2026.10.29" },
+  getVersion: () => "2026.10.29",
 }));
 
 describe("EmbedCreator", () => {

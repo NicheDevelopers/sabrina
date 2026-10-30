@@ -1,7 +1,7 @@
 import { LoopType } from "../SongQueue";
 import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot";
-import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
+import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
 
 const data = new SlashCommandBuilder()
   .setName("loop")

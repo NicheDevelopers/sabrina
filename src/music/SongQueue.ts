@@ -1,8 +1,10 @@
-export enum LoopType {
-  Disabled = "disabled",
-  One = "one",
-  All = "all",
-}
+export const LoopType = {
+  Disabled: "disabled",
+  One: "one",
+  All: "all",
+} as const;
+
+export type LoopType = (typeof LoopType)[keyof typeof LoopType];
 
 export default class SongQueue<T> {
   private queue: T[] = [];

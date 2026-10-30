@@ -1,4 +1,4 @@
-import { ChannelFetcher, GuildPlayer } from "./GuildPlayer";
+import { type ChannelFetcher, GuildPlayer } from "./GuildPlayer";
 import { log } from "./logging";
 
 export class GuildPlayersManager {
