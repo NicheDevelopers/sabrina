@@ -1,10 +1,12 @@
-import * as dotenv from "dotenv";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Load environment variables from .env file
-dotenv.config({ path: resolve(import.meta.dirname, "../.env"), quiet: true });
+const envFile = resolve(import.meta.dirname, "../.env");
+if (existsSync(envFile)) {
+  process.loadEnvFile(envFile);
+}
 
-// Export simple environment variables like before, but with dotenv loaded
 export const APPLICATION_ID = process.env["APPLICATION_ID"] || "";
 export const SECRET_TOKEN = process.env["SECRET_TOKEN"] || "";
 export const BOT_NAME = process.env["BOT_NAME"] || "NicheBot";
