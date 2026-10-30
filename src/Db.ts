@@ -147,10 +147,6 @@ export default class Db {
         log.info("Database closed.");
     }
 
-    public async prune() {
-        log.info("Pruning database...");
-    }
-
     public async insertVideoData(
         id: string,
         path: VideoDataRecord["path"],
@@ -290,15 +286,6 @@ export default class Db {
         log.debug(
             `Logged message from ${record.userName} in #${record.channelName} (${record.contentLength} chars, ${record.attachmentCount} attachments)`
         );
-    }
-
-    public async clearDatabase() {
-        if (!this.db) throw new Error("Database not initialized");
-
-        log.warn("Clearing the database...");
-        await this.db.exec(`DELETE
-                            FROM yt_videos;`);
-        log.info("Cleared the database.");
     }
 }
 

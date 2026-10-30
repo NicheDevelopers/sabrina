@@ -187,20 +187,6 @@ export default class SongQueue<T> {
         return this.queue.length === 0;
     }
 
-    clear() {
-        if (this.queue.length === 0) {
-            return;
-        }
-
-        const currentSong = this.getCurrentSong();
-        if (currentSong) {
-            this.queue = [currentSong];
-            this.currentSongIndex = 0;
-        } else {
-            this.reset();
-        }
-    }
-
     private removeSongsBeforeCurrent() {
         if (this.queue.length === 0) {
             return;
@@ -209,7 +195,6 @@ export default class SongQueue<T> {
         this.currentSongIndex = 0;
     }
 
-    /* Empties the queue, as opposed to clear() which keeps the current song */
     reset() {
         this.previousSong = undefined;
         this.currentSongIndex = 0;

@@ -121,22 +121,4 @@ describe("Db", () => {
             await expect(db.close()).resolves.toBeUndefined();
         });
     });
-
-    describe("clearDatabase", () => {
-        it("should delete all database entries", async () => {
-            // Setup - insert some records
-            await db.insertVideoData("video1", "/path1", null);
-            await db.insertVideoData("video2", "/path2", null);
-
-            // Execute
-            await db.clearDatabase();
-
-            // Verify all records were deleted
-            const data1 = await db.getVideoRecord("video1");
-            const data2 = await db.getVideoRecord("video2");
-
-            expect(data1).toBeNull();
-            expect(data2).toBeNull();
-        });
-    });
 });

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 import QueryParser from "../QueryParser";
-import { youTube, isVideoDataFetchError } from "../youtube/YouTube";
+import { youTube } from "../youtube/YouTube";
 import { log } from "../../logging";
 
 const data = new SlashCommandBuilder()
@@ -21,20 +21,16 @@ async function execute(ctx: CommandContext) {
     const { videos, errors } = await youTube.handleQuery(query);
 
     const promises = videos.map(async data => {
-        if (isVideoDataFetchError(data)) {
-            return null;
-        }
         await youTube.findLocalOrDownload(data.id);
         log.info(`[cache] Cached video: ${data.title} (${data.id})`);
         return data;
     });
 
     const downloadResults = await Promise.all(promises);
-    const titles = downloadResults.filter(v => v !== null).map(v => v.title);
-    const nulls = downloadResults.filter(v => v === null).length;
+    const titles = downloadResults.map(v => v.title);
 
     log.info(
-        `[cache] Cached ${titles.length} out of ${videos.length} videos. Failed fetches): ${errors.length}. Download errors: ${nulls}`
+        `[cache] Cached ${titles.length} out of ${videos.length} videos. Failed fetches: ${errors.length}`
     );
     if (titles.length === 0) {
         await ctx.interaction.followUp(`No results found for query: "${input}"`);

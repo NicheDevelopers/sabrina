@@ -79,15 +79,6 @@ export class GuildPlayer {
         return this.voiceConnection !== undefined;
     }
 
-    public hasActiveVoiceConnection(): boolean {
-        const status = this.voiceConnection?.state.status;
-        return (
-            status !== undefined &&
-            status !== VoiceConnectionStatus.Destroyed &&
-            status !== VoiceConnectionStatus.Disconnected
-        );
-    }
-
     /* Connect to a voice channel.
      * Returns a promise that resolves when the connection is ready.
      * Rejects if the connection fails or times out.

@@ -467,30 +467,6 @@ describe("SongQueue", () => {
         });
     });
 
-    describe("clear", () => {
-        it("should keep only first song", () => {
-            queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-            queue.clear();
-
-            expect(queue.getQueue().length).toBe(1);
-            expect(queue.getCurrentSong()?.id).toBe(1);
-        });
-
-        it("should handle clear when current song is not first", () => {
-            queue.addSongs([createSong(1), createSong(2), createSong(3)]);
-            queue.notifyCurrentSongFinished(); // Move to song 2
-            queue.clear();
-
-            expect(queue.getQueue()[0].id).toBe(2); // Should be 2
-            expect(queue.getCurrentSong()?.id).toBe(2);
-        });
-
-        it("should handle clear on empty queue", () => {
-            queue.clear();
-            expect(queue.getQueue().length).toBe(0);
-        });
-    });
-
     describe("setLoopType", () => {
         it("should set loop type and return it", () => {
             expect(queue.setLoopType(LoopType.One)).toBe(LoopType.One);
@@ -614,9 +590,6 @@ describe("SongQueue", () => {
             queue.removeSong(0);
             queue.addSongs([createSong(2)]);
             expect(queue.getCurrentSong()?.id).toBe(2);
-
-            queue.clear();
-            expect(queue.getQueue().length).toBe(1);
         });
     });
 
