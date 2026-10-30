@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  InteractionContextType,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
   VoiceChannel,
@@ -29,7 +30,7 @@ export default class NicheBotCommand {
     execute: (ctx: CommandContext) => Promise<void>,
     requirements: CommandRequirements = {},
   ) {
-    this.data = data;
+    this.data = data.setContexts(InteractionContextType.Guild);
     this.execute = execute;
     this.requiresUserInVoice = requirements.userInVoice ?? false;
     this.requiresBotInVoice = requirements.botInVoice ?? false;

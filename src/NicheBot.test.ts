@@ -15,6 +15,7 @@ import {
   Channel,
   ChatInputCommandInteraction,
   Client,
+  InteractionContextType,
   TextChannel,
   ThreadChannel,
   VoiceChannel,
@@ -153,6 +154,17 @@ describe("NicheBot crash handling", () => {
     const failure = new Error("udp failure");
     expect(() => connection.emit("error", failure)).not.toThrow();
     expect(logError).toHaveBeenCalledWith(expect.any(String), failure);
+  });
+});
+
+describe("NicheBot commands", () => {
+  it("only registers commands for servers", () => {
+    const commands = CommandProvider.getAllCommands();
+
+    expect(commands.length).toBeGreaterThan(0);
+    for (const command of commands) {
+      expect(command.data.toJSON().contexts).toEqual([InteractionContextType.Guild]);
+    }
   });
 });
 
