@@ -24,19 +24,19 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
-    "@discordjs/voice": "^0.19.0",
-    "@snazzah/davey": "^0.1.6",
-    "discord.js": "^14.22.1",
-    "dotenv": "^16.6.1",
+    "@discordjs/voice": "^0.19.2",
+    "@snazzah/davey": "^0.1.12",
+    "discord.js": "^14.27.0",
+    "dotenv": "^18.0.9",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "winston": "^3.17.0",
+    "winston": "^3.19.0",
     "yt-search": "^2.13.1"
   },
   "devDependencies": {
-    "@types/node": "^22.15.15",
+    "@types/node": "^22.20.5",
     "@types/yt-search": "^2.10.3",
-    "typescript": "^5.6.3",
+    "typescript": "^7.0.2",
     "vite-plus": "^1.4.0"
   },
   "engines": {
