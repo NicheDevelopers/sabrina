@@ -41,7 +41,7 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 Publish a GitHub release tagged `vX.Y.Z`. The release workflow builds the image and pushes it to `ghcr.io` tagged `X.Y.Z`, and `/about` shows that version. Builds from source show `dev`, unless you pass one:
 
 ```bash
-VERSION=$(git describe --tags) docker-compose up -d --build
+VERSION=$(git describe --tags) docker compose up -d --build
 ```
 
 ## Docker Deployment
@@ -50,14 +50,14 @@ VERSION=$(git describe --tags) docker-compose up -d --build
 
 ```bash
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f sabrina
+docker compose logs -f sabrina
 
 # Update and restart
 git pull
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Manual Docker Build

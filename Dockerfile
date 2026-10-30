@@ -35,4 +35,4 @@ RUN mkdir -p /app/downloads
 ARG VERSION=dev
 ENV VERSION=$VERSION
 
-CMD ["node", "--disable-warning=ExperimentalWarning", "dist/main.js"]
+CMD ["node", "dist/main.js"]

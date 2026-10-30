@@ -16,12 +16,12 @@
   "scripts": {
     "dev": "vpx --watch src/main.ts",
     "build": "vp pack",
-    "start": "node --disable-warning=ExperimentalWarning dist/main.js",
+    "start": "node dist/main.js",
     "test": "vp test",
     "check": "vp check",
     "docker:build": "docker build -t sabrina:latest .",
-    "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
