@@ -47,6 +47,10 @@ describe("UrlValidator", () => {
                     expected: "dQw4w9WgXcQ",
                 },
                 {
+                    url: "https://youtu.be/dQw4w9WgXcQ/",
+                    expected: "dQw4w9WgXcQ",
+                },
+                {
                     url: "https://youtube.com/watch?v=dQw4w9WgXcQ&feature=share",
                     expected: "dQw4w9WgXcQ",
                 },
@@ -154,19 +158,6 @@ describe("UrlValidator", () => {
                 }).not.toThrow();
                 expect(UrlValidator.isValidHttpUrl(url)).toBe(false);
             }
-        });
-    });
-
-    // Each test states the correct behaviour and fails against the current code.
-    // Jest reports it as an error once the bug is fixed: remove `.failing` then.
-    describe("known bugs", () => {
-        it.failing.each([
-            "https://www.youtube.com/shorts/dQw4w9WgXcQ",
-            "https://www.youtube.com/live/dQw4w9WgXcQ",
-            "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            "https://youtu.be/dQw4w9WgXcQ/",
-        ])("should extract the video ID from %s", url => {
-            expect(UrlValidator.extractVideoId(new URL(url))).toBe("dQw4w9WgXcQ");
         });
     });
 });

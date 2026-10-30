@@ -35,7 +35,7 @@ export default class AudioFileRepository {
         log.info(`Registered ${this.videos.size} audio files from disk.`);
     }
 
-    private registerVideo(videoId: string, filePath: string) {
+    public registerVideo(videoId: string, filePath: string) {
         if (this.videos.has(videoId)) {
             log.warn(
                 `Skipping duplicate video ID detected in repository at ${filePath}: ${videoId}`
@@ -47,7 +47,18 @@ export default class AudioFileRepository {
     }
 
     public getPath(videoId: string): string | null {
-        return this.videos.get(videoId) || null;
+        const filePath = this.videos.get(videoId);
+        if (!filePath) {
+            return null;
+        }
+
+        if (!fs.existsSync(filePath)) {
+            log.warn(`Audio file was deleted from disk: ${filePath}`);
+            this.videos.delete(videoId);
+            return null;
+        }
+
+        return filePath;
     }
 
     public extractVideoIdFromFilename(filename: string): string | null {

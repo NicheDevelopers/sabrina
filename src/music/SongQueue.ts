@@ -24,8 +24,7 @@ export default class SongQueue<T> {
         this.onQueueEmpty = onQueueEmpty ?? (async () => {});
     }
 
-    /* Checks if the current song has changed and calls the callback if it has.
-     * With restartCurrent, the callback is called even if the song is the same. */
+    /* Checks if the current song has changed and calls the callback if it has */
     private onMaybeSongChanged(restartCurrent: boolean = false) {
         const currentSong = this.getCurrentSong();
         // Moved past the last song, the queue has ended
@@ -76,7 +75,6 @@ export default class SongQueue<T> {
         this.queue.splice(index, 0, ...song);
     }
 
-    /* Adds a song or an array of songs right after the current song */
     addSongsNext(song: T[]) {
         this.addSongsAt(song, this.currentSongIndex + 1);
     }
@@ -179,7 +177,6 @@ export default class SongQueue<T> {
         }
     }
 
-    /* Removes the current song for good and starts the next one */
     removeCurrentSong() {
         if (this.getCurrentSong()) {
             this.removeSong(this.currentSongIndex);

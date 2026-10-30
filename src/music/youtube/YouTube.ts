@@ -122,6 +122,7 @@ export default class YouTube {
         }
 
         await this.db.insertVideoData(videoId, filePath, videoData);
+        this.audioRepo.registerVideo(videoId, filePath);
         log.info(`Audio download completed: ${videoId} saved to ${filePath}`);
         return filePath;
     }

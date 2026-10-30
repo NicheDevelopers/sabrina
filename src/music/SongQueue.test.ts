@@ -592,11 +592,9 @@ describe("SongQueue", () => {
             // Enable loop all
             queue.setLoopType(LoopType.All);
 
-            // Skip a full cycle back to song 2
             queue.skipSongs(3);
             expect(queue.getCurrentSong()?.id).toBe(2);
 
-            // Shuffle keeps the current song and every other song
             queue.shuffle();
             expect(queue.getCurrentSong()?.id).toBe(2);
             expect(
@@ -606,7 +604,6 @@ describe("SongQueue", () => {
                     .sort((a, b) => a - b)
             ).toEqual([0, 2, 3]);
 
-            // Removing a song before the current one keeps the current song
             queue.removeSong(0);
             expect(queue.getCurrentSong()?.id).toBe(2);
             expect(queue.getQueue().length).toBe(2);

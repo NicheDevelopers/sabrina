@@ -46,7 +46,7 @@ export default class UrlValidator {
         }
 
         if (url.hostname === "youtu.be") {
-            return url.pathname.substring(1);
+            return url.pathname.split("/")[1];
         }
 
         // now its either www.youtube.com or music.youtube.com

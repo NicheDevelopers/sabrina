@@ -27,8 +27,15 @@ export class YtDlp {
     ): Promise<string | null> {
         const outputTemplate = `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
 
-        return new Promise((resolve, reject) => {
-            const process = spawn(ytDlpPath, ["-x", "-o", outputTemplate, url]);
+        return new Promise(resolve => {
+            const process = spawn(ytDlpPath, [
+                "-x",
+                "--print",
+                "after_move:filepath",
+                "-o",
+                outputTemplate,
+                url,
+            ]);
 
             let stdout = "";
             let stderr = "";
@@ -48,29 +55,15 @@ export class YtDlp {
                     return;
                 }
 
-                const downloadMatch = stdout.match(
-                    /^\[ExtractAudio\] Destination: (.+)$/m
-                );
-                const alreadyDownloadedMatch = stdout.match(
-                    /^\[download\] (.+) has already been downloaded$/m
-                );
-
-                if (downloadMatch) {
-                    const path = downloadMatch[1]?.trim();
-                    log.info(`Downloaded audio to ${path}`);
-                    resolve(path);
+                const path = stdout.trim();
+                if (!path) {
+                    log.error("Could not find downloaded file path in yt-dlp output.");
+                    resolve(null);
                     return;
                 }
 
-                if (alreadyDownloadedMatch) {
-                    const path = alreadyDownloadedMatch[1].trim();
-                    log.info(`File has already been downloaded - ${path}`);
-                    resolve(path);
-                    return;
-                }
-
-                log.error("Could not find downloaded file path in yt-dlp output.");
-                resolve(null);
+                log.info(`Downloaded audio to ${path}`);
+                resolve(path);
             });
 
             process.on("error", error => {

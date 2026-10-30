@@ -15,7 +15,7 @@ import {
     Guild,
     REST,
     Routes,
-    TextChannel,
+    SendableChannels,
     VoiceChannel,
 } from "discord.js";
 import { log } from "./logging";
@@ -224,7 +224,7 @@ class NicheBotClass {
         });
 
         try {
-            await entersState(voiceConnection, VoiceConnectionStatus.Ready, 15000); // 15 seconds timeout
+            await entersState(voiceConnection, VoiceConnectionStatus.Ready, 15000);
         } catch (error) {
             this.abandonConnection(guildId, voiceConnection);
             throw error;
@@ -342,55 +342,51 @@ class NicheBotClass {
             // Immediately stop any current playback
             guildState.stopPlayback();
 
-            if (!videoData.path) {
-                try {
-                    videoData.path = await youTube.findLocalOrDownload(videoData.id);
-                } catch (downloadError) {
-                    log.error(
-                        `[Guild ${guildId}] Failed to download video ${videoData.id}:`,
-                        downloadError
-                    );
+            let audioPath: string;
+            try {
+                audioPath = await youTube.findLocalOrDownload(videoData.id);
+            } catch (downloadError) {
+                log.error(
+                    `[Guild ${guildId}] Failed to download video ${videoData.id}:`,
+                    downloadError
+                );
 
-                    // The song was skipped during the download, so it doesn't matter
-                    if (guildState.songQueue.getCurrentSong() !== videoData) {
-                        return;
-                    }
-
-                    // Remove it instead of skipping it, a looping queue would retry forever
-                    guildState.songQueue.removeCurrentSong();
-
-                    const channelId = guildState.getLastInteractionChannel();
-                    if (channelId) {
-                        try {
-                            const channel = await this.getChannel(channelId);
-                            const errorMessage =
-                                downloadError instanceof Error
-                                    ? downloadError.message
-                                    : String(downloadError);
-                            await channel.send(
-                                `Failed to download video: **${videoData.title}**\nError: ${errorMessage}\nSkipping to next song...`
-                            );
-                        } catch (channelError) {
-                            log.error(
-                                `[Guild ${guildId}] Failed to send download error message:`,
-                                channelError
-                            );
-                        }
-                    }
-
-                    return;
-                }
-
-                // The queue may have moved on during the download
                 if (guildState.songQueue.getCurrentSong() !== videoData) {
-                    log.debug(
-                        `[Guild ${guildId}] Skipped during download: ${videoData.id}`
-                    );
                     return;
                 }
+
+                // Remove it instead of skipping it, a looping queue would retry forever
+                guildState.songQueue.removeCurrentSong();
+
+                const channelId = guildState.getLastInteractionChannel();
+                if (channelId) {
+                    try {
+                        const channel = await this.getChannel(channelId);
+                        const errorMessage =
+                            downloadError instanceof Error
+                                ? downloadError.message
+                                : String(downloadError);
+                        await channel.send(
+                            `Failed to download video: **${videoData.title}**\nError: ${errorMessage}\nSkipping to next song...`
+                        );
+                    } catch (channelError) {
+                        log.error(
+                            `[Guild ${guildId}] Failed to send download error message:`,
+                            channelError
+                        );
+                    }
+                }
+
+                return;
             }
 
-            const audioResource = createAudioResource(videoData.path);
+            // The queue may have moved on during the download
+            if (guildState.songQueue.getCurrentSong() !== videoData) {
+                log.debug(`[Guild ${guildId}] Skipped during download: ${videoData.id}`);
+                return;
+            }
+
+            const audioResource = createAudioResource(audioPath);
 
             // Use the guild-specific audio player
             guildState.audioPlayer.play(audioResource);
@@ -420,13 +416,13 @@ class NicheBotClass {
         }
     }
 
-    private async getChannel(channelId: string): Promise<TextChannel> {
+    private async getChannel(channelId: string): Promise<SendableChannels> {
         const channel = await this.client.channels.fetch(channelId);
         if (!channel) {
             throw new Error(`Channel with ID ${channelId} not found`);
         }
-        if (!(channel instanceof TextChannel)) {
-            throw new Error(`Channel with ID ${channelId} is not text-based`);
+        if (!channel.isSendable()) {
+            throw new Error(`Channel with ID ${channelId} cannot receive messages`);
         }
         return channel;
     }

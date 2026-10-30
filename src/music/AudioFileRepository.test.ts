@@ -16,6 +16,7 @@ describe("AudioFileRepository", () => {
 
         // Clear all mocks
         jest.clearAllMocks();
+        mockFs.existsSync.mockReturnValue(true);
     });
 
     describe("extractVideoIdFromFilename", () => {
@@ -96,6 +97,24 @@ describe("AudioFileRepository", () => {
 
             const result = repository.getPath(videoId);
             expect(result).toBe(filePath);
+        });
+
+        it("should forget a file that was deleted from disk", () => {
+            const videoId = "dQw4w9WgXcQ";
+            const filePath = "./downloads/youtube/Song [dQw4w9WgXcQ].mp3";
+            repository.registerVideo(videoId, filePath);
+
+            mockFs.existsSync.mockReturnValue(false);
+            expect(repository.getPath(videoId)).toBeNull();
+
+            mockFs.existsSync.mockReturnValue(true);
+            repository.registerVideo(
+                videoId,
+                "./downloads/youtube/New [dQw4w9WgXcQ].mp3"
+            );
+            expect(repository.getPath(videoId)).toBe(
+                "./downloads/youtube/New [dQw4w9WgXcQ].mp3"
+            );
         });
 
         it("should return null for unregistered video ID", () => {

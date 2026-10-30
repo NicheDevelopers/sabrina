@@ -1,9 +1,12 @@
 import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import {
+    CategoryChannel,
+    Channel,
     ChatInputCommandInteraction,
     Client,
     TextChannel,
+    ThreadChannel,
     VoiceChannel,
 } from "discord.js";
 import * as voice from "@discordjs/voice";
@@ -164,10 +167,10 @@ describe("NicheBot playback", () => {
             .map(song => song.id);
     const playedPaths = () => createAudioResource.mock.calls.map(call => call[0]);
 
-    function song(id: string, path: string | null = null): VideoDataRecord {
+    function song(id: string): VideoDataRecord {
         return {
             id,
-            path,
+            path: null,
             title: id,
             url: null,
             timestamp: null,
@@ -181,7 +184,6 @@ describe("NicheBot playback", () => {
         };
     }
 
-    // Plays through the real AudioPlayer, as opus frames sent to a stubbed connection
     function makeOpusResource() {
         let ended = false;
         const stream = new Readable({
@@ -263,6 +265,7 @@ describe("NicheBot playback", () => {
     beforeEach(() => {
         guildId = `guild-${++guildCount}`;
         download.mockReset();
+        download.mockImplementation(async id => `${id}.opus`);
         entersState.mockReset();
         getVoiceConnection.mockReset();
         createAudioResource.mockReset();
@@ -274,8 +277,14 @@ describe("NicheBot playback", () => {
         jest.restoreAllMocks();
     });
 
+    it("looks up the audio file instead of trusting the stored path", async () => {
+        await startPlaying([{ ...song("a"), path: "deleted.opus" }]);
+
+        expect(playedPaths()).toEqual(["a.opus"]);
+    });
+
     it("plays the next song when the current one ends", async () => {
-        await startPlaying([song("a", "a.opus"), song("b", "b.opus")]);
+        await startPlaying([song("a"), song("b")]);
 
         endCurrentSong();
 
@@ -284,7 +293,7 @@ describe("NicheBot playback", () => {
     });
 
     it("keeps the queue intact when skipping to a song still downloading", async () => {
-        await startPlaying([song("a", "a.opus"), song("b"), song("c", "c.opus")]);
+        await startPlaying([song("a"), song("b"), song("c")]);
         const { finish } = pendingDownload();
 
         guildState().songQueue.skipSongs(1);
@@ -299,7 +308,7 @@ describe("NicheBot playback", () => {
     });
 
     it("ignores a download that finishes after the queue moved on", async () => {
-        await startPlaying([song("a", "a.opus"), song("b"), song("c", "c.opus")]);
+        await startPlaying([song("a"), song("b"), song("c")]);
         const { finish } = pendingDownload();
 
         guildState().songQueue.skipSongs(1);
@@ -312,7 +321,7 @@ describe("NicheBot playback", () => {
     });
 
     it("keeps the current song when a skipped song fails to download", async () => {
-        await startPlaying([song("a", "a.opus"), song("b"), song("c", "c.opus")]);
+        await startPlaying([song("a"), song("b"), song("c")]);
         const { fail } = pendingDownload();
 
         guildState().songQueue.skipSongs(1);
@@ -324,7 +333,7 @@ describe("NicheBot playback", () => {
     });
 
     it("moves past a song that fails to download", async () => {
-        await startPlaying([song("a", "a.opus"), song("b"), song("c", "c.opus")]);
+        await startPlaying([song("a"), song("b"), song("c")]);
         const { fail } = pendingDownload();
 
         guildState().songQueue.skipSongs(1);
@@ -348,7 +357,7 @@ describe("NicheBot playback", () => {
     });
 
     it("clears the queue and stops playing when leaving", async () => {
-        await startPlaying([song("a", "a.opus"), song("b", "b.opus")]);
+        await startPlaying([song("a"), song("b")]);
         const destroy = jest.fn();
         getVoiceConnection.mockReturnValue({
             destroy,
@@ -364,7 +373,7 @@ describe("NicheBot playback", () => {
     it("cleans up after being kicked from the voice channel", async () => {
         const connection = makeConnection();
         await joinThenTrack(connection);
-        guildState().songQueue.addSongs([song("a", "a.opus")]);
+        guildState().songQueue.addSongs([song("a")]);
         entersState.mockRejectedValue(new Error("timed out"));
 
         connection.emit(voice.VoiceConnectionStatus.Disconnected);
@@ -377,7 +386,7 @@ describe("NicheBot playback", () => {
     it("stays connected when moved to another channel", async () => {
         const connection = makeConnection();
         await joinThenTrack(connection);
-        guildState().songQueue.addSongs([song("a", "a.opus")]);
+        guildState().songQueue.addSongs([song("a")]);
 
         connection.emit(voice.VoiceConnectionStatus.Disconnected);
         await sleep(10);
@@ -429,19 +438,25 @@ describe("NicheBot playback", () => {
         expect(connection.destroy).toHaveBeenCalledTimes(1);
     });
 
-    describe("now playing message", () => {
+    describe("channel messages", () => {
         let send: jest.Mock;
+
+        function useChannel(channel: object) {
+            const { client } = NicheBot as unknown as { client: Client };
+            jest.spyOn(client.channels, "fetch").mockResolvedValue(channel as Channel);
+        }
+
+        const sendableChannel = (prototype: object) =>
+            Object.assign(Object.create(prototype), { send });
 
         beforeEach(() => {
             send = jest.fn().mockResolvedValue(undefined);
-            const channel = Object.assign(Object.create(TextChannel.prototype), { send });
-            const { client } = NicheBot as unknown as { client: Client };
-            jest.spyOn(client.channels, "fetch").mockResolvedValue(channel);
+            useChannel(sendableChannel(TextChannel.prototype));
             guildState().setLastInteractionChannel("channel");
         });
 
         it("announces each new song", async () => {
-            guildState().songQueue.addSongs([song("a", "a.opus")]);
+            guildState().songQueue.addSongs([song("a")]);
             await waitFor(() => send.mock.calls.length > 0);
 
             expect(send.mock.calls[0][0].embeds).toHaveLength(1);
@@ -449,10 +464,40 @@ describe("NicheBot playback", () => {
 
         it("does not announce every repeat of a looped song", async () => {
             guildState().songQueue.setLoopType(LoopType.One);
-            guildState().songQueue.addSongs([song("a", "a.opus")]);
+            guildState().songQueue.addSongs([song("a")]);
             await sleep(50);
 
             expect(send).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            ["voice channel chat", VoiceChannel.prototype],
+            ["a thread", ThreadChannel.prototype],
+        ])("announces songs in %s", async (_name, prototype) => {
+            useChannel(sendableChannel(prototype));
+
+            guildState().songQueue.addSongs([song("a")]);
+
+            await waitFor(() => send.mock.calls.length > 0);
+        });
+
+        it("reports failed downloads in voice channel chat", async () => {
+            useChannel(sendableChannel(VoiceChannel.prototype));
+            download.mockRejectedValueOnce(new Error("download failed"));
+
+            guildState().songQueue.addSongs([song("a")]);
+
+            await waitFor(() => send.mock.calls.length > 0);
+            expect(send.mock.calls[0][0]).toContain("download failed");
+        });
+
+        it("keeps playing when the channel cannot receive messages", async () => {
+            useChannel(Object.create(CategoryChannel.prototype));
+
+            guildState().songQueue.addSongs([song("a")]);
+            await sleep(50);
+
+            expect(playedPaths()).toEqual(["a.opus"]);
         });
     });
 });
