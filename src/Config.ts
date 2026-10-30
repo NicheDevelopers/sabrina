@@ -11,3 +11,4 @@ export const BOT_NAME = process.env["BOT_NAME"] || "NicheBot";
 export const LOG_LEVEL = process.env["LOG_LEVEL"] || "info";
 export const LOG_FILE = process.env["LOG_FILE"] || "";
 export const ENV = process.env["ENV"] || "DEV";
+export const VERSION = process.env["VERSION"] || "dev";

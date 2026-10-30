@@ -1,6 +1,15 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { VideoDataRecord } from "../Db";
 import EmbedCreator from "./EmbedCreator";
+
+vi.mock("../Config", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  VERSION: "1.2.3",
+}));
+
+vi.mock("./youtube/YtDlp", () => ({
+  YtDlp: { getVersion: () => "2026.10.29" },
+}));
 
 describe("EmbedCreator", () => {
   const video: VideoDataRecord = {
@@ -17,6 +26,14 @@ describe("EmbedCreator", () => {
     authorName: "Author",
     authorUrl: "https://www.youtube.com/@author",
   };
+
+  describe("createAboutEmbed", () => {
+    it("shows the release version", () => {
+      const { description } = EmbedCreator.createAboutEmbed(0).toJSON();
+
+      expect(description).toContain("**Version:** 1.2.3");
+    });
+  });
 
   describe("createNowPlayingEmbed", () => {
     it("shows the song details", () => {

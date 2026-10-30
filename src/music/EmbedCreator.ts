@@ -1,6 +1,6 @@
 import { VideoDataRecord } from "../Db";
 import { EmbedBuilder } from "discord.js";
-import { BOT_NAME } from "../Config";
+import { BOT_NAME, VERSION } from "../Config";
 import Utils from "../Utils";
 import { YtDlp } from "./youtube/YtDlp";
 
@@ -67,7 +67,6 @@ export default class EmbedCreator {
     const gitHubUrl = "https://github.com/NicheDevs/Sabrina";
     const authors = ["Michał Miłek", "Artur Gulik"];
     const year = 2025;
-    const version = Utils.getVersion();
     const uptime = Utils.formatDuration(uptimeMs);
 
     return new EmbedBuilder()
@@ -77,7 +76,7 @@ export default class EmbedCreator {
         `${BOT_NAME} is a Discord music bot that plays audio from YouTube links or search terms.\n\n` +
           `**Authors:** ${authors.join(", ")}\n` +
           `**Source Code:** [GitHub](${gitHubUrl})\n` +
-          `**Version:** ${version}\n` +
+          `**Version:** ${VERSION}\n` +
           `**Uptime:** ${uptime}\n\n` +
           `**yt-dlp version:** ${YtDlp.getVersion()}\n` +
           `NicheDevs ${year}`,

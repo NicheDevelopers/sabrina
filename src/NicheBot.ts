@@ -5,6 +5,7 @@ import {
   Events,
   GatewayIntentBits,
   Guild,
+  MessageFlags,
   REST,
   Routes,
   VoiceChannel,
@@ -107,7 +108,7 @@ class NicheBotClass {
       log.error(`No command matching ${interaction.commandName} was found.`);
       await interaction.followUp({
         content: "Command not found.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -155,7 +156,7 @@ class NicheBotClass {
       log.error(`Error executing command ${command.data.name}`, error);
       await interaction.followUp({
         content: "There was an error while executing this command!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

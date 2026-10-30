@@ -14,6 +14,7 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 
 ### v1.2
 
+- [x] Leave empty voice channels
 - [ ] Auto-disconnect after inactivity
 - [ ] Download songs in the background
 
@@ -21,7 +22,7 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 
 - [ ] /help command
 - [ ] Support for Polish language
-- [ ] Improve logging
+- [x] Improve logging
 
 ### v1.4
 
@@ -30,10 +31,18 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 
 ## Configuration
 
-- **Version Management**: Version is automatically read from `package.json`
+- **Version Management**: Set from the Git tag when a release is published
 - **Database**: SQLite database (`sabrina.db`) for persistent data
 - **Logging**: Logs are stored in the `logs/` directory
 - **Downloads**: YouTube audio files cached in `downloads/youtube/`
+
+## Releasing
+
+Publish a GitHub release tagged `vX.Y.Z`. The release workflow builds the image and pushes it to `ghcr.io` tagged `X.Y.Z`, and `/about` shows that version. Builds from source show `dev`, unless you pass one:
+
+```bash
+VERSION=$(git describe --tags) docker-compose up -d --build
+```
 
 ## Docker Deployment
 
@@ -44,7 +53,7 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 docker-compose up -d
 
 # View logs
-docker-compose logs -f nichebot
+docker-compose logs -f sabrina
 
 # Update and restart
 git pull

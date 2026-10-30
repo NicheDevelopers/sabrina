@@ -1,6 +1,7 @@
 {
   "name": "sabrina",
-  "version": "1.1.3",
+  "version": "0.0.0",
+  "private": true,
   "description": "Discord music bot that plays audio from YouTube",
   "keywords": [
     "bot",

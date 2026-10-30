@@ -1,5 +1,4 @@
 import { ChatInputCommandInteraction, GuildMember, VoiceChannel } from "discord.js";
-import * as fs from "node:fs";
 import { VideoDataRecord } from "./Db";
 
 export default class Utils {
@@ -32,16 +31,6 @@ export default class Utils {
         : `Added ${videos.length} songs to the queue.`;
 
     return failedCount > 0 ? `${added} ${failed}` : added;
-  }
-
-  public static getVersion(): string {
-    try {
-      const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
-      return packageJson.version;
-    } catch (error) {
-      console.error("Error reading package.json:", error);
-      return "unknown";
-    }
   }
 
   public static formatDuration(ms: number): string {
