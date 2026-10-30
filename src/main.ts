@@ -1,5 +1,5 @@
 import { log } from "./logging";
-import { BOT_NAME } from "./Config";
+import { BOT_NAME, ENV } from "./Config";
 import NicheBot from "./NicheBot";
 import { YtDlp } from "./music/youtube/YtDlp";
 import { audioFileRepository } from "./music/AudioFileRepository";
@@ -11,6 +11,9 @@ async function main() {
 
     // Initialize core components
     YtDlp.init();
+    if (ENV === "PROD") {
+      YtDlp.startAutoUpdate();
+    }
     audioFileRepository.init();
     await sabrinaDb.init();
 

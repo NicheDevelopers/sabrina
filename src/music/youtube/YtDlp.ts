@@ -3,6 +3,9 @@ import { spawn, spawnSync } from "child_process";
 
 const ytDlpPath = "yt-dlp";
 
+const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const UPDATE_TIMEOUT_MS = 2 * 60 * 1000;
+
 export class YtDlp {
   public static init() {
     if (YtDlp.isAvailable()) {
@@ -21,6 +24,42 @@ export class YtDlp {
     } catch {
       return false;
     }
+  }
+
+  /* Keeps yt-dlp current without blocking startup, since YouTube changes often break old versions */
+  public static startAutoUpdate() {
+    void YtDlp.update();
+    setInterval(() => void YtDlp.update(), UPDATE_INTERVAL_MS).unref();
+  }
+
+  public static update(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const updater = spawn(ytDlpPath, ["--update-to", "master"], {
+        timeout: UPDATE_TIMEOUT_MS,
+      });
+
+      let output = "";
+      updater.stdout.on("data", (data) => {
+        output += data.toString();
+      });
+      updater.stderr.on("data", (data) => {
+        output += data.toString();
+      });
+
+      updater.on("close", (code) => {
+        if (code === 0) {
+          log.info(`yt-dlp update check finished: ${output.trim()}`);
+        } else {
+          log.warn(`yt-dlp update failed with code ${code}: ${output.trim()}`);
+        }
+        resolve(code === 0);
+      });
+
+      updater.on("error", (error) => {
+        log.warn(`yt-dlp update failed: ${error}`);
+        resolve(false);
+      });
+    });
   }
 
   public static async downloadAudio(url: string, outputDir: string): Promise<string | null> {

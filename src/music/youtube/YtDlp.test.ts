@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "node:events";
+import { log } from "../../logging";
 import { YtDlp } from "./YtDlp";
 
 vi.mock("child_process");
@@ -40,6 +41,62 @@ function runYtDlp(stdout: string, exitCode = 0) {
 describe("YtDlp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("update", () => {
+    function runUpdate(exitCode: number, output: string) {
+      const child = makeChild();
+      const update = YtDlp.update();
+
+      child.stdout.emit("data", Buffer.from(output));
+      child.emit("close", exitCode);
+
+      return update;
+    }
+
+    it("should update to the same channel the image installs", async () => {
+      await runUpdate(0, "yt-dlp is up to date");
+
+      const [command, args] = vi.mocked(spawn).mock.calls[0];
+      expect(command).toBe("yt-dlp");
+      expect(args).toEqual(["--update-to", "master"]);
+    });
+
+    it("should report success", async () => {
+      expect(await runUpdate(0, "Updated yt-dlp")).toBe(true);
+    });
+
+    it("should warn instead of failing when the update fails", async () => {
+      expect(await runUpdate(1, "Unable to reach GitHub")).toBe(false);
+      expect(log.warn).toHaveBeenCalledWith(expect.stringContaining("Unable to reach GitHub"));
+    });
+
+    it("should warn instead of failing when yt-dlp cannot be started", async () => {
+      const child = makeChild();
+      const update = YtDlp.update();
+
+      child.emit("error", new Error("spawn yt-dlp ENOENT"));
+
+      expect(await update).toBe(false);
+      expect(log.warn).toHaveBeenCalled();
+    });
+  });
+
+  describe("startAutoUpdate", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should update immediately and then once a day", () => {
+      vi.useFakeTimers();
+      makeChild();
+
+      YtDlp.startAutoUpdate();
+      expect(spawn).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+      expect(spawn).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("downloadAudio", () => {
