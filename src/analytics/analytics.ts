@@ -1,7 +1,12 @@
-import { Message, MessageType, VoiceState } from "discord.js";
+import {
+    ChatInputCommandInteraction,
+    Message,
+    MessageType,
+    VoiceState,
+} from "discord.js";
 import { log } from "../logging";
 import { sabrinaDb } from "../Db";
-import { MessageLogRecord } from "../Db";
+import { MessageLogRecord, VideoDataRecord } from "../Db";
 import { randomUUID } from "node:crypto";
 
 export interface VoiceStateChange {
@@ -44,6 +49,22 @@ function detectUserStateChangeKind(
         return VoiceStateChangeKind.DEAFENED;
     }
     return null;
+}
+
+/* Failing to record a play should never fail the command that started it */
+export async function logPlays(
+    videos: readonly VideoDataRecord[],
+    interaction: ChatInputCommandInteraction
+): Promise<void> {
+    await Promise.all(
+        videos.map(async video => {
+            try {
+                await sabrinaDb.insertPlayLog(video.id, interaction);
+            } catch (error) {
+                log.error(`Failed to log play of video ${video.id}:`, error);
+            }
+        })
+    );
 }
 
 export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
@@ -90,7 +111,7 @@ export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceStat
         };
 
         log.info(
-            `[VoiceStateChange] ${userStateChange.username} (${userStateChange.id}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`
+            `[VoiceStateChange] ${userStateChange.username} (${userStateChange.userId}) ${userStateChange.kind} ${userStateChange.channelName} (${userStateChange.channelId}) at ${userStateChange.timestamp.toISOString()}`
         );
         sabrinaDb
             .insertVoiceStateLog(userStateChange)
@@ -140,7 +161,7 @@ export function handleMessageCreate(message: Message) {
         }
 
         const channel = message.channel;
-        const channelName = ("name" in channel && channel.name) ? channel.name : "unknown";
+        const channelName = "name" in channel && channel.name ? channel.name : "unknown";
 
         const record: MessageLogRecord = {
             id: randomUUID(),
@@ -155,7 +176,7 @@ export function handleMessageCreate(message: Message) {
             hasEmbed: message.embeds.length > 0,
             isReply: message.reference !== null,
             repliedToUserId: message.reference?.messageId
-                ? message.mentions.repliedUser?.id ?? null
+                ? (message.mentions.repliedUser?.id ?? null)
                 : null,
             messageType: getMessageTypeName(message.type),
             timestamp: new Date().toISOString(),
@@ -177,4 +198,3 @@ export function handleMessageCreate(message: Message) {
         log.error("Error handling message create:", error);
     }
 }
-

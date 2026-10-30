@@ -106,6 +106,22 @@ describe("Db", () => {
         });
     });
 
+    describe("close", () => {
+        it("should refuse queries after closing", async () => {
+            await db.close();
+
+            await expect(db.getVideoRecord("abc123")).rejects.toThrow(
+                "Database not initialized"
+            );
+        });
+
+        it("should do nothing when the database is not open", async () => {
+            await db.close();
+
+            await expect(db.close()).resolves.toBeUndefined();
+        });
+    });
+
     describe("clearDatabase", () => {
         it("should delete all database entries", async () => {
             // Setup - insert some records

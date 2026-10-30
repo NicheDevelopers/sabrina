@@ -139,6 +139,14 @@ export default class Db {
         `);
     }
 
+    public async close() {
+        if (!this.db) return;
+
+        await this.db.close();
+        this.db = null;
+        log.info("Database closed.");
+    }
+
     public async prune() {
         log.info("Pruning database...");
     }

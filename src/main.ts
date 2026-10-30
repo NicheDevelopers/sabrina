@@ -15,8 +15,7 @@ async function main() {
 
         await NicheBot.start();
     } catch (error) {
-        log.error(`Failed to start ${BOT_NAME}: ${error}`);
-        log.error(error);
+        log.error(`Failed to start ${BOT_NAME}:`, error);
         process.exit(1);
     }
 }
@@ -24,12 +23,12 @@ async function main() {
 // Handle graceful shutdown
 process.on("SIGINT", () => {
     log.info("Received SIGINT, shutting down gracefully...");
-    process.exit(0);
+    NicheBot.shutdown();
 });
 
 process.on("SIGTERM", () => {
     log.info("Received SIGTERM, shutting down gracefully...");
-    process.exit(0);
+    NicheBot.shutdown();
 });
 
 main();

@@ -11,7 +11,7 @@ import {
 } from "discord.js";
 import * as voice from "@discordjs/voice";
 import CommandProvider from "./CommandProvider";
-import { VideoDataRecord } from "./Db";
+import { sabrinaDb, VideoDataRecord } from "./Db";
 import NicheBot from "./NicheBot";
 import NicheBotCommand from "./NicheBotCommand";
 import { log } from "./logging";
@@ -121,7 +121,10 @@ describe("NicheBot crash handling", () => {
     });
 
     it("survives voice connection errors", async () => {
-        const connection = Object.assign(new EventEmitter(), { subscribe: jest.fn() });
+        const connection = Object.assign(new EventEmitter(), {
+            subscribe: jest.fn(),
+            destroy: jest.fn(),
+        });
         jest.mocked(voice.joinVoiceChannel).mockReturnValue(
             connection as unknown as voice.VoiceConnection
         );
@@ -137,6 +140,54 @@ describe("NicheBot crash handling", () => {
         const failure = new Error("udp failure");
         expect(() => connection.emit("error", failure)).not.toThrow();
         expect(logError).toHaveBeenCalledWith(expect.any(String), failure);
+    });
+});
+
+describe("NicheBot shutdown", () => {
+    const { client: discordClient } = NicheBot as unknown as { client: Client };
+
+    let exit: jest.SpyInstance;
+    let destroyClient: jest.SpyInstance;
+    let closeDb: jest.SpyInstance;
+
+    beforeEach(() => {
+        (NicheBot as unknown as { isShuttingDown: boolean }).isShuttingDown = false;
+        exit = jest.spyOn(process, "exit").mockImplementation((() => {}) as never);
+        destroyClient = jest.spyOn(discordClient, "destroy").mockResolvedValue();
+        closeDb = jest.spyOn(sabrinaDb, "close").mockResolvedValue();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it("leaves voice, disconnects and closes the database before exiting", async () => {
+        const connection = { subscribe: jest.fn(), destroy: jest.fn() };
+        NicheBot.getGuildState("shutdown").setVoiceConnection(
+            connection as unknown as voice.VoiceConnection
+        );
+
+        await NicheBot.shutdown();
+
+        expect(connection.destroy).toHaveBeenCalledTimes(1);
+        expect(destroyClient).toHaveBeenCalledTimes(1);
+        expect(closeDb).toHaveBeenCalledTimes(1);
+        expect(exit).toHaveBeenCalledWith(0);
+    });
+
+    it("only shuts down once when signalled twice", async () => {
+        await Promise.all([NicheBot.shutdown(), NicheBot.shutdown()]);
+
+        expect(destroyClient).toHaveBeenCalledTimes(1);
+        expect(exit).toHaveBeenCalledTimes(1);
+    });
+
+    it("still exits when the cleanup fails", async () => {
+        destroyClient.mockRejectedValue(new Error("gateway failure"));
+
+        await NicheBot.shutdown();
+
+        expect(exit).toHaveBeenCalledWith(1);
     });
 });
 

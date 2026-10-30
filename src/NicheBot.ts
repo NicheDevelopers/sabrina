@@ -22,7 +22,7 @@ import { log } from "./logging";
 import CommandProvider from "./CommandProvider";
 import { youTube } from "./music/youtube/YouTube";
 import EmbedCreator from "./music/EmbedCreator";
-import { VideoDataRecord } from "./Db";
+import { sabrinaDb, VideoDataRecord } from "./Db";
 import { GuildStatesManager } from "./GuildStatesManager";
 import Utils from "./Utils";
 import { CommandContext } from "./NicheBotCommand";
@@ -171,18 +171,24 @@ class NicheBotClass {
     /* Gracefully shut down the bot.
      * Cleans up resources and disconnects from Discord.
      */
-    private shutdown() {
+    public async shutdown(): Promise<void> {
         if (this.isShuttingDown) return;
         this.isShuttingDown = true;
         log.warn("Shutting down...");
 
-        // Clean up all guild states
-        this.guildStatesManager.destroyAll();
+        try {
+            // Clean up all guild states
+            this.guildStatesManager.destroyAll();
 
-        this.client.destroy().then(() => {
+            await this.client.destroy();
+            await sabrinaDb.close();
+
             log.warn("Bot shut down.");
             process.exit(0);
-        });
+        } catch (error) {
+            log.error("Failed to shut down cleanly:", error);
+            process.exit(1);
+        }
     }
 
     public getCurrentVoiceConnection(guildId: string): VoiceConnection | null {

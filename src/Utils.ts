@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, GuildMember, VoiceChannel } from "discord.js";
 import * as fs from "node:fs";
+import { VideoDataRecord } from "./Db";
 
 export default class Utils {
     /* Returns the voice channel of the member who initiated the interaction. */
@@ -8,6 +9,29 @@ export default class Utils {
     ): VoiceChannel | null {
         const member = interaction.member as GuildMember;
         return member.voice.channel as VoiceChannel;
+    }
+
+    /* Describes what a play command added to the queue, and what it could not load */
+    public static queueResultMessage(
+        query: string,
+        videos: readonly VideoDataRecord[],
+        failedCount: number
+    ): string {
+        const failed =
+            failedCount === 1
+                ? "1 song could not be loaded."
+                : `${failedCount} songs could not be loaded.`;
+
+        if (videos.length === 0) {
+            return failedCount > 0 ? failed : `No results found for query: "${query}"`;
+        }
+
+        const added =
+            videos.length === 1
+                ? `Added **${videos[0].title}** to the queue.`
+                : `Added ${videos.length} songs to the queue.`;
+
+        return failedCount > 0 ? `${added} ${failed}` : added;
     }
 
     public static getVersion(): string {

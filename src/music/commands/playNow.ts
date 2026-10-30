@@ -4,7 +4,8 @@ import NicheBot from "../../NicheBot";
 import { log } from "../../logging";
 import QueryParser from "../QueryParser";
 import { youTube } from "../youtube/YouTube";
-import { sabrinaDb } from "../../Db";
+import { logPlays } from "../../analytics/analytics";
+import Utils from "../../Utils";
 
 const data = new SlashCommandBuilder()
     .setName("playnow")
@@ -40,8 +41,10 @@ async function execute(ctx: CommandContext) {
         `[playnow] Adding ${videos.length} videos after the current song. Failed fetches: ${errors.length}`
     );
 
+    const message = Utils.queueResultMessage(input, videos, errors.length);
+
     if (videos.length === 0) {
-        await ctx.interaction.followUp(`No results found for query: "${input}"`);
+        await ctx.interaction.followUp(message);
         return;
     }
 
@@ -54,20 +57,14 @@ async function execute(ctx: CommandContext) {
         guildState.songQueue.skipSongs(1);
     }
 
-    if (videos.length === 1) {
-        await ctx.interaction.followUp(`Added **${videos[0].title}** to the queue!`);
-    } else {
-        await ctx.interaction.followUp(`Added ${videos.length} songs to the queue!`);
-    }
+    await ctx.interaction.followUp(message);
 
-    await Promise.all(
-        videos.map(async videoData => {
-            log.info(
-                `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
-            );
-            await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
-        })
-    );
+    for (const videoData of videos) {
+        log.info(
+            `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
+        );
+    }
+    await logPlays(videos, ctx.interaction);
 }
 
 const playNowCommand = new NicheBotCommand(data, execute, true);
