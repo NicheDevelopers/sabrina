@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi, type Mock } from "vite-plus/test";
 import { ChatInputCommandInteraction } from "discord.js";
 import { VideoDataRecord } from "../../Db";
 import NicheBot from "../../NicheBot";
@@ -6,132 +7,129 @@ import { sabrinaDb } from "../../Db";
 import { VideoDataFetchError, youTube } from "../youtube/YouTube";
 import playNowCommand from "./playNow";
 
-jest.mock("../../NicheBot", () => ({
-    __esModule: true,
-    default: {
-        getGuildPlayer: jest.fn(),
-    },
+vi.mock("../../NicheBot", () => ({
+  default: {
+    getGuildPlayer: vi.fn(),
+  },
 }));
 
-jest.mock("../youtube/YouTube", () => ({
-    youTube: { handleQuery: jest.fn() },
+vi.mock("../youtube/YouTube", () => ({
+  youTube: { handleQuery: vi.fn() },
 }));
 
-jest.mock("../../Db", () => ({
-    sabrinaDb: { insertPlayLog: jest.fn() },
+vi.mock("../../Db", () => ({
+  sabrinaDb: { insertPlayLog: vi.fn() },
 }));
 
-jest.mock("../../logging", () => ({
-    log: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+vi.mock("../../logging", () => ({
+  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 describe("/playnow", () => {
-    let songQueue: SongQueue<VideoDataRecord>;
-    let played: string[];
-    let followUp: jest.Mock;
+  let songQueue: SongQueue<VideoDataRecord>;
+  let played: string[];
+  let followUp: Mock;
 
-    const song = (id: string) => ({ id, title: id }) as VideoDataRecord;
-    const queuedIds = () => songQueue.getQueue().map(video => video.id);
+  const song = (id: string) => ({ id, title: id }) as VideoDataRecord;
+  const queuedIds = () => songQueue.getQueue().map((video) => video.id);
 
-    function run(
-        videos: VideoDataRecord[],
-        skip: boolean | null = null,
-        errors: VideoDataFetchError[] = []
-    ) {
-        jest.mocked(youTube.handleQuery).mockResolvedValue({ videos, errors });
-        return playNowCommand.execute({
-            guildId: "guild",
-            channel: null,
-            interaction: {
-                followUp,
-                options: {
-                    getString: () => "query",
-                    getBoolean: () => skip,
-                },
-            } as unknown as ChatInputCommandInteraction,
-        });
-    }
-
-    beforeEach(() => {
-        played = [];
-        followUp = jest.fn().mockResolvedValue(undefined);
-        songQueue = new SongQueue<VideoDataRecord>(async video => {
-            played.push(video.id);
-        });
-        jest.mocked(NicheBot.getGuildPlayer).mockReturnValue({
-            isConnected: () => true,
-            songQueue,
-        } as unknown as ReturnType<typeof NicheBot.getGuildPlayer>);
+  function run(
+    videos: VideoDataRecord[],
+    skip: boolean | null = null,
+    errors: VideoDataFetchError[] = [],
+  ) {
+    vi.mocked(youTube.handleQuery).mockResolvedValue({ videos, errors });
+    return playNowCommand.execute({
+      guildId: "guild",
+      channel: null,
+      interaction: {
+        followUp,
+        options: {
+          getString: () => "query",
+          getBoolean: () => skip,
+        },
+      } as unknown as ChatInputCommandInteraction,
     });
+  }
 
-    it("plays the song after the current one", async () => {
-        songQueue.addSongs([song("a"), song("b")]);
-
-        await run([song("new")]);
-
-        expect(queuedIds()).toEqual(["a", "new", "b"]);
-        expect(played).toEqual(["a"]);
+  beforeEach(() => {
+    played = [];
+    followUp = vi.fn().mockResolvedValue(undefined);
+    songQueue = new SongQueue<VideoDataRecord>(async (video) => {
+      played.push(video.id);
     });
+    vi.mocked(NicheBot.getGuildPlayer).mockReturnValue({
+      isConnected: () => true,
+      songQueue,
+    } as unknown as ReturnType<typeof NicheBot.getGuildPlayer>);
+  });
 
-    it("skips straight to the new song", async () => {
-        songQueue.addSongs([song("a"), song("b")]);
+  it("plays the song after the current one", async () => {
+    songQueue.addSongs([song("a"), song("b")]);
 
-        await run([song("new")], true);
+    await run([song("new")]);
 
-        expect(played).toEqual(["a", "new"]);
-    });
+    expect(queuedIds()).toEqual(["a", "new", "b"]);
+    expect(played).toEqual(["a"]);
+  });
 
-    it("skips to the new song when looping the queue", async () => {
-        songQueue.addSongs([song("a"), song("b"), song("c")]);
-        songQueue.setLoopType(LoopType.All);
-        songQueue.skipSongs(2);
+  it("skips straight to the new song", async () => {
+    songQueue.addSongs([song("a"), song("b")]);
 
-        await run([song("new")], true);
+    await run([song("new")], true);
 
-        expect(songQueue.getCurrentSong()?.id).toBe("new");
-    });
+    expect(played).toEqual(["a", "new"]);
+  });
 
-    it("keeps the new song when skipping on an empty queue", async () => {
-        await run([song("new")], true);
+  it("skips to the new song when looping the queue", async () => {
+    songQueue.addSongs([song("a"), song("b"), song("c")]);
+    songQueue.setLoopType(LoopType.All);
+    songQueue.skipSongs(2);
 
-        expect(played).toEqual(["new"]);
-        expect(queuedIds()).toEqual(["new"]);
-    });
+    await run([song("new")], true);
 
-    it("does not skip the current song when nothing was found", async () => {
-        songQueue.addSongs([song("a"), song("b")]);
+    expect(songQueue.getCurrentSong()?.id).toBe("new");
+  });
 
-        await run([], true);
+  it("keeps the new song when skipping on an empty queue", async () => {
+    await run([song("new")], true);
 
-        expect(songQueue.getCurrentSong()?.id).toBe("a");
-        expect(followUp).toHaveBeenCalledTimes(1);
-    });
+    expect(played).toEqual(["new"]);
+    expect(queuedIds()).toEqual(["new"]);
+  });
 
-    it("mentions songs that could not be loaded", async () => {
-        const failed = { videoId: "x", error: "unavailable" };
+  it("does not skip the current song when nothing was found", async () => {
+    songQueue.addSongs([song("a"), song("b")]);
 
-        await run([song("a"), song("b")], null, [failed]);
+    await run([], true);
 
-        expect(followUp).toHaveBeenCalledTimes(1);
-        expect(followUp.mock.calls[0][0]).toContain("1 song could not be loaded");
-    });
+    expect(songQueue.getCurrentSong()?.id).toBe("a");
+    expect(followUp).toHaveBeenCalledTimes(1);
+  });
 
-    it("still succeeds when the play cannot be logged", async () => {
-        jest.mocked(sabrinaDb.insertPlayLog).mockRejectedValueOnce(
-            new Error("db locked")
-        );
+  it("mentions songs that could not be loaded", async () => {
+    const failed = { videoId: "x", error: "unavailable" };
 
-        await expect(run([song("new")])).resolves.toBeUndefined();
+    await run([song("a"), song("b")], null, [failed]);
 
-        expect(queuedIds()).toEqual(["new"]);
-    });
+    expect(followUp).toHaveBeenCalledTimes(1);
+    expect(followUp.mock.calls[0][0]).toContain("1 song could not be loaded");
+  });
 
-    it("replies when adding several songs", async () => {
-        songQueue.addSongs([song("a")]);
+  it("still succeeds when the play cannot be logged", async () => {
+    vi.mocked(sabrinaDb.insertPlayLog).mockRejectedValueOnce(new Error("db locked"));
 
-        await run([song("b"), song("c")]);
+    await expect(run([song("new")])).resolves.toBeUndefined();
 
-        expect(followUp).toHaveBeenCalledTimes(1);
-        expect(followUp.mock.calls[0][0]).toContain("2");
-    });
+    expect(queuedIds()).toEqual(["new"]);
+  });
+
+  it("replies when adding several songs", async () => {
+    songQueue.addSongs([song("a")]);
+
+    await run([song("b"), song("c")]);
+
+    expect(followUp).toHaveBeenCalledTimes(1);
+    expect(followUp.mock.calls[0][0]).toContain("2");
+  });
 });

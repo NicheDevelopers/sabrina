@@ -4,19 +4,19 @@ import { log } from "../../logging";
 import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 
 const data = new SlashCommandBuilder()
-    .setName("resume")
-    .setDescription("Resume the currently playing track");
+  .setName("resume")
+  .setDescription("Resume the currently playing track");
 
 async function execute(ctx: CommandContext) {
-    const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
-    guildPlayer.audioPlayer.unpause();
+  const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
+  guildPlayer.audioPlayer.unpause();
 
-    log.info(`[resume] Resumed music in guild ${ctx.guildId}`);
-    await ctx.interaction.followUp("Resumed music!");
+  log.info(`[resume] Resumed music in guild ${ctx.guildId}`);
+  await ctx.interaction.followUp("Resumed music!");
 }
 
 const resumeCommand = new NicheBotCommand(data, execute, {
-    userInVoice: true,
-    botInVoice: true,
+  userInVoice: true,
+  botInVoice: true,
 });
 export default resumeCommand;

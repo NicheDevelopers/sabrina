@@ -3,21 +3,19 @@ import NicheBot from "../../NicheBot";
 import { log } from "../../logging";
 import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 
-const data = new SlashCommandBuilder()
-    .setName("join")
-    .setDescription("Joins the voice channel");
+const data = new SlashCommandBuilder().setName("join").setDescription("Joins the voice channel");
 
 async function execute(ctx: CommandContext) {
-    const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
-    if (guildPlayer.isConnected()) {
-        log.info(`[join] Already in a voice channel (guild ${ctx.guildId})`);
-        await ctx.interaction.followUp("I'm already in a voice channel!");
-        return;
-    }
+  const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
+  if (guildPlayer.isConnected()) {
+    log.info(`[join] Already in a voice channel (guild ${ctx.guildId})`);
+    await ctx.interaction.followUp("I'm already in a voice channel!");
+    return;
+  }
 
-    await guildPlayer.join(ctx.channel!);
-    log.info(`[join] Joined voice channel in guild ${ctx.guildId}`);
-    await ctx.interaction.followUp("Joined voice channel!");
+  await guildPlayer.join(ctx.channel!);
+  log.info(`[join] Joined voice channel in guild ${ctx.guildId}`);
+  await ctx.interaction.followUp("Joined voice channel!");
 }
 
 const joinCommand = new NicheBotCommand(data, execute, { userInVoice: true });

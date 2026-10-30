@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import { resolve } from "node:path";
 
 // Load environment variables from .env file
-dotenv.config({ path: resolve(__dirname, "../.env") });
+dotenv.config({ path: resolve(import.meta.dirname, "../.env") });
 
 // Export simple environment variables like before, but with dotenv loaded
 export const APPLICATION_ID = process.env["APPLICATION_ID"] || "";

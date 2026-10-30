@@ -18,7 +18,7 @@ RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
 WORKDIR /app
 
 COPY package*.json ./
-COPY tsconfig.json ./
+COPY tsconfig.json vite.config.ts ./
 
 RUN npm ci
 

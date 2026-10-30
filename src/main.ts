@@ -6,30 +6,30 @@ import { audioFileRepository } from "./music/AudioFileRepository";
 import { sabrinaDb } from "./Db";
 
 async function main() {
-    try {
-        log.info(`Starting ${BOT_NAME}...`);
+  try {
+    log.info(`Starting ${BOT_NAME}...`);
 
-        // Initialize core components
-        YtDlp.init();
-        audioFileRepository.init();
-        await sabrinaDb.init();
+    // Initialize core components
+    YtDlp.init();
+    audioFileRepository.init();
+    await sabrinaDb.init();
 
-        await NicheBot.start();
-    } catch (error) {
-        log.error(`Failed to start ${BOT_NAME}:`, error);
-        process.exit(1);
-    }
+    await NicheBot.start();
+  } catch (error) {
+    log.error(`Failed to start ${BOT_NAME}:`, error);
+    process.exit(1);
+  }
 }
 
 // Handle graceful shutdown
 process.on("SIGINT", () => {
-    log.info("Received SIGINT, shutting down gracefully...");
-    NicheBot.shutdown();
+  log.info("Received SIGINT, shutting down gracefully...");
+  void NicheBot.shutdown();
 });
 
 process.on("SIGTERM", () => {
-    log.info("Received SIGTERM, shutting down gracefully...");
-    NicheBot.shutdown();
+  log.info("Received SIGTERM, shutting down gracefully...");
+  void NicheBot.shutdown();
 });
 
-main();
+void main();

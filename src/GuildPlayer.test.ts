@@ -1,66 +1,67 @@
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite-plus/test";
 import { EMPTY_CHANNEL_LEAVE_DELAY_MS, GuildPlayer } from "./GuildPlayer";
 
-jest.mock("@discordjs/voice", () => ({
-    createAudioPlayer: () => ({ on: jest.fn(), stop: jest.fn() }),
-    getVoiceConnection: jest.fn(),
-    NoSubscriberBehavior: { Pause: "pause" },
+vi.mock("@discordjs/voice", () => ({
+  createAudioPlayer: () => ({ on: vi.fn(), stop: vi.fn() }),
+  getVoiceConnection: vi.fn(),
+  NoSubscriberBehavior: { Pause: "pause" },
 }));
 
 describe("GuildPlayer scheduled leave", () => {
-    let guildPlayer: GuildPlayer;
-    let onLeave: jest.Mock;
+  let guildPlayer: GuildPlayer;
+  let onLeave: Mock;
 
-    beforeEach(() => {
-        jest.useFakeTimers();
-        guildPlayer = new GuildPlayer("guild", async () => null);
-        onLeave = jest.fn();
-    });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    guildPlayer = new GuildPlayer("guild", async () => null);
+    onLeave = vi.fn();
+  });
 
-    afterEach(() => {
-        jest.useRealTimers();
-    });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    it("leaves only after the full delay", () => {
-        guildPlayer.scheduleLeave(onLeave);
+  it("leaves only after the full delay", () => {
+    guildPlayer.scheduleLeave(onLeave);
 
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS - 1);
-        expect(onLeave).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS - 1);
+    expect(onLeave).not.toHaveBeenCalled();
 
-        jest.advanceTimersByTime(1);
-        expect(onLeave).toHaveBeenCalledTimes(1);
-    });
+    vi.advanceTimersByTime(1);
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
 
-    it("does not restart the delay when scheduled again", () => {
-        guildPlayer.scheduleLeave(onLeave);
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS - 1);
-        guildPlayer.scheduleLeave(onLeave);
+  it("does not restart the delay when scheduled again", () => {
+    guildPlayer.scheduleLeave(onLeave);
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS - 1);
+    guildPlayer.scheduleLeave(onLeave);
 
-        jest.advanceTimersByTime(1);
-        expect(onLeave).toHaveBeenCalledTimes(1);
-    });
+    vi.advanceTimersByTime(1);
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
 
-    it("does not leave when cancelled", () => {
-        guildPlayer.scheduleLeave(onLeave);
-        guildPlayer.cancelScheduledLeave();
+  it("does not leave when cancelled", () => {
+    guildPlayer.scheduleLeave(onLeave);
+    guildPlayer.cancelScheduledLeave();
 
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
-        expect(onLeave).not.toHaveBeenCalled();
-    });
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
+    expect(onLeave).not.toHaveBeenCalled();
+  });
 
-    it("can be scheduled again after firing", () => {
-        guildPlayer.scheduleLeave(onLeave);
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
+  it("can be scheduled again after firing", () => {
+    guildPlayer.scheduleLeave(onLeave);
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
 
-        guildPlayer.scheduleLeave(onLeave);
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
-        expect(onLeave).toHaveBeenCalledTimes(2);
-    });
+    guildPlayer.scheduleLeave(onLeave);
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
+    expect(onLeave).toHaveBeenCalledTimes(2);
+  });
 
-    it("does not leave after being destroyed", () => {
-        guildPlayer.scheduleLeave(onLeave);
-        guildPlayer.destroy();
+  it("does not leave after being destroyed", () => {
+    guildPlayer.scheduleLeave(onLeave);
+    guildPlayer.destroy();
 
-        jest.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
-        expect(onLeave).not.toHaveBeenCalled();
-    });
+    vi.advanceTimersByTime(EMPTY_CHANNEL_LEAVE_DELAY_MS);
+    expect(onLeave).not.toHaveBeenCalled();
+  });
 });
