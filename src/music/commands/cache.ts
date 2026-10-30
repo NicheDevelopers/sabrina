@@ -47,5 +47,5 @@ async function execute(ctx: CommandContext) {
     }
 }
 
-const cacheCommand = new NicheBotCommand(data, execute, false);
+const cacheCommand = new NicheBotCommand(data, execute);
 export default cacheCommand;

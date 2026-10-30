@@ -1,5 +1,5 @@
-import {ChatInputCommandInteraction, VoiceChannel} from "discord.js";
-import {SlashCommandBuilder, SlashCommandOptionsOnlyBuilder} from "@discordjs/builders";
+import { ChatInputCommandInteraction, VoiceChannel } from "discord.js";
+import { SlashCommandBuilder, SlashCommandOptionsOnlyBuilder } from "@discordjs/builders";
 
 type CommandData = SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
 
@@ -9,18 +9,25 @@ export interface CommandContext {
     guildId: string;
 }
 
+export interface CommandRequirements {
+    userInVoice?: boolean;
+    botInVoice?: boolean;
+}
+
 export default class NicheBotCommand {
     data: CommandData;
     execute: (ctx: CommandContext) => Promise<void>;
-    requiresVoiceConnection: boolean;
+    requiresUserInVoice: boolean;
+    requiresBotInVoice: boolean;
 
     constructor(
         data: CommandData,
         execute: (ctx: CommandContext) => Promise<void>,
-        requiresVoiceConnection: boolean,
+        requirements: CommandRequirements = {}
     ) {
         this.data = data;
         this.execute = execute;
-        this.requiresVoiceConnection = requiresVoiceConnection;
+        this.requiresUserInVoice = requirements.userInVoice ?? false;
+        this.requiresBotInVoice = requirements.botInVoice ?? false;
     }
 }

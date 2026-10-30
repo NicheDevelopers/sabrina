@@ -1,12 +1,6 @@
 import { VideoDataRecord } from "../Db";
 import EmbedCreator from "./EmbedCreator";
 
-jest.mock("../NicheBot", () => ({
-    __esModule: true,
-    default: { getUptime: jest.fn() },
-    BOT_NAME: "Sabrina",
-}));
-
 describe("EmbedCreator", () => {
     const video: VideoDataRecord = {
         id: "dQw4w9WgXcQ",

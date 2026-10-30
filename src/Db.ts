@@ -1,5 +1,5 @@
 import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import { Database, open } from "sqlite";
 import { log } from "./logging";
 import { VideoMetadataResult } from "yt-search";
 import { ChatInputCommandInteraction } from "discord.js";
@@ -49,7 +49,7 @@ export interface MessageLogRecord {
 }
 
 export default class Db {
-    db: any = null;
+    db: Database<sqlite3.Database, sqlite3.Statement> | null = null;
 
     public constructor(private readonly databaseName: string) {
         log.info(`Database will connect to ${databaseName}`);
@@ -87,7 +87,7 @@ export default class Db {
             );
         `);
 
-        const result = await this.db.get(`
+        const result = await this.db.get<{ count: number }>(`
             SELECT COUNT(*) AS count
             FROM yt_videos;
         `);
@@ -155,7 +155,7 @@ export default class Db {
         id: string,
         path: VideoDataRecord["path"],
         videoData: VideoMetadataResult | null
-    ): Promise<VideoDataRecord> {
+    ): Promise<void> {
         if (!this.db) throw new Error("Database not initialized");
 
         log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
@@ -182,13 +182,12 @@ export default class Db {
         ];
         await this.db.run(query, values);
         log.info(`Registered video ${id} at path ${path} in the database.`);
-        return videoData as unknown as VideoDataRecord;
     }
 
     public async getVideoRecord(id: string): Promise<VideoDataRecord | null> {
         if (!this.db) throw new Error("Database not initialized");
 
-        const result = await this.db.get(
+        const result = await this.db.get<VideoDataRecord>(
             `
                 SELECT *
                 FROM yt_videos
@@ -198,7 +197,7 @@ export default class Db {
         );
 
         if (result) {
-            return result as VideoDataRecord;
+            return result;
         } else {
             log.debug(`No entry found in database for video ID ${id}.`);
             return null;

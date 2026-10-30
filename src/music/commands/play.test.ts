@@ -8,9 +8,7 @@ import playCommand from "./play";
 jest.mock("../../NicheBot", () => ({
     __esModule: true,
     default: {
-        getCurrentVoiceConnection: jest.fn(() => ({})),
-        getGuildState: jest.fn(),
-        joinVoiceChannel: jest.fn(),
+        getGuildPlayer: jest.fn(),
     },
 }));
 
@@ -54,9 +52,10 @@ describe("/play", () => {
         jest.clearAllMocks();
         followUp = jest.fn().mockResolvedValue(undefined);
         songQueue = new SongQueue<VideoDataRecord>();
-        jest.mocked(NicheBot.getGuildState).mockReturnValue({
+        jest.mocked(NicheBot.getGuildPlayer).mockReturnValue({
+            isConnected: () => true,
             songQueue,
-        } as unknown as ReturnType<typeof NicheBot.getGuildState>);
+        } as unknown as ReturnType<typeof NicheBot.getGuildPlayer>);
     });
 
     it("names a single added song", async () => {

@@ -58,7 +58,8 @@ function makeGuildInteraction(followUp: jest.Mock): ChatInputCommandInteraction 
 function mockFailingCommand(failure: Error) {
     jest.spyOn(CommandProvider, "getCommand").mockReturnValue({
         data: { name: "broken" },
-        requiresVoiceConnection: false,
+        requiresUserInVoice: false,
+        requiresBotInVoice: false,
         execute: jest.fn().mockRejectedValue(failure),
     } as unknown as NicheBotCommand);
 }
@@ -129,7 +130,7 @@ describe("NicheBot crash handling", () => {
             connection as unknown as voice.VoiceConnection
         );
 
-        const joined = NicheBot.joinVoiceChannel({
+        const joined = NicheBot.getGuildPlayer("guild").join({
             id: "channel",
             guildId: "guild",
             guild: { voiceAdapterCreator: jest.fn() },
@@ -140,6 +141,66 @@ describe("NicheBot crash handling", () => {
         const failure = new Error("udp failure");
         expect(() => connection.emit("error", failure)).not.toThrow();
         expect(logError).toHaveBeenCalledWith(expect.any(String), failure);
+    });
+});
+
+describe("NicheBot command requirements", () => {
+    const flush = () => new Promise(resolve => setImmediate(resolve));
+
+    function run(requirements: object, connected: boolean, userChannel: object | null) {
+        const execute = jest.fn().mockResolvedValue(undefined);
+        const followUp = jest.fn().mockResolvedValue(undefined);
+        jest.spyOn(CommandProvider, "getCommand").mockReturnValue({
+            data: { name: "skip" },
+            execute,
+            ...requirements,
+        } as unknown as NicheBotCommand);
+        jest.mocked(voice.getVoiceConnection).mockReturnValue(
+            (connected ? {} : undefined) as voice.VoiceConnection | undefined
+        );
+
+        client.emit(
+            "interactionCreate",
+            makeInteraction({
+                guildId: "requirements",
+                channelId: "channel",
+                commandName: "skip",
+                user: { tag: "user#0001" },
+                member: { voice: { channel: userChannel } },
+                deferReply: jest.fn().mockResolvedValue(undefined),
+                followUp,
+            })
+        );
+        return { execute, followUp };
+    }
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        jest.mocked(voice.getVoiceConnection).mockReset();
+    });
+
+    it("refuses commands that need the bot in voice when it is not", async () => {
+        const { execute, followUp } = run({ requiresBotInVoice: true }, false, null);
+        await flush();
+
+        expect(execute).not.toHaveBeenCalled();
+        expect(followUp).toHaveBeenCalledWith("I'm not in a voice channel!");
+    });
+
+    it("refuses commands that need the user in voice when they are not", async () => {
+        const { execute, followUp } = run({ requiresUserInVoice: true }, true, null);
+        await flush();
+
+        expect(execute).not.toHaveBeenCalled();
+        expect(followUp).toHaveBeenCalledWith("Cannot get the channel you're in!");
+    });
+
+    it("runs commands when their requirements are met", async () => {
+        const requirements = { requiresUserInVoice: true, requiresBotInVoice: true };
+        const { execute } = run(requirements, true, { id: "voice" });
+        await flush();
+
+        expect(execute).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -163,8 +224,11 @@ describe("NicheBot shutdown", () => {
 
     it("leaves voice, disconnects and closes the database before exiting", async () => {
         const connection = { subscribe: jest.fn(), destroy: jest.fn() };
-        NicheBot.getGuildState("shutdown").setVoiceConnection(
-            connection as unknown as voice.VoiceConnection
+        NicheBot.getGuildPlayer("shutdown");
+        jest.mocked(voice.getVoiceConnection).mockImplementation(guildId =>
+            guildId === "shutdown"
+                ? (connection as unknown as voice.VoiceConnection)
+                : undefined
         );
 
         await NicheBot.shutdown();
@@ -211,9 +275,9 @@ describe("NicheBot playback", () => {
         expect(condition()).toBe(true);
     }
 
-    const guildState = () => NicheBot.getGuildState(guildId);
+    const guildPlayer = () => NicheBot.getGuildPlayer(guildId);
     const queuedIds = () =>
-        guildState()
+        guildPlayer()
             .songQueue.getQueue()
             .map(song => song.id);
     const playedPaths = () => createAudioResource.mock.calls.map(call => call[0]);
@@ -255,7 +319,7 @@ describe("NicheBot playback", () => {
     }
 
     function subscribeStubConnection() {
-        const player = guildState().audioPlayer as unknown as {
+        const player = guildPlayer().audioPlayer as unknown as {
             subscribe(connection: object): void;
         };
         player.subscribe({
@@ -271,8 +335,8 @@ describe("NicheBot playback", () => {
 
     async function startPlaying(songs: VideoDataRecord[]) {
         subscribeStubConnection();
-        guildState().songQueue.addSongs(songs);
-        await waitFor(() => guildState().audioPlayer.state.status === "playing");
+        guildPlayer().songQueue.addSongs(songs);
+        await waitFor(() => guildPlayer().audioPlayer.state.status === "playing");
     }
 
     function pendingDownload() {
@@ -299,7 +363,7 @@ describe("NicheBot playback", () => {
     }
 
     function join() {
-        return NicheBot.joinVoiceChannel({
+        return guildPlayer().join({
             id: "channel",
             guildId,
             guild: { voiceAdapterCreator: jest.fn() },
@@ -324,7 +388,7 @@ describe("NicheBot playback", () => {
     });
 
     afterEach(() => {
-        guildState().destroy();
+        guildPlayer().destroy();
         jest.restoreAllMocks();
     });
 
@@ -347,11 +411,11 @@ describe("NicheBot playback", () => {
         await startPlaying([song("a"), song("b"), song("c")]);
         const { finish } = pendingDownload();
 
-        guildState().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
         await sleep(250);
 
         expect(queuedIds()).toEqual(["b", "c"]);
-        expect(guildState().audioPlayer.state.status).toBe("idle");
+        expect(guildPlayer().audioPlayer.state.status).toBe("idle");
 
         finish("b.opus");
         await waitFor(() => playedPaths().includes("b.opus"));
@@ -362,8 +426,8 @@ describe("NicheBot playback", () => {
         await startPlaying([song("a"), song("b"), song("c")]);
         const { finish } = pendingDownload();
 
-        guildState().songQueue.skipSongs(1);
-        guildState().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
         finish("b.opus");
         await sleep(50);
 
@@ -375,8 +439,8 @@ describe("NicheBot playback", () => {
         await startPlaying([song("a"), song("b"), song("c")]);
         const { fail } = pendingDownload();
 
-        guildState().songQueue.skipSongs(1);
-        guildState().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
         fail(new Error("download failed"));
         await sleep(50);
 
@@ -387,7 +451,7 @@ describe("NicheBot playback", () => {
         await startPlaying([song("a"), song("b"), song("c")]);
         const { fail } = pendingDownload();
 
-        guildState().songQueue.skipSongs(1);
+        guildPlayer().songQueue.skipSongs(1);
         fail(new Error("download failed"));
 
         await waitFor(() => playedPaths().includes("c.opus"));
@@ -398,13 +462,13 @@ describe("NicheBot playback", () => {
         // Later attempts hang, so that a retry loop fails this test instead of spinning
         download.mockReturnValue(new Promise(() => {}));
         download.mockRejectedValueOnce(new Error("download failed"));
-        guildState().songQueue.setLoopType(LoopType.All);
+        guildPlayer().songQueue.setLoopType(LoopType.All);
 
-        guildState().songQueue.addSongs([song("a")]);
+        guildPlayer().songQueue.addSongs([song("a")]);
         await sleep(50);
 
         expect(download).toHaveBeenCalledTimes(1);
-        expect(guildState().songQueue.isEmpty()).toBe(true);
+        expect(guildPlayer().songQueue.isEmpty()).toBe(true);
     });
 
     it("clears the queue and stops playing when leaving", async () => {
@@ -414,30 +478,30 @@ describe("NicheBot playback", () => {
             destroy,
         } as unknown as voice.VoiceConnection);
 
-        NicheBot.disconnectFrom(guildId);
+        guildPlayer().disconnect();
 
         expect(destroy).toHaveBeenCalledTimes(1);
-        expect(guildState().songQueue.isEmpty()).toBe(true);
-        expect(guildState().audioPlayer.state.status).toBe("idle");
+        expect(guildPlayer().songQueue.isEmpty()).toBe(true);
+        expect(guildPlayer().audioPlayer.state.status).toBe("idle");
     });
 
     it("cleans up after being kicked from the voice channel", async () => {
         const connection = makeConnection();
         await joinThenTrack(connection);
-        guildState().songQueue.addSongs([song("a")]);
+        guildPlayer().songQueue.addSongs([song("a")]);
         entersState.mockRejectedValue(new Error("timed out"));
 
         connection.emit(voice.VoiceConnectionStatus.Disconnected);
         await sleep(10);
 
         expect(connection.destroy).toHaveBeenCalledTimes(1);
-        expect(guildState().songQueue.isEmpty()).toBe(true);
+        expect(guildPlayer().songQueue.isEmpty()).toBe(true);
     });
 
     it("stays connected when moved to another channel", async () => {
         const connection = makeConnection();
         await joinThenTrack(connection);
-        guildState().songQueue.addSongs([song("a")]);
+        guildPlayer().songQueue.addSongs([song("a")]);
 
         connection.emit(voice.VoiceConnectionStatus.Disconnected);
         await sleep(10);
@@ -503,19 +567,19 @@ describe("NicheBot playback", () => {
         beforeEach(() => {
             send = jest.fn().mockResolvedValue(undefined);
             useChannel(sendableChannel(TextChannel.prototype));
-            guildState().setLastInteractionChannel("channel");
+            guildPlayer().setLastInteractionChannel("channel");
         });
 
         it("announces each new song", async () => {
-            guildState().songQueue.addSongs([song("a")]);
+            guildPlayer().songQueue.addSongs([song("a")]);
             await waitFor(() => send.mock.calls.length > 0);
 
             expect(send.mock.calls[0][0].embeds).toHaveLength(1);
         });
 
         it("does not announce every repeat of a looped song", async () => {
-            guildState().songQueue.setLoopType(LoopType.One);
-            guildState().songQueue.addSongs([song("a")]);
+            guildPlayer().songQueue.setLoopType(LoopType.One);
+            guildPlayer().songQueue.addSongs([song("a")]);
             await sleep(50);
 
             expect(send).not.toHaveBeenCalled();
@@ -527,7 +591,7 @@ describe("NicheBot playback", () => {
         ])("announces songs in %s", async (_name, prototype) => {
             useChannel(sendableChannel(prototype));
 
-            guildState().songQueue.addSongs([song("a")]);
+            guildPlayer().songQueue.addSongs([song("a")]);
 
             await waitFor(() => send.mock.calls.length > 0);
         });
@@ -536,7 +600,7 @@ describe("NicheBot playback", () => {
             useChannel(sendableChannel(VoiceChannel.prototype));
             download.mockRejectedValueOnce(new Error("download failed"));
 
-            guildState().songQueue.addSongs([song("a")]);
+            guildPlayer().songQueue.addSongs([song("a")]);
 
             await waitFor(() => send.mock.calls.length > 0);
             expect(send.mock.calls[0][0]).toContain("download failed");
@@ -545,7 +609,7 @@ describe("NicheBot playback", () => {
         it("keeps playing when the channel cannot receive messages", async () => {
             useChannel(Object.create(CategoryChannel.prototype));
 
-            guildState().songQueue.addSongs([song("a")]);
+            guildPlayer().songQueue.addSongs([song("a")]);
             await sleep(50);
 
             expect(playedPaths()).toEqual(["a.opus"]);

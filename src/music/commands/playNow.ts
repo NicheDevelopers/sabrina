@@ -1,11 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
-import NicheBot from "../../NicheBot";
-import { log } from "../../logging";
-import QueryParser from "../QueryParser";
-import { youTube } from "../youtube/YouTube";
-import { logPlays } from "../../analytics/analytics";
-import Utils from "../../Utils";
+import { enqueueFromQuery } from "./enqueueFromQuery";
 
 const data = new SlashCommandBuilder()
     .setName("playnow")
@@ -18,54 +13,16 @@ const data = new SlashCommandBuilder()
     );
 
 async function execute(ctx: CommandContext) {
-    if (!NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
-        await NicheBot.joinVoiceChannel(ctx.channel!);
-    }
+    await enqueueFromQuery(ctx, (queue, videos) => {
+        // With nothing to skip, the new song starts on its own
+        const shouldSkip = ctx.interaction.options.getBoolean("skip") && !queue.isEmpty();
 
-    const voiceConnection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
-    if (!voiceConnection) {
-        await ctx.interaction.followUp("Failed to join the voice channel.");
-        log.error(
-            `[playnow] Failed to join voice channel. Voice connection is null after joining (guild ${ctx.guildId})`
-        );
-        return;
-    }
-
-    const guildState = NicheBot.getGuildState(ctx.guildId);
-    const input = ctx.interaction.options.getString("query", true);
-    const query = QueryParser.parse(input);
-
-    const { videos, errors } = await youTube.handleQuery(query);
-
-    log.warn(
-        `[playnow] Adding ${videos.length} videos after the current song. Failed fetches: ${errors.length}`
-    );
-
-    const message = Utils.queueResultMessage(input, videos, errors.length);
-
-    if (videos.length === 0) {
-        await ctx.interaction.followUp(message);
-        return;
-    }
-
-    // With nothing to skip, the new song starts on its own
-    const shouldSkip =
-        ctx.interaction.options.getBoolean("skip") && !guildState.songQueue.isEmpty();
-
-    guildState.songQueue.addSongsNext(videos);
-    if (shouldSkip) {
-        guildState.songQueue.skipSongs(1);
-    }
-
-    await ctx.interaction.followUp(message);
-
-    for (const videoData of videos) {
-        log.info(
-            `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
-        );
-    }
-    await logPlays(videos, ctx.interaction);
+        queue.addSongsNext(videos);
+        if (shouldSkip) {
+            queue.skipSongs(1);
+        }
+    });
 }
 
-const playNowCommand = new NicheBotCommand(data, execute, true);
+const playNowCommand = new NicheBotCommand(data, execute, { userInVoice: true });
 export default playNowCommand;

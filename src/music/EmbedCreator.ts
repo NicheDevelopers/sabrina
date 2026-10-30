@@ -1,6 +1,6 @@
 import { VideoDataRecord } from "../Db";
 import { EmbedBuilder } from "discord.js";
-import NicheBot, { BOT_NAME } from "../NicheBot";
+import { BOT_NAME } from "../Config";
 import Utils from "../Utils";
 import { YtDlp } from "./youtube/YtDlp";
 
@@ -66,12 +66,12 @@ export default class EmbedCreator {
             .setFooter({ text: `Total songs: ${queue.length}` });
     }
 
-    public static createAboutEmbed(): EmbedBuilder {
+    public static createAboutEmbed(uptimeMs: number): EmbedBuilder {
         const gitHubUrl = "https://github.com/NicheDevs/Sabrina";
         const authors = ["Michał Miłek", "Artur Gulik"];
         const year = 2025;
         const version = Utils.getVersion();
-        const uptime = Utils.formatDuration(NicheBot.getUptime());
+        const uptime = Utils.formatDuration(uptimeMs);
 
         return new EmbedBuilder()
             .setColor(this.color)

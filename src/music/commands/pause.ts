@@ -1,7 +1,7 @@
-import {SlashCommandBuilder} from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import NicheBot from "../../NicheBot";
-import {log} from "../../logging";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import { log } from "../../logging";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 
 const data = new SlashCommandBuilder()
     .setName("pause")
@@ -10,21 +10,15 @@ const data = new SlashCommandBuilder()
 async function execute(ctx: CommandContext) {
     const interaction = ctx.interaction;
 
-    const connection = NicheBot.getCurrentVoiceConnection(ctx.guildId);
-    if (!connection) {
-        log.warn(
-            `[pause] Command invoked but bot is not in a voice channel (guild ${interaction.guildId})`,
-        );
-        await interaction.followUp("I'm not in a voice channel!");
-        return;
-    }
-
-    const guildState = NicheBot.getGuildState(ctx.guildId);
-    guildState.audioPlayer.pause();
+    const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
+    guildPlayer.audioPlayer.pause();
 
     log.info(`[pause] Paused music in guild ${interaction.guildId}`);
     await interaction.followUp("Paused music!");
 }
 
-const pauseCommand = new NicheBotCommand(data, execute, true);
+const pauseCommand = new NicheBotCommand(data, execute, {
+    userInVoice: true,
+    botInVoice: true,
+});
 export default pauseCommand;

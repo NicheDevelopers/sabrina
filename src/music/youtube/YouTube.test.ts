@@ -52,7 +52,7 @@ describe("YouTube", () => {
     });
 
     afterEach(async () => {
-        await db.db.close();
+        await db.close();
     });
 
     describe("findLocalOrDownload", () => {

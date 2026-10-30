@@ -10,20 +10,15 @@ const data = new SlashCommandBuilder()
 async function execute(ctx: CommandContext) {
     log.info(`[shuffle] Shuffling queue in guild ${ctx.guildId || "unknown"}`);
 
-    if (!NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
-        log.warn(
-            `[skip] Command invoked but bot is not in a voice channel (guild ${ctx.guildId})`
-        );
-        await ctx.interaction.followUp("I'm not in a voice channel!");
-        return;
-    }
-
-    const guildState = NicheBot.getGuildState(ctx.guildId);
-    guildState.songQueue.shuffle();
+    const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
+    guildPlayer.songQueue.shuffle();
 
     log.info(`[shuffle] Shuffled queue in guild ${ctx.guildId}`);
     await ctx.interaction.followUp(`Shuffled the queue!`);
 }
 
-const shuffleCommand = new NicheBotCommand(data, execute, true);
+const shuffleCommand = new NicheBotCommand(data, execute, {
+    userInVoice: true,
+    botInVoice: true,
+});
 export default shuffleCommand;

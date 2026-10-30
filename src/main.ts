@@ -1,5 +1,6 @@
 import { log } from "./logging";
-import NicheBot, { BOT_NAME } from "./NicheBot";
+import { BOT_NAME } from "./Config";
+import NicheBot from "./NicheBot";
 import { YtDlp } from "./music/youtube/YtDlp";
 import { audioFileRepository } from "./music/AudioFileRepository";
 import { sabrinaDb } from "./Db";

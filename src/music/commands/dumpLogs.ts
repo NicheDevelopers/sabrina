@@ -1,7 +1,7 @@
-import {AttachmentBuilder, SlashCommandBuilder} from "discord.js";
-import NicheBotCommand, {CommandContext} from "../../NicheBotCommand";
+import { AttachmentBuilder, SlashCommandBuilder } from "discord.js";
+import NicheBotCommand, { CommandContext } from "../../NicheBotCommand";
 import * as fs from "node:fs";
-import {log} from "../../logging";
+import { log } from "../../logging";
 
 const data = new SlashCommandBuilder()
     .setName("dumplogs")
@@ -25,7 +25,7 @@ async function execute(ctx: CommandContext) {
 
         if (stats.size > maxSize) {
             // Read only the last 5MB of the file
-            const fd = fs.openSync(logFilePath, 'r');
+            const fd = fs.openSync(logFilePath, "r");
             const buffer = Buffer.alloc(maxSize);
             fs.readSync(fd, buffer, 0, maxSize, stats.size - maxSize);
             fs.closeSync(fd);
@@ -33,7 +33,7 @@ async function execute(ctx: CommandContext) {
 
             await ctx.interaction.followUp({
                 content: `Log file is larger than 5MB. Showing last 5MB of logs.`,
-                files: [new AttachmentBuilder(content, {name: 'bot-logs.txt'})]
+                files: [new AttachmentBuilder(content, { name: "bot-logs.txt" })],
             });
         } else {
             // Read entire file
@@ -41,15 +41,16 @@ async function execute(ctx: CommandContext) {
 
             await ctx.interaction.followUp({
                 content: `Log file dump (${(stats.size / 1024).toFixed(2)} KB)`,
-                files: [new AttachmentBuilder(content, {name: 'bot-logs.txt'})]
+                files: [new AttachmentBuilder(content, { name: "bot-logs.txt" })],
             });
         }
-
     } catch (error) {
         console.error("Error reading log file:", error);
-        await ctx.interaction.followUp("Failed to read log file: " + (error as Error).message);
+        await ctx.interaction.followUp(
+            "Failed to read log file: " + (error as Error).message
+        );
     }
 }
 
-const dumpLogsCommand = new NicheBotCommand(data, execute, false);
+const dumpLogsCommand = new NicheBotCommand(data, execute);
 export default dumpLogsCommand;

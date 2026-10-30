@@ -9,9 +9,7 @@ import playNowCommand from "./playNow";
 jest.mock("../../NicheBot", () => ({
     __esModule: true,
     default: {
-        getCurrentVoiceConnection: jest.fn(() => ({})),
-        getGuildState: jest.fn(),
-        joinVoiceChannel: jest.fn(),
+        getGuildPlayer: jest.fn(),
     },
 }));
 
@@ -60,9 +58,10 @@ describe("/playnow", () => {
         songQueue = new SongQueue<VideoDataRecord>(async video => {
             played.push(video.id);
         });
-        jest.mocked(NicheBot.getGuildState).mockReturnValue({
+        jest.mocked(NicheBot.getGuildPlayer).mockReturnValue({
+            isConnected: () => true,
             songQueue,
-        } as unknown as ReturnType<typeof NicheBot.getGuildState>);
+        } as unknown as ReturnType<typeof NicheBot.getGuildPlayer>);
     });
 
     it("plays the song after the current one", async () => {

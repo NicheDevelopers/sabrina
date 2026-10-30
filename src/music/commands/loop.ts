@@ -46,16 +46,14 @@ async function execute(ctx: CommandContext) {
     }
     const loopType = loopTypeString as LoopType;
 
-    if (!NicheBot.getCurrentVoiceConnection(ctx.guildId)) {
-        await ctx.interaction.followUp("I'm not in a voice channel!");
-        return;
-    }
-
-    const guildState = NicheBot.getGuildState(ctx.guildId);
-    guildState.songQueue.setLoopType(loopType);
+    const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
+    guildPlayer.songQueue.setLoopType(loopType);
 
     await ctx.interaction.followUp(loopMessage(loopType));
 }
 
-const loopCommand = new NicheBotCommand(data, execute, true);
+const loopCommand = new NicheBotCommand(data, execute, {
+    userInVoice: true,
+    botInVoice: true,
+});
 export default loopCommand;
