@@ -1,24 +1,8 @@
-FROM node:26
-
-RUN apt-get update && apt-get install -y \
-    sqlite3 \
-    ffmpeg \
-    jq \
-    wget \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g deno
-
-RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-    && chmod a+rx yt-dlp \
-    && mv yt-dlp /usr/local/bin/yt-dlp \
-    && yt-dlp --update-to master
+FROM node:26-slim AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.json vite.config.ts ./
+COPY package*.json tsconfig.json vite.config.ts ./
 
 RUN npm ci
 
@@ -26,11 +10,29 @@ COPY src/ ./src/
 
 RUN npm run build
 
-RUN npm prune --production
+RUN npm prune --omit=dev
 
-RUN mkdir -p /app/logs
+FROM node:26-slim
 
-RUN mkdir -p /app/downloads
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    ffmpeg \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g deno && npm cache clean --force
+
+ADD --chmod=755 https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp /usr/local/bin/yt-dlp
+
+RUN yt-dlp --update-to master
+
+WORKDIR /app
+
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+
+RUN mkdir -p /app/logs /app/downloads
 
 ARG VERSION=dev
 ENV VERSION=$VERSION
