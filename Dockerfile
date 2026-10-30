@@ -32,6 +32,4 @@ RUN mkdir -p /app/logs
 
 RUN mkdir -p /app/downloads
 
-EXPOSE 8080
-
 CMD ["node", "dist/main.js"]

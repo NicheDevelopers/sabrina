@@ -2,7 +2,6 @@ import { log } from "./logging";
 import NicheBot, { BOT_NAME } from "./NicheBot";
 import { YtDlp } from "./music/youtube/YtDlp";
 import { audioFileRepository } from "./music/AudioFileRepository";
-import { startHealthServer } from "./HealthServer";
 import { sabrinaDb } from "./Db";
 
 async function main() {
@@ -13,10 +12,6 @@ async function main() {
         YtDlp.init();
         audioFileRepository.init();
         await sabrinaDb.init();
-
-        // Start health server first - if this fails, we don't want to start the bot
-        log.info("Starting health server...");
-        startHealthServer();
 
         await NicheBot.start();
     } catch (error) {

@@ -31,13 +31,6 @@ A Discord music bot that plays audio from YouTube with voice channel support.
 - **Logging**: Logs are stored in the `logs/` directory
 - **Downloads**: YouTube audio files cached in `downloads/youtube/`
 
-## Health Check
-
-The bot includes a health check endpoint accessible at:
-
-- Development: `http://localhost:4747/health`
-- Production: Configurable via `HEALTH_PORT` environment variable
-
 ## Docker Deployment
 
 ### Using Docker Compose (Recommended)

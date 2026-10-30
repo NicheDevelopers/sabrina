@@ -399,10 +399,6 @@ class NicheBotClass {
         return this.guildStatesManager.getGuildState(guildId);
     }
 
-    public isReady(): boolean {
-        return this.client.isReady();
-    }
-
     public getUptime(): number {
         return Date.now() - this.startupTimestamp;
     }
