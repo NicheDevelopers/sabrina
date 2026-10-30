@@ -149,3 +149,7 @@ vite.config.ts.timestamp-*
 
 downloads/
 cov_profile
+
+# DB export tool
+tools/db-export/export/
+tools/db-export/db-export

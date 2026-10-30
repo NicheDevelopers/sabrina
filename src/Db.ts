@@ -31,6 +31,23 @@ export interface PlayLogRecord {
     guildName: string;
 }
 
+export interface MessageLogRecord {
+    id: string;
+    userId: string;
+    userName: string;
+    channelId: string;
+    channelName: string;
+    guildId: string;
+    guildName: string;
+    contentLength: number;
+    attachmentCount: number;
+    hasEmbed: boolean;
+    isReply: boolean;
+    repliedToUserId: string | null;
+    messageType: string;
+    timestamp: string;
+}
+
 export default class Db {
     db: any = null;
 
@@ -98,6 +115,25 @@ export default class Db {
                 channelName TEXT,
                 guildId TEXT,
                 guildName TEXT,
+                timestamp DATETIME
+            );
+        `);
+
+        await this.db.exec(`
+            CREATE TABLE IF NOT EXISTS message_analytics (
+                id TEXT PRIMARY KEY,
+                userId TEXT,
+                userName TEXT,
+                channelId TEXT,
+                channelName TEXT,
+                guildId TEXT,
+                guildName TEXT,
+                contentLength INTEGER,
+                attachmentCount INTEGER,
+                hasEmbed INTEGER,
+                isReply INTEGER,
+                repliedToUserId TEXT,
+                messageType TEXT,
                 timestamp DATETIME
             );
         `);
@@ -213,6 +249,39 @@ export default class Db {
 
         log.debug(
             `Logged voice state change of user ${voiceStateChange.username} (${voiceStateChange.userId}) - ${voiceStateChange.kind} in channel ${voiceStateChange.channelName} (${voiceStateChange.channelId})`
+        );
+    }
+
+    public async insertMessageLog(record: MessageLogRecord) {
+        if (!this.db) throw new Error("Database not initialized");
+
+        const query = `
+            INSERT INTO message_analytics (
+                id, userId, userName, channelId, channelName,
+                guildId, guildName, contentLength, attachmentCount,
+                hasEmbed, isReply, repliedToUserId, messageType, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        const values = [
+            record.id,
+            record.userId,
+            record.userName,
+            record.channelId,
+            record.channelName,
+            record.guildId,
+            record.guildName,
+            record.contentLength,
+            record.attachmentCount,
+            record.hasEmbed ? 1 : 0,
+            record.isReply ? 1 : 0,
+            record.repliedToUserId,
+            record.messageType,
+            record.timestamp,
+        ];
+        await this.db.run(query, values);
+
+        log.debug(
+            `Logged message from ${record.userName} in #${record.channelName} (${record.contentLength} chars, ${record.attachmentCount} attachments)`
         );
     }
 

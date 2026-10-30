@@ -1,6 +1,8 @@
-import { Message, VoiceState } from "discord.js";
+import { Message, MessageType, VoiceState } from "discord.js";
 import { log } from "../logging";
 import { sabrinaDb } from "../Db";
+import { MessageLogRecord } from "../Db";
+import { randomUUID } from "node:crypto";
 
 export interface VoiceStateChange {
     id?: string;
@@ -103,16 +105,76 @@ export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceStat
     }
 }
 
+/**
+ * Maps Discord.js MessageType enum to a human-readable string for analytics.
+ */
+function getMessageTypeName(type: MessageType): string {
+    switch (type) {
+        case MessageType.Default:
+            return "default";
+        case MessageType.Reply:
+            return "reply";
+        case MessageType.ChatInputCommand:
+            return "slash_command";
+        case MessageType.ContextMenuCommand:
+            return "context_menu";
+        case MessageType.ThreadStarterMessage:
+            return "thread_starter";
+        case MessageType.GuildBoost:
+            return "boost";
+        case MessageType.UserJoin:
+            return "user_join";
+        default:
+            return `other_${type}`;
+    }
+}
+
 export function handleMessageCreate(message: Message) {
     try {
         if (message.author.bot) {
             return;
         }
-        const author = message.author.username;
-        const channel = message.channelId;
-        log.info(`${author} sent a message in ${channel}`);
-        // when database will be implemented, author and channel will be used to store message count
+
+        if (!message.guildId || !message.guild) {
+            return;
+        }
+
+        const channel = message.channel;
+        const channelName = ("name" in channel && channel.name) ? channel.name : "unknown";
+
+        const record: MessageLogRecord = {
+            id: randomUUID(),
+            userId: message.author.id,
+            userName: message.author.username,
+            channelId: message.channelId,
+            channelName: channelName,
+            guildId: message.guildId,
+            guildName: message.guild.name,
+            contentLength: message.content?.length ?? 0,
+            attachmentCount: message.attachments.size,
+            hasEmbed: message.embeds.length > 0,
+            isReply: message.reference !== null,
+            repliedToUserId: message.reference?.messageId
+                ? message.mentions.repliedUser?.id ?? null
+                : null,
+            messageType: getMessageTypeName(message.type),
+            timestamp: new Date().toISOString(),
+        };
+
+        log.info(
+            `[Message] ${record.userName} in #${record.channelName} (${record.guildName}) - ${record.contentLength} chars`
+        );
+
+        sabrinaDb
+            .insertMessageLog(record)
+            .then(() => {
+                log.debug("Message logged to database.");
+            })
+            .catch((err: unknown) => {
+                log.error("Failed to log message to database:", err);
+            });
     } catch (error) {
         log.error("Error handling message create:", error);
     }
 }
+

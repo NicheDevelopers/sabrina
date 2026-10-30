@@ -261,6 +261,7 @@ class NicheBotClass {
                 GatewayIntentBits.GuildVoiceStates,
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.GuildMembers,
+                GatewayIntentBits.MessageContent,
             ],
         });
     }
