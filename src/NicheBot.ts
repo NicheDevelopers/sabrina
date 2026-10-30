@@ -1,5 +1,6 @@
 import {
     createAudioResource,
+    entersState,
     getVoiceConnection,
     joinVoiceChannel,
     VoiceConnection,
@@ -192,13 +193,13 @@ class NicheBotClass {
      * Returns a promise that resolves when the connection is ready.
      * Rejects if the connection fails or times out.
      */
-    public joinVoiceChannel(channel: VoiceChannel): Promise<void> {
+    public async joinVoiceChannel(channel: VoiceChannel): Promise<void> {
         const guildId = channel.guildId;
         const guildState = this.guildStatesManager.getGuildState(guildId);
 
         if (this.getCurrentVoiceConnection(guildId)) {
             log.warn(`Already connected to a voice channel in guild ${guildId}.`);
-            return Promise.resolve();
+            return;
         }
 
         const voiceConnection = joinVoiceChannel({
@@ -211,26 +212,49 @@ class NicheBotClass {
             log.error(`Voice connection error for guild ${guildId}:`, error);
         });
 
-        return new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error("Voice connection timeout"));
-            }, 15000); // 15 seconds timeout
-
-            voiceConnection.on(VoiceConnectionStatus.Ready, () => {
-                // Set the voice connection in guild state - this will also subscribe the audio player
-                guildState.setVoiceConnection(voiceConnection);
-                clearTimeout(timeout);
-                resolve();
-                log.info(`Voice connection ready for guild ${guildId}.`);
-            });
-
-            voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
-                clearTimeout(timeout);
-                guildState.setVoiceConnection(null);
-                reject(new Error("Voice connection disconnected"));
-                log.warn(`Voice connection disconnected for guild ${guildId}.`);
-            });
+        voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+            // Set the voice connection in guild state - this will also subscribe the audio player
+            guildState.setVoiceConnection(voiceConnection);
+            log.info(`Voice connection ready for guild ${guildId}.`);
         });
+
+        voiceConnection.on(VoiceConnectionStatus.Disconnected, () => {
+            log.warn(`Voice connection disconnected for guild ${guildId}.`);
+            this.recoverConnection(guildId, voiceConnection);
+        });
+
+        try {
+            await entersState(voiceConnection, VoiceConnectionStatus.Ready, 15000); // 15 seconds timeout
+        } catch (error) {
+            this.abandonConnection(guildId, voiceConnection);
+            throw error;
+        }
+    }
+
+    /* Waits for a disconnected connection to come back, and gives up on it if it doesn't.
+     * Moving the bot to another channel recovers on its own, kicking it never does.
+     */
+    private async recoverConnection(
+        guildId: string,
+        voiceConnection: VoiceConnection
+    ): Promise<void> {
+        try {
+            await Promise.race([
+                entersState(voiceConnection, VoiceConnectionStatus.Signalling, 5000),
+                entersState(voiceConnection, VoiceConnectionStatus.Connecting, 5000),
+            ]);
+            await entersState(voiceConnection, VoiceConnectionStatus.Ready, 20000);
+        } catch (_error) {
+            log.warn(`Voice connection lost for good in guild ${guildId}.`);
+            this.abandonConnection(guildId, voiceConnection);
+        }
+    }
+
+    /* Disconnects, unless this connection has already been replaced or destroyed */
+    private abandonConnection(guildId: string, voiceConnection: VoiceConnection): void {
+        if (this.getCurrentVoiceConnection(guildId) === voiceConnection) {
+            this.disconnectFrom(guildId);
+        }
     }
 
     /* Disconnect from the current voice channel.
@@ -245,8 +269,8 @@ class NicheBotClass {
             return;
         }
 
-        // Stop the audio player for this guild
-        guildState.audioPlayer.stop();
+        // Empty the queue, which also stops the audio player for this guild
+        guildState.songQueue.reset();
         voiceConnection.destroy();
         guildState.setVoiceConnection(null);
 
@@ -316,7 +340,7 @@ class NicheBotClass {
             );
 
             // Immediately stop any current playback
-            guildState.audioPlayer.stop();
+            guildState.stopPlayback();
 
             if (!videoData.path) {
                 try {
@@ -326,6 +350,14 @@ class NicheBotClass {
                         `[Guild ${guildId}] Failed to download video ${videoData.id}:`,
                         downloadError
                     );
+
+                    // The song was skipped during the download, so it doesn't matter
+                    if (guildState.songQueue.getCurrentSong() !== videoData) {
+                        return;
+                    }
+
+                    // Remove it instead of skipping it, a looping queue would retry forever
+                    guildState.songQueue.removeCurrentSong();
 
                     const channelId = guildState.getLastInteractionChannel();
                     if (channelId) {
@@ -346,17 +378,22 @@ class NicheBotClass {
                         }
                     }
 
-                    guildState.songQueue.skipSongs(1);
+                    return;
+                }
+
+                // The queue may have moved on during the download
+                if (guildState.songQueue.getCurrentSong() !== videoData) {
+                    log.debug(
+                        `[Guild ${guildId}] Skipped during download: ${videoData.id}`
+                    );
                     return;
                 }
             }
 
             const audioResource = createAudioResource(videoData.path);
-            const isPaused = guildState.audioPlayer.state.status === "paused";
 
             // Use the guild-specific audio player
             guildState.audioPlayer.play(audioResource);
-            if (isPaused) guildState.audioPlayer.pause();
 
             log.debug(`[Guild ${guildId}] Playing ${JSON.stringify(videoData, null, 2)}`);
 
@@ -370,7 +407,7 @@ class NicheBotClass {
             }
 
             const channel = await this.getChannel(channelId);
-            if (guildState.songQueue.loopType === LoopType.One) {
+            if (guildState.songQueue.loopType !== LoopType.One) {
                 const nowPlaying = EmbedCreator.createNowPlayingEmbed(videoData);
                 await channel.send({ embeds: [nowPlaying] });
                 log.debug(

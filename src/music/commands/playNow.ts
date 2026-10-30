@@ -36,35 +36,38 @@ async function execute(ctx: CommandContext) {
 
     const { videos, errors } = await youTube.handleQuery(query);
 
-    guildState.songQueue.addSongsAt(videos, 1);
-    if (ctx.interaction.options.getBoolean("skip")) {
-        guildState.songQueue.skipSongs(1);
-    }
-
     log.warn(
-        `[playnow] Added ${videos.length} videos to the queue at position 1. Failed fetches: ${errors.length}`
+        `[playnow] Adding ${videos.length} videos after the current song. Failed fetches: ${errors.length}`
     );
 
     if (videos.length === 0) {
         await ctx.interaction.followUp(`No results found for query: "${input}"`);
         return;
-    } else if (videos.length === 1) {
-        const videoData = videos[0];
-        await ctx.interaction.followUp(`Added **${videoData.title}** to the queue!`);
-        await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
-        log.info(
-            `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
-        );
-    } else {
-        await Promise.all(
-            videos.map(async videoData => {
-                log.info(
-                    `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
-                );
-                await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
-            })
-        );
     }
+
+    // With nothing to skip, the new song starts on its own
+    const shouldSkip =
+        ctx.interaction.options.getBoolean("skip") && !guildState.songQueue.isEmpty();
+
+    guildState.songQueue.addSongsNext(videos);
+    if (shouldSkip) {
+        guildState.songQueue.skipSongs(1);
+    }
+
+    if (videos.length === 1) {
+        await ctx.interaction.followUp(`Added **${videos[0].title}** to the queue!`);
+    } else {
+        await ctx.interaction.followUp(`Added ${videos.length} songs to the queue!`);
+    }
+
+    await Promise.all(
+        videos.map(async videoData => {
+            log.info(
+                `[playnow] Added video ${videoData.title} (${videoData.id}) to queue in guild ${ctx.guildId}`
+            );
+            await sabrinaDb.insertPlayLog(videoData.id, ctx.interaction);
+        })
+    );
 }
 
 const playNowCommand = new NicheBotCommand(data, execute, true);

@@ -24,13 +24,13 @@ export default class EmbedCreator {
             .setURL(videoData.url ?? null)
             .setAuthor({
                 name: videoData.authorName ?? "Unknown",
-                url: videoData.authorUrl ?? "Unknown",
+                ...(videoData.authorUrl ? { url: videoData.authorUrl } : {}),
             })
             .setThumbnail(videoData.image ?? null)
             .addFields(
                 {
                     name: "Duration",
-                    value: videoData.timestamp ?? "Unknown",
+                    value: videoData.timestamp || "Unknown",
                     inline: true,
                 },
                 {
@@ -43,7 +43,7 @@ export default class EmbedCreator {
                 },
                 {
                     name: "Uploaded",
-                    value: videoData.ago ?? "Unknown",
+                    value: videoData.ago || "Unknown",
                     inline: true,
                 }
             )

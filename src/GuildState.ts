@@ -17,6 +17,7 @@ export class GuildState {
     public lastInteractionChannelId: string | null = null;
     public voiceConnection: VoiceConnection | null = null;
     private leaveTimeout: NodeJS.Timeout | null = null;
+    private isStoppingPlayback: boolean = false;
 
     constructor(
         guildId: string,
@@ -31,7 +32,7 @@ export class GuildState {
 
         const onQueueEmpty = async () => {
             log.debug(`[Guild ${this.guildId}] Song queue is empty.`);
-            this.audioPlayer.stop();
+            this.stopPlayback();
         };
 
         this.songQueue = new SongQueue<VideoDataRecord>(async song => {
@@ -47,7 +48,8 @@ export class GuildState {
                 `[Guild ${this.guildId}] Audio player state changed from ${oldState.status} to ${newState.status}`
             );
 
-            if (oldState.status === "playing" && newState.status === "idle") {
+            const songEnded = oldState.status !== "idle" && newState.status === "idle";
+            if (songEnded && !this.isStoppingPlayback) {
                 log.debug(
                     `[Guild ${this.guildId}] Audio player is idle, playing next song in queue...`
                 );
@@ -58,6 +60,13 @@ export class GuildState {
         this.audioPlayer.on("error", error => {
             log.error(`[Guild ${this.guildId}] Audio player error:`, error);
         });
+    }
+
+    /* Stops the audio immediately, without treating the song as finished */
+    public stopPlayback(): void {
+        this.isStoppingPlayback = true;
+        this.audioPlayer.stop(true);
+        this.isStoppingPlayback = false;
     }
 
     public setLastInteractionChannel(channelId: string): void {
@@ -107,7 +116,7 @@ export class GuildState {
 
     public destroy(): void {
         this.cancelScheduledLeave();
-        this.audioPlayer.stop();
+        this.stopPlayback();
         if (this.voiceConnection) {
             this.voiceConnection.destroy();
             this.voiceConnection = null;

@@ -131,6 +131,34 @@ describe("SongQueue", () => {
         });
     });
 
+    describe("addSongsNext", () => {
+        it("should play immediately when the queue is empty", () => {
+            const song = createSong(1);
+            queue.addSongsNext([song]);
+
+            expect(songChangeCallbacks).toEqual([song]);
+        });
+
+        it("should add songs right after the current song", () => {
+            queue.addSongs([createSong(1), createSong(3)]);
+            queue.addSongsNext([createSong(2)]);
+
+            expect(queue.getQueue().map(song => song.id)).toEqual([1, 2, 3]);
+            expect(queue.getCurrentSong()?.id).toBe(1);
+        });
+
+        it("should follow the current song when looping all", () => {
+            queue.addSongs([createSong(1), createSong(2), createSong(3)]);
+            queue.setLoopType(LoopType.All);
+            queue.skipSongs(2); // Move to song 3
+
+            queue.addSongsNext([createSong(4)]);
+            queue.skipSongs(1);
+
+            expect(queue.getCurrentSong()?.id).toBe(4);
+        });
+    });
+
     describe("currentSong", () => {
         it("should return undefined for empty queue", () => {
             expect(queue.getCurrentSong()).toBeUndefined();
@@ -397,6 +425,48 @@ describe("SongQueue", () => {
         });
     });
 
+    describe("removeCurrentSong", () => {
+        it("should start the next song", () => {
+            queue.addSongs([createSong(1), createSong(2)]);
+            songChangeCallbacks = [];
+
+            queue.removeCurrentSong();
+
+            expect(queue.getQueue().map(song => song.id)).toEqual([2]);
+            expect(songChangeCallbacks.map(song => song.id)).toEqual([2]);
+        });
+
+        it("should clear the queue when removing the last song while looping", () => {
+            queue.addSongs([createSong(1)]);
+            queue.setLoopType(LoopType.All);
+            songChangeCallbacks = [];
+
+            queue.removeCurrentSong();
+
+            expect(queue.isEmpty()).toBe(true);
+            expect(onQueueEmpty).toHaveBeenCalledTimes(1);
+            expect(songChangeCallbacks.length).toBe(0);
+        });
+
+        it("should wrap to the first song when looping all", () => {
+            queue.addSongs([createSong(1), createSong(2), createSong(3)]);
+            queue.setLoopType(LoopType.All);
+            queue.skipSongs(2); // Move to song 3
+            songChangeCallbacks = [];
+
+            queue.removeCurrentSong();
+
+            expect(queue.getCurrentSong()?.id).toBe(1);
+            expect(songChangeCallbacks.map(song => song.id)).toEqual([1]);
+        });
+
+        it("should do nothing on an empty queue", () => {
+            queue.removeCurrentSong();
+
+            expect(onQueueEmpty).not.toHaveBeenCalled();
+        });
+    });
+
     describe("clear", () => {
         it("should keep only first song", () => {
             queue.addSongs([createSong(1), createSong(2), createSong(3)]);
@@ -553,24 +623,22 @@ describe("SongQueue", () => {
         });
     });
 
-    // Each test states the correct behaviour and fails against the current code.
-    // Jest reports it as an error once the bug is fixed: remove `.failing` then.
-    describe("known bugs", () => {
-        it.failing("should clear the queue when the last song finishes", () => {
+    describe("playback regressions", () => {
+        it("should clear the queue when the last song finishes", () => {
             queue.addSongs([createSong(1)]);
             queue.notifyCurrentSongFinished();
 
             expect(queue.isEmpty()).toBe(true);
         });
 
-        it.failing("should notify when the last song finishes", () => {
+        it("should notify when the last song finishes", () => {
             queue.addSongs([createSong(1)]);
             queue.notifyCurrentSongFinished();
 
             expect(onQueueEmpty).toHaveBeenCalledTimes(1);
         });
 
-        it.failing("should play a song inserted after the queue finished", () => {
+        it("should play a song inserted after the queue finished", () => {
             queue.addSongs([createSong(1)]);
             queue.notifyCurrentSongFinished();
             songChangeCallbacks = [];
@@ -581,7 +649,7 @@ describe("SongQueue", () => {
             expect(songChangeCallbacks).toEqual([next]);
         });
 
-        it.failing("should not restart the song when adding while looping one", () => {
+        it("should not restart the song when adding while looping one", () => {
             queue.addSongs([createSong(1)]);
             queue.setLoopType(LoopType.One);
             songChangeCallbacks = [];
@@ -591,7 +659,7 @@ describe("SongQueue", () => {
             expect(songChangeCallbacks.length).toBe(0);
         });
 
-        it.failing("should not restart the song when adding while looping all", () => {
+        it("should not restart the song when adding while looping all", () => {
             queue.addSongs([createSong(1)]);
             queue.setLoopType(LoopType.All);
             songChangeCallbacks = [];
@@ -601,7 +669,25 @@ describe("SongQueue", () => {
             expect(songChangeCallbacks.length).toBe(0);
         });
 
-        it.failing("should not restart the song when shuffling while looping", () => {
+        it("should notify only once when the queue ends", () => {
+            queue.addSongs([createSong(1)]);
+            queue.notifyCurrentSongFinished();
+            queue.notifyCurrentSongFinished();
+
+            expect(onQueueEmpty).toHaveBeenCalledTimes(1);
+        });
+
+        it("should restart the only song when skipping while looping all", () => {
+            queue.addSongs([createSong(1)]);
+            queue.setLoopType(LoopType.All);
+            songChangeCallbacks = [];
+
+            queue.skipSongs(1);
+
+            expect(songChangeCallbacks.map(song => song.id)).toEqual([1]);
+        });
+
+        it("should not restart the song when shuffling while looping", () => {
             queue.addSongs([createSong(1), createSong(2), createSong(3)]);
             queue.setLoopType(LoopType.All);
             songChangeCallbacks = [];
@@ -611,7 +697,7 @@ describe("SongQueue", () => {
             expect(songChangeCallbacks.length).toBe(0);
         });
 
-        it.failing("should start the next song when removing current song", () => {
+        it("should start the next song when removing current song", () => {
             queue.addSongs([createSong(1), createSong(2)]);
             songChangeCallbacks = [];
 

@@ -24,31 +24,24 @@ export default class SongQueue<T> {
         this.onQueueEmpty = onQueueEmpty ?? (async () => {});
     }
 
-    /* Checks if the current song has changed and calls the callback if it has */
-    private onMaybeSongChanged() {
+    /* Checks if the current song has changed and calls the callback if it has.
+     * With restartCurrent, the callback is called even if the song is the same. */
+    private onMaybeSongChanged(restartCurrent: boolean = false) {
         const currentSong = this.getCurrentSong();
-        // No current song, nothing to do
+        // Moved past the last song, the queue has ended
         if (!currentSong) {
+            if (!this.isEmpty()) {
+                this.reset();
+            }
             return;
         }
-
-        const isDifferentThanPrevious = currentSong !== this.previousSong;
 
         // Only keep the entire queue if looping all
         if (this.looping === LoopType.Disabled || this.looping === LoopType.One) {
             this.removeSongsBeforeCurrent();
         }
 
-        // Queue ended
-        if (!currentSong && this.previousSong !== undefined) {
-            this.reset();
-            return;
-        }
-
-        const shouldContinuePlaying =
-            isDifferentThanPrevious || this.looping !== LoopType.Disabled;
-
-        if (shouldContinuePlaying) {
+        if (restartCurrent || currentSong !== this.previousSong) {
             this.previousSong = currentSong;
             this.onCurrentSongChanged(currentSong);
         }
@@ -57,7 +50,7 @@ export default class SongQueue<T> {
     /* Call this method when the current song has finished playing */
     notifyCurrentSongFinished() {
         this.currentSongIndex = this.nextSongIndexValue();
-        this.onMaybeSongChanged();
+        this.onMaybeSongChanged(true);
     }
 
     /* Adds a song or an array of songs to the end of the queue */
@@ -83,13 +76,17 @@ export default class SongQueue<T> {
         this.queue.splice(index, 0, ...song);
     }
 
+    /* Adds a song or an array of songs right after the current song */
+    addSongsNext(song: T[]) {
+        this.addSongsAt(song, this.currentSongIndex + 1);
+    }
+
     getCurrentSong(): T | undefined {
         return this.queue.at(this.currentSongIndex);
     }
 
     nextSongIndexValue(): number {
         if (this.isEmpty()) {
-            this.reset();
             return 0;
         }
         if (this.looping === LoopType.Disabled) {
@@ -119,7 +116,7 @@ export default class SongQueue<T> {
 
         if (this.looping === LoopType.All) {
             this.currentSongIndex = (this.currentSongIndex + n) % this.queue.length;
-            this.onMaybeSongChanged();
+            this.onMaybeSongChanged(true);
             return;
         }
 
@@ -127,13 +124,12 @@ export default class SongQueue<T> {
 
         if (this.currentSongIndex >= this.queue.length) {
             this.reset();
-            this.onMaybeSongChanged();
             return;
         }
 
         this.removeSongsBeforeCurrent();
         this.currentSongIndex = 0;
-        this.onMaybeSongChanged();
+        this.onMaybeSongChanged(true);
     }
 
     shuffle() {
@@ -159,8 +155,6 @@ export default class SongQueue<T> {
             currentSong,
             ...toShuffle.slice(beforeCurrent.length)
         );
-
-        this.onMaybeSongChanged();
     }
 
     removeSong(index: number) {
@@ -171,16 +165,25 @@ export default class SongQueue<T> {
             this.reset();
             return;
         }
+
+        const isCurrentSong = index === this.currentSongIndex;
         if (index < this.currentSongIndex) {
             this.currentSongIndex--;
-        } else if (
-            index === this.currentSongIndex &&
-            this.currentSongIndex === this.queue.length - 1
-        ) {
-            this.currentSongIndex = Math.max(0, this.currentSongIndex - 1);
+        } else if (isCurrentSong && this.currentSongIndex === this.queue.length - 1) {
+            this.currentSongIndex = 0;
         }
 
         this.queue.splice(index, 1);
+        if (isCurrentSong) {
+            this.onMaybeSongChanged();
+        }
+    }
+
+    /* Removes the current song for good and starts the next one */
+    removeCurrentSong() {
+        if (this.getCurrentSong()) {
+            this.removeSong(this.currentSongIndex);
+        }
     }
 
     isEmpty() {
@@ -209,7 +212,8 @@ export default class SongQueue<T> {
         this.currentSongIndex = 0;
     }
 
-    private reset() {
+    /* Empties the queue, as opposed to clear() which keeps the current song */
+    reset() {
         this.previousSong = undefined;
         this.currentSongIndex = 0;
         this.queue = [];
