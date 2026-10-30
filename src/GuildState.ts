@@ -8,12 +8,15 @@ import SongQueue from "./music/SongQueue";
 import { VideoDataRecord } from "./Db";
 import { log } from "./logging";
 
+export const EMPTY_CHANNEL_LEAVE_DELAY_MS = 5 * 60 * 1000;
+
 export class GuildState {
     public readonly guildId: string;
     public audioPlayer: AudioPlayer;
     public songQueue: SongQueue<VideoDataRecord>;
     public lastInteractionChannelId: string | null = null;
     public voiceConnection: VoiceConnection | null = null;
+    private leaveTimeout: NodeJS.Timeout | null = null;
 
     constructor(
         guildId: string,
@@ -80,7 +83,30 @@ export class GuildState {
         }
     }
 
+    public scheduleLeave(onLeave: () => void): void {
+        if (this.leaveTimeout) {
+            return;
+        }
+
+        log.debug(`[Guild ${this.guildId}] Voice channel is empty, scheduling leave.`);
+        this.leaveTimeout = setTimeout(() => {
+            this.leaveTimeout = null;
+            onLeave();
+        }, EMPTY_CHANNEL_LEAVE_DELAY_MS);
+    }
+
+    public cancelScheduledLeave(): void {
+        if (!this.leaveTimeout) {
+            return;
+        }
+
+        log.debug(`[Guild ${this.guildId}] Cancelling scheduled leave.`);
+        clearTimeout(this.leaveTimeout);
+        this.leaveTimeout = null;
+    }
+
     public destroy(): void {
+        this.cancelScheduledLeave();
         this.audioPlayer.stop();
         if (this.voiceConnection) {
             this.voiceConnection.destroy();

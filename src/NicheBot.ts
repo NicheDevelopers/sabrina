@@ -11,6 +11,7 @@ import {
     Client,
     Events,
     GatewayIntentBits,
+    Guild,
     REST,
     Routes,
     TextChannel,
@@ -54,6 +55,9 @@ class NicheBotClass {
         // Node signal handlers are already in main
         this.client.on("messageCreate", handleMessageCreate);
         this.client.on("voiceStateUpdate", handleVoiceStateUpdate);
+        this.client.on("voiceStateUpdate", (_oldState, newState) =>
+            this.updateScheduledLeave(newState.guild)
+        );
     }
 
     public async start() {
@@ -236,6 +240,24 @@ class NicheBotClass {
         guildState.setVoiceConnection(null);
 
         log.info(`Destroyed voice connection for guild ${guildId}.`);
+    }
+
+    private updateScheduledLeave(guild: Guild): void {
+        if (!this.guildStatesManager.hasGuildState(guild.id)) {
+            return;
+        }
+
+        const guildState = this.guildStatesManager.getGuildState(guild.id);
+        const channel = guild.members.me?.voice.channel;
+
+        if (channel && channel.members.every(member => member.user.bot)) {
+            guildState.scheduleLeave(() => {
+                log.info(`Leaving empty voice channel in guild ${guild.id}.`);
+                this.disconnectFrom(guild.id);
+            });
+        } else {
+            guildState.cancelScheduledLeave();
+        }
     }
 
     /*
