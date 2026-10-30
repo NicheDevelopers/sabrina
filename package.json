@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "vpx --watch src/main.ts",
     "build": "vp pack",
-    "start": "node dist/main.js",
+    "start": "node --disable-warning=ExperimentalWarning dist/main.js",
     "test": "vp test",
     "check": "vp check",
     "docker:build": "docker build -t sabrina:latest .",
@@ -29,8 +29,6 @@
     "@snazzah/davey": "^0.1.12",
     "discord.js": "^14.27.0",
     "dotenv": "^18.0.9",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "winston": "^3.19.0"
   },
   "devDependencies": {

@@ -1,5 +1,4 @@
-import sqlite3 from "sqlite3";
-import { Database, open } from "sqlite";
+import { DatabaseSync } from "node:sqlite";
 import { log } from "./logging";
 import { ChatInputCommandInteraction } from "discord.js";
 import { randomUUID } from "node:crypto";
@@ -49,28 +48,25 @@ export interface MessageLogRecord {
 }
 
 export default class Db {
-  db: Database<sqlite3.Database, sqlite3.Statement> | null = null;
+  db: DatabaseSync | null = null;
 
   public constructor(private readonly databaseName: string) {
     log.info(`Database will connect to ${databaseName}`);
   }
 
   public async init() {
-    this.db = await open({
-      filename: this.databaseName,
-      driver: sqlite3.Database,
-    });
+    this.db = new DatabaseSync(this.databaseName);
 
     log.info(`Database connected to ${this.databaseName}`);
-    await this.createTables();
+    this.createTables();
   }
 
-  private async createTables() {
+  private createTables() {
     if (!this.db) throw new Error("Database not initialized");
 
     log.info("Initializing database...");
 
-    await this.db.exec(`
+    this.db.exec(`
             CREATE TABLE IF NOT EXISTS yt_videos (
                 id TEXT PRIMARY KEY,
                 path TEXT,
@@ -86,13 +82,15 @@ export default class Db {
             );
         `);
 
-    const result = await this.db.get<{ count: number }>(`
+    const result = this.db
+      .prepare(`
             SELECT COUNT(*) AS count
             FROM yt_videos;
-        `);
+        `)
+      .get() as { count: number } | undefined;
     log.info(`Found ${result?.count || 0} entries in the database.`);
 
-    await this.db.exec(`
+    this.db.exec(`
             CREATE TABLE IF NOT EXISTS play_analytics (
                 id TEXT PRIMARY KEY,
                 videoId TEXT,
@@ -104,7 +102,7 @@ export default class Db {
             );
         `);
 
-    await this.db.exec(`
+    this.db.exec(`
             CREATE TABLE IF NOT EXISTS voice_state_analytics (
                 id TEXT PRIMARY KEY,
                 userId TEXT,
@@ -118,7 +116,7 @@ export default class Db {
             );
         `);
 
-    await this.db.exec(`
+    this.db.exec(`
             CREATE TABLE IF NOT EXISTS message_analytics (
                 id TEXT PRIMARY KEY,
                 userId TEXT,
@@ -141,7 +139,7 @@ export default class Db {
   public async close() {
     if (!this.db) return;
 
-    await this.db.close();
+    this.db.close();
     this.db = null;
     log.info("Database closed.");
   }
@@ -169,33 +167,31 @@ export default class Db {
       video.authorName,
       video.authorUrl,
     ];
-    await this.db.run(query, values);
+    this.db.prepare(query).run(...values);
   }
 
   public async setVideoPath(id: string, path: string): Promise<void> {
     if (!this.db) throw new Error("Database not initialized");
 
-    await this.db.run(
-      `
+    this.db
+      .prepare(`
                 INSERT INTO yt_videos (id, path) VALUES (?, ?)
                 ON CONFLICT(id) DO UPDATE SET path = excluded.path;
-            `,
-      [id, path],
-    );
+            `)
+      .run(id, path);
     log.info(`Registered video ${id} at path ${path} in the database.`);
   }
 
   public async getVideoRecord(id: string): Promise<VideoDataRecord | null> {
     if (!this.db) throw new Error("Database not initialized");
 
-    const result = await this.db.get<VideoDataRecord>(
-      `
+    const result = this.db
+      .prepare(`
                 SELECT *
                 FROM yt_videos
                 WHERE id = ?;
-            `,
-      id,
-    );
+            `)
+      .get(id) as VideoDataRecord | undefined;
 
     if (result) {
       return result;
@@ -225,7 +221,7 @@ export default class Db {
       userName,
       guildName,
     ];
-    await this.db.run(query, values);
+    this.db.prepare(query).run(...values);
     log.debug(`Logged play of video ${videoId} by user ${userName} in guild ${guildName}.`);
   }
 
@@ -248,7 +244,7 @@ export default class Db {
       voiceStateChange.guildName,
       voiceStateChange.timestamp.toISOString(),
     ];
-    await this.db.run(query, values);
+    this.db.prepare(query).run(...values);
 
     log.debug(
       `Logged voice state change of user ${voiceStateChange.username} (${voiceStateChange.userId}) - ${voiceStateChange.kind} in channel ${voiceStateChange.channelName} (${voiceStateChange.channelId})`,
@@ -281,7 +277,7 @@ export default class Db {
       record.messageType,
       record.timestamp,
     ];
-    await this.db.run(query, values);
+    this.db.prepare(query).run(...values);
 
     log.debug(
       `Logged message from ${record.userName} in #${record.channelName} (${record.contentLength} chars, ${record.attachmentCount} attachments)`,
