@@ -49,6 +49,12 @@ describe("AudioFileRepository", () => {
             expect(videoId).toBe("xyz987_test");
         });
 
+        it("should extract video ID from valid opus filename", () => {
+            const filename = "Song [dQw4w9WgXcQ].opus";
+            const videoId = repository.extractVideoIdFromFilename(filename);
+            expect(videoId).toBe("dQw4w9WgXcQ");
+        });
+
         it("should return null for filename without brackets", () => {
             const filename = "song.mp3";
             const videoId = repository.extractVideoIdFromFilename(filename);
@@ -153,11 +159,11 @@ describe("AudioFileRepository", () => {
         });
 
         it("should skip directories", () => {
-            const mockDirEntries = ["subfolder", "Song [dQw4w9WgXcQ].mp3"];
+            const mockDirEntries = ["Folder [abc123def45].mp3", "Song [dQw4w9WgXcQ].mp3"];
 
             mockFs.readdirSync.mockReturnValue(mockDirEntries as any);
             mockFs.statSync
-                .mockReturnValueOnce({ isFile: () => false } as any) // subfolder
+                .mockReturnValueOnce({ isFile: () => false } as any) // directory
                 .mockReturnValueOnce({ isFile: () => true } as any); // mp3 file
 
             (repository as any).loadVideosFromDisk();
@@ -165,7 +171,7 @@ describe("AudioFileRepository", () => {
             expect(repository.getPath("dQw4w9WgXcQ")).toBe(
                 "downloads/youtube/Song [dQw4w9WgXcQ].mp3"
             );
-            expect((repository as any).videos.size).toBe(1);
+            expect(repository.getPath("abc123def45")).toBeNull();
         });
 
         it("should skip files with invalid filenames", () => {

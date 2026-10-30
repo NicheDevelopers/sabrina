@@ -53,6 +53,14 @@ class NicheBotClass {
         this.validateConfig();
 
         // Node signal handlers are already in main
+        this.client.on(Events.Error, error => {
+            log.error("Discord client error:", error);
+        });
+        this.client.on("interactionCreate", interaction => {
+            this.onInteractionCreate(interaction).catch((error: unknown) => {
+                log.error("Failed to handle interaction:", error);
+            });
+        });
         this.client.on("messageCreate", handleMessageCreate);
         this.client.on("voiceStateUpdate", handleVoiceStateUpdate);
         this.client.on("voiceStateUpdate", (_oldState, newState) =>
@@ -66,7 +74,6 @@ class NicheBotClass {
             log.info(`Ready! Logged in as ${c.user.tag}`);
         });
         await this.client.login(this.token);
-        this.client.on("interactionCreate", this.onInteractionCreate);
     }
 
     /*
@@ -99,7 +106,7 @@ class NicheBotClass {
         }
         if (!interaction.guildId) {
             log.warn("Command invoked outside of a guild");
-            await interaction.followUp("This command can only be used in a server!");
+            await interaction.reply("This command can only be used in a server!");
             return;
         }
 
@@ -198,6 +205,10 @@ class NicheBotClass {
             channelId: channel.id,
             guildId: channel.guildId,
             adapterCreator: channel.guild.voiceAdapterCreator,
+        });
+
+        voiceConnection.on("error", error => {
+            log.error(`Voice connection error for guild ${guildId}:`, error);
         });
 
         return new Promise<void>((resolve, reject) => {

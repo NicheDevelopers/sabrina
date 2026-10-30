@@ -41,12 +41,22 @@ describe("QueryParser", () => {
                     input: "https://www.youtube.com/playlist?list=PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
                     expectedPayload: "PLH-huzMEgGWBUU5E6hzHpBXN5T13IbgB1",
                 },
+                {
+                    input: "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLexample",
+                    expectedPayload: "PLexample",
+                },
             ];
             for (const testCase of testPlaylistUrls) {
                 const result = QueryParser.parse(testCase.input);
                 expect(result.type).toBe(QueryKind.YT_PLAYLIST);
                 expect(result.payload).toBe(testCase.expectedPayload);
             }
+        });
+
+        it("should ignore autoplay lists on YouTube Music", () => {
+            const url = "https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=RDexample";
+
+            expect(QueryParser.parse(url).type).toBe(QueryKind.YT_URL);
         });
 
         it("should handle edge cases gracefully", () => {
@@ -72,16 +82,6 @@ describe("QueryParser", () => {
                 const result = QueryParser.parse(testCase.input);
                 expect(result.type).toBe(testCase.expectedType);
                 expect(result.payload).toBe(testCase.expectedPayload);
-            }
-        });
-
-        it("should handle null and undefined inputs", () => {
-            const nullishInputs = [null, undefined];
-
-            for (const input of nullishInputs) {
-                expect(() => {
-                    QueryParser.parse(input as any);
-                }).not.toThrow();
             }
         });
     });

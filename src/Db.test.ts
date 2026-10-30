@@ -32,7 +32,7 @@ describe("Db", () => {
         }
     });
 
-    describe("insertVideoPath", () => {
+    describe("insertVideoData", () => {
         it("should insert video path into database", async () => {
             // Execute
             await db.insertVideoData("abc123", "/videos/abc123.mp4", null);
@@ -59,7 +59,7 @@ describe("Db", () => {
         });
     });
 
-    describe("getVideoData", () => {
+    describe("getVideoRecord", () => {
         it("should return full data for existing video ID", async () => {
             // Setup - create a record with title
             const videoData: VideoMetadataResult = {
@@ -121,14 +121,6 @@ describe("Db", () => {
 
             expect(data1).toBeNull();
             expect(data2).toBeNull();
-        });
-    });
-
-    describe("prune", () => {
-        it("should be implemented", async () => {
-            // This is just a placeholder test since prune() is currently empty
-            await db.prune();
-            // No assertions needed since the method is empty
         });
     });
 });

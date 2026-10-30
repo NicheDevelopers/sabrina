@@ -8,15 +8,21 @@ interface TestSong {
 describe("SongQueue", () => {
     let queue: SongQueue<TestSong>;
     let songChangeCallbacks: TestSong[] = [];
+    let onQueueEmpty: jest.Mock;
 
     const createSong = (id: number): TestSong => ({ id, title: `Song ${id}` });
 
     beforeEach(() => {
         songChangeCallbacks = [];
+        onQueueEmpty = jest.fn().mockResolvedValue(undefined);
         queue = new SongQueue<TestSong>(song => {
             songChangeCallbacks.push(song);
             return Promise.resolve();
-        });
+        }, onQueueEmpty);
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     describe("constructor", () => {
@@ -115,10 +121,13 @@ describe("SongQueue", () => {
 
         it("should adjust currentSongIndex when adding multiple songs before current", () => {
             queue.addSongs([createSong(1), createSong(4), createSong(5)]);
+            queue.setLoopType(LoopType.All); // Only looping keeps songs before current
             queue.notifyCurrentSongFinished(); // Move to song 4
 
             queue.addSongsAt([createSong(2), createSong(3)], 1);
-            expect(queue.getCurrentSong()?.id).toBe(4); // Index adjusted by 2
+
+            expect(queue.getQueue().map(song => song.id)).toEqual([1, 2, 3, 4, 5]);
+            expect(queue.getCurrentSong()?.id).toBe(4);
         });
     });
 
@@ -300,7 +309,7 @@ describe("SongQueue", () => {
 
         it("should not shuffle if queue has 2 songs", () => {
             queue.addSongs([createSong(1), createSong(2)]);
-            const before = queue.getQueue();
+            const before = [...queue.getQueue()];
 
             queue.shuffle();
             expect(queue.getQueue()).toEqual(before);
@@ -315,28 +324,34 @@ describe("SongQueue", () => {
             expect(queue.getQueue()[0].id).toBe(1);
         });
 
-        it("should shuffle remaining songs", () => {
+        it("should reorder remaining songs without losing any", () => {
+            jest.spyOn(Math, "random").mockReturnValue(0);
             const songs = Array.from({ length: 10 }, (_, i) => createSong(i + 1));
             queue.addSongs(songs);
 
-            const originalOrder = queue.getQueue().slice(1);
+            const originalOrder = queue
+                .getQueue()
+                .slice(1)
+                .map(song => song.id);
             queue.shuffle();
-            const newOrder = queue.getQueue().slice(1);
+            const newOrder = queue
+                .getQueue()
+                .slice(1)
+                .map(song => song.id);
 
-            // Very unlikely to be in same order after shuffle
-            const isDifferent = originalOrder.some(
-                (song: TestSong, i: number) => song.id !== newOrder[i].id
-            );
-            expect(isDifferent).toBe(true);
+            expect(newOrder).not.toEqual(originalOrder);
+            expect([...newOrder].sort((a, b) => a - b)).toEqual(originalOrder);
         });
 
-        it("should handle shuffle with current song not at index 0", () => {
+        it("should keep current song in place when it is not at index 0", () => {
             queue.addSongs(Array.from({ length: 10 }, (_, i) => createSong(i + 1)));
+            queue.setLoopType(LoopType.All); // Only looping keeps songs before current
             queue.notifyCurrentSongFinished(); // Move to song 2
-            const currentSongId = queue.getCurrentSong()?.id;
+
             queue.shuffle();
-            expect(queue.getQueue()[0].id).toBe(currentSongId); // Should be 2, not touched by shuffle
-            expect(queue.getCurrentSong()?.id).toBe(2); // Current index still points to song 2
+
+            expect(queue.getQueue()[1].id).toBe(2);
+            expect(queue.getCurrentSong()?.id).toBe(2);
         });
     });
 
@@ -358,12 +373,19 @@ describe("SongQueue", () => {
             expect(songs[1].id).toBe(3);
         });
 
-        it("should handle removing current song", () => {
+        it("should make the next song current when removing current song", () => {
             queue.addSongs([createSong(1), createSong(2)]);
             queue.removeSong(0);
 
-            // BUG: currentSongIndex stays at 0, but queue[0] is now song 2
             expect(queue.getCurrentSong()?.id).toBe(2);
+        });
+
+        it("should clear the queue when removing the only song", () => {
+            queue.addSongs([createSong(1)]);
+            queue.removeSong(0);
+
+            expect(queue.isEmpty()).toBe(true);
+            expect(onQueueEmpty).toHaveBeenCalledTimes(1);
         });
 
         it("should handle removing song after current", () => {
@@ -458,30 +480,29 @@ describe("SongQueue", () => {
         });
     });
 
-    describe("private reset method via skipSongs", () => {
-        it("should reset to beginning and trigger callback", () => {
+    describe("end of queue via skipSongs", () => {
+        it("should clear the queue and notify when skipping past the end", () => {
             queue.addSongs([createSong(1), createSong(2), createSong(3)]);
             queue.notifyCurrentSongFinished(); // Move to song 2
             songChangeCallbacks = [];
 
-            // Force reset by skipping past end
             queue.skipSongs(5);
 
-            expect(queue.getCurrentSong()?.id).toBeUndefined();
-            // No callback because song didn't change (reset to same song that was at index 0)
+            expect(queue.isEmpty()).toBe(true);
+            expect(onQueueEmpty).toHaveBeenCalledTimes(1);
             expect(songChangeCallbacks.length).toBe(0);
         });
 
-        it("should trigger callback when reset changes song", () => {
-            queue.addSongs([createSong(1), createSong(2)]);
-            queue.notifyCurrentSongFinished(); // Move to song 2
-            queue.skipSongs(1); // This removes song 1, making song 2 at index 0
-
+        it("should start a song added after the queue was cleared", () => {
+            queue.addSongs([createSong(1)]);
+            queue.skipSongs(1);
             songChangeCallbacks = [];
-            queue.skipSongs(5); // Force reset
 
-            expect(queue.getCurrentSong()?.id).toBeUndefined();
-            expect(songChangeCallbacks.length).toBe(0); // No change, still song 2
+            const next = createSong(2);
+            queue.addSongs([next]);
+
+            expect(queue.getCurrentSong()).toBe(next);
+            expect(songChangeCallbacks).toEqual([next]);
         });
     });
 
@@ -501,19 +522,24 @@ describe("SongQueue", () => {
             // Enable loop all
             queue.setLoopType(LoopType.All);
 
-            // Skip multiple songs
+            // Skip a full cycle back to song 2
             queue.skipSongs(3);
+            expect(queue.getCurrentSong()?.id).toBe(2);
 
-            // Shuffle
+            // Shuffle keeps the current song and every other song
             queue.shuffle();
+            expect(queue.getCurrentSong()?.id).toBe(2);
+            expect(
+                queue
+                    .getQueue()
+                    .map(song => song.id)
+                    .sort((a, b) => a - b)
+            ).toEqual([0, 2, 3]);
 
-            // Remove a song
-            if (queue.getQueue().length > 2) {
-                queue.removeSong(1);
-            }
-
-            // Verify queue is still functional
-            expect(queue.isEmpty()).toBe(false);
+            // Removing a song before the current one keeps the current song
+            queue.removeSong(0);
+            expect(queue.getCurrentSong()?.id).toBe(2);
+            expect(queue.getQueue().length).toBe(2);
         });
 
         it("should maintain consistency with rapid operations", () => {
@@ -525,22 +551,73 @@ describe("SongQueue", () => {
             queue.clear();
             expect(queue.getQueue().length).toBe(1);
         });
+    });
 
-        it("should handle all branches of checkIfCurrentSongChanged", () => {
-            // Branch 1: Song changes from undefined to defined
+    // Each test states the correct behaviour and fails against the current code.
+    // Jest reports it as an error once the bug is fixed: remove `.failing` then.
+    describe("known bugs", () => {
+        it.failing("should clear the queue when the last song finishes", () => {
             queue.addSongs([createSong(1)]);
-            expect(songChangeCallbacks.length).toBe(1);
+            queue.notifyCurrentSongFinished();
 
-            // Branch 2: Song doesn't change
+            expect(queue.isEmpty()).toBe(true);
+        });
+
+        it.failing("should notify when the last song finishes", () => {
+            queue.addSongs([createSong(1)]);
+            queue.notifyCurrentSongFinished();
+
+            expect(onQueueEmpty).toHaveBeenCalledTimes(1);
+        });
+
+        it.failing("should play a song inserted after the queue finished", () => {
+            queue.addSongs([createSong(1)]);
+            queue.notifyCurrentSongFinished();
             songChangeCallbacks = [];
-            queue.addSongs([createSong(2)]);
-            expect(songChangeCallbacks.length).toBe(0);
 
-            // Branch 3: Song changes to undefined
+            const next = createSong(2);
+            queue.addSongsAt([next], 1);
+
+            expect(songChangeCallbacks).toEqual([next]);
+        });
+
+        it.failing("should not restart the song when adding while looping one", () => {
+            queue.addSongs([createSong(1)]);
+            queue.setLoopType(LoopType.One);
+            songChangeCallbacks = [];
+
+            queue.addSongs([createSong(2)]);
+
+            expect(songChangeCallbacks.length).toBe(0);
+        });
+
+        it.failing("should not restart the song when adding while looping all", () => {
+            queue.addSongs([createSong(1)]);
+            queue.setLoopType(LoopType.All);
+            songChangeCallbacks = [];
+
+            queue.addSongs([createSong(2)]);
+
+            expect(songChangeCallbacks.length).toBe(0);
+        });
+
+        it.failing("should not restart the song when shuffling while looping", () => {
+            queue.addSongs([createSong(1), createSong(2), createSong(3)]);
+            queue.setLoopType(LoopType.All);
+            songChangeCallbacks = [];
+
+            queue.shuffle();
+
+            expect(songChangeCallbacks.length).toBe(0);
+        });
+
+        it.failing("should start the next song when removing current song", () => {
+            queue.addSongs([createSong(1), createSong(2)]);
+            songChangeCallbacks = [];
+
             queue.removeSong(0);
-            queue.removeSong(0);
-            expect(queue.getCurrentSong()).toBeUndefined();
-            expect(songChangeCallbacks.length).toBe(0); // No callback for undefined
+
+            expect(songChangeCallbacks.map(song => song.id)).toEqual([2]);
         });
     });
 });
