@@ -1,109 +1,77 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import Db from "./Db";
-import { VideoMetadataResult } from "yt-search";
+import Db, { VideoMetadata } from "./Db";
 
-// Mock the logging module to prevent log output during tests
 vi.mock("./logging", () => ({
-  log: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+  log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 describe("Db", () => {
-  // Use an in-memory database for testing
+  const video: VideoMetadata = {
+    id: "abc123",
+    title: "Test Video",
+    url: "https://example.com/video",
+    timestamp: "2:00",
+    seconds: 120,
+    views: 1000,
+    uploadDate: "2023-01-01",
+    image: "https://example.com/image.jpg",
+    authorName: "Test Author",
+    authorUrl: "https://example.com/author",
+  };
+
   let db: Db;
 
   beforeEach(async () => {
-    // Create a new Db instance with in-memory database
     db = new Db(":memory:");
     await db.init();
   });
 
   afterEach(async () => {
-    // Close the database to prevent leaks
-    if (db && db.db) {
-      try {
-        await db.db.close();
-      } catch (error) {
-        console.error("Failed to close the database after test", error);
-      }
-    }
+    await db.close();
   });
 
-  describe("insertVideoData", () => {
-    it("should insert video path into database", async () => {
-      // Execute
-      await db.insertVideoData("abc123", "/videos/abc123.mp4", null);
+  describe("insertVideo", () => {
+    it("should store the video metadata", async () => {
+      await db.insertVideo(video);
 
-      // Verify the record was inserted
-      const result = await db.getVideoRecord("abc123");
-
-      expect(result?.id).toBe("abc123");
-      expect(result?.path).toBe("/videos/abc123.mp4");
+      expect(await db.getVideoRecord("abc123")).toEqual({ ...video, path: null });
     });
 
-    it("should replace existing video path", async () => {
-      // Setup - insert initial record
-      await db.insertVideoData("abc123", "/videos/old-path.mp4", null);
+    it("should keep the downloaded file when saving a known video again", async () => {
+      await db.insertVideo(video);
+      await db.setVideoPath("abc123", "/videos/abc123.opus");
 
-      // Execute - update with new path
-      await db.insertVideoData("abc123", "/videos/new-path.mp4", null);
+      await db.insertVideo({ ...video, title: "New Title" });
 
-      // Verify the record was updated
-      const result = await db.getVideoRecord("abc123");
+      const record = await db.getVideoRecord("abc123");
+      expect(record?.path).toBe("/videos/abc123.opus");
+      expect(record?.title).toBe("Test Video");
+    });
+  });
 
-      expect(result?.id).toBe("abc123");
-      expect(result?.path).toBe("/videos/new-path.mp4");
+  describe("setVideoPath", () => {
+    it("should keep the metadata", async () => {
+      await db.insertVideo(video);
+
+      await db.setVideoPath("abc123", "/videos/abc123.opus");
+
+      expect(await db.getVideoRecord("abc123")).toEqual({
+        ...video,
+        path: "/videos/abc123.opus",
+      });
+    });
+
+    it("should create a record for an unknown video", async () => {
+      await db.setVideoPath("abc123", "/videos/abc123.opus");
+
+      const record = await db.getVideoRecord("abc123");
+      expect(record?.path).toBe("/videos/abc123.opus");
     });
   });
 
   describe("getVideoRecord", () => {
-    it("should return full data for existing video ID", async () => {
-      // Setup - create a record with title
-      const videoData: VideoMetadataResult = {
-        title: "Test Video",
-        url: "https://example.com/video",
-        videoId: "abc123",
-        timestamp: "2:00",
-        seconds: 120,
-        views: 1000,
-        genre: "Music",
-        uploadDate: "2023-01-01",
-        ago: "1 year ago",
-        image: "https://example.com/image.jpg",
-        thumbnail: "https://example.com/thumbnail.jpg",
-        description: "Test description",
-        author: {
-          name: "Test Author",
-          url: "https://example.com/author",
-        },
-        duration: {
-          seconds: 120,
-          timestamp: "2:00",
-          toString: () => "2:00",
-        },
-      };
-
-      await db.insertVideoData("abc123", "/videos/abc123.mp4", videoData);
-
-      // Execute
-      const data = await db.getVideoRecord("abc123");
-
-      // Verify
-      expect(data?.id).toBe("abc123");
-      expect(data?.path).toBe("/videos/abc123.mp4");
-      expect(data?.title).toBe("Test Video");
-    });
-
     it("should return null for non-existent video ID", async () => {
-      // Execute
-      const data = await db.getVideoRecord("non-existent");
-
-      // Verify
-      expect(data).toBeNull();
+      expect(await db.getVideoRecord("non-existent")).toBeNull();
     });
   });
 

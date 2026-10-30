@@ -21,7 +21,6 @@ describe("EmbedCreator", () => {
     seconds: 212,
     views: 1500,
     uploadDate: "2009-10-25",
-    ago: "16 years ago",
     image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     authorName: "Author",
     authorUrl: "https://www.youtube.com/@author",
@@ -41,7 +40,7 @@ describe("EmbedCreator", () => {
 
       expect(title).toBe("Song");
       expect(author).toEqual({ name: "Author", url: video.authorUrl });
-      expect(fields?.map((field) => field.value)).toEqual(["3:32", "1.5K", "16 years ago"]);
+      expect(fields?.map((field) => field.value)).toEqual(["3:32", "1.5K", "2009-10-25"]);
     });
 
     it("handles a video without metadata", () => {
@@ -51,7 +50,7 @@ describe("EmbedCreator", () => {
         url: null,
         timestamp: null,
         views: null,
-        ago: null,
+        uploadDate: null,
         image: null,
         authorName: null,
         authorUrl: null,
@@ -65,7 +64,7 @@ describe("EmbedCreator", () => {
       const { fields } = EmbedCreator.createNowPlayingEmbed({
         ...video,
         timestamp: "",
-        ago: "",
+        uploadDate: "",
       }).toJSON();
 
       expect(fields?.map((field) => field.value)).toEqual(["Unknown", "1.5K", "Unknown"]);

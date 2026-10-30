@@ -301,7 +301,6 @@ describe("NicheBot playback", () => {
       seconds: null,
       views: null,
       uploadDate: null,
-      ago: null,
       image: null,
       authorName: null,
       authorUrl: null,

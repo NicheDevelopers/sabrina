@@ -40,7 +40,7 @@ export default class EmbedCreator {
         },
         {
           name: "Uploaded",
-          value: videoData.ago || "Unknown",
+          value: videoData.uploadDate || "Unknown",
           inline: true,
         },
       )

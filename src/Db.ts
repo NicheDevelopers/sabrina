@@ -1,7 +1,6 @@
 import sqlite3 from "sqlite3";
 import { Database, open } from "sqlite";
 import { log } from "./logging";
-import { VideoMetadataResult } from "yt-search";
 import { ChatInputCommandInteraction } from "discord.js";
 import { randomUUID } from "node:crypto";
 import { VoiceStateChange } from "./analytics/analytics";
@@ -15,11 +14,12 @@ export interface VideoDataRecord {
   seconds: number | null;
   views: number | null;
   uploadDate: string | null;
-  ago: string | null;
   image: string | null;
   authorName: string | null;
   authorUrl: string | null;
 }
+
+export type VideoMetadata = Omit<VideoDataRecord, "path">;
 
 export interface PlayLogRecord {
   id: string;
@@ -80,7 +80,6 @@ export default class Db {
                 seconds INTEGER,
                 views INTEGER,
                 uploadDate TEXT,
-                ago TEXT,
                 image TEXT,
                 authorName TEXT,
                 authorUrl TEXT
@@ -147,36 +146,42 @@ export default class Db {
     log.info("Database closed.");
   }
 
-  public async insertVideoData(
-    id: string,
-    path: VideoDataRecord["path"],
-    videoData: VideoMetadataResult | null,
-  ): Promise<void> {
+  /* Saves a video unless it is already known, keeping any downloaded file path */
+  public async insertVideo(video: VideoMetadata): Promise<void> {
     if (!this.db) throw new Error("Database not initialized");
 
-    log.debug(`Inserting video ID ${id} with path ${path} into the database.`);
     const query = `
-            INSERT
-            OR REPLACE INTO yt_videos (
-            id, path, title, url, timestamp, seconds, views, 
-            uploadDate, ago, image, authorName, authorUrl
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO yt_videos (
+                id, title, url, timestamp, seconds, views,
+                uploadDate, image, authorName, authorUrl
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING;
         `;
     const values = [
-      id,
-      path,
-      videoData?.title ?? null,
-      videoData?.url ?? null,
-      videoData?.timestamp ?? null,
-      videoData?.seconds ?? null,
-      videoData?.views ?? null,
-      videoData?.uploadDate ?? null,
-      videoData?.ago ?? null,
-      videoData?.image ?? null,
-      videoData?.author?.name ?? null,
-      videoData?.author?.url ?? null,
+      video.id,
+      video.title,
+      video.url,
+      video.timestamp,
+      video.seconds,
+      video.views,
+      video.uploadDate,
+      video.image,
+      video.authorName,
+      video.authorUrl,
     ];
     await this.db.run(query, values);
+  }
+
+  public async setVideoPath(id: string, path: string): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.run(
+      `
+                INSERT INTO yt_videos (id, path) VALUES (?, ?)
+                ON CONFLICT(id) DO UPDATE SET path = excluded.path;
+            `,
+      [id, path],
+    );
     log.info(`Registered video ${id} at path ${path} in the database.`);
   }
 

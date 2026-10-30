@@ -1,10 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import * as fs from "node:fs";
-import { VideoMetadataResult } from "yt-search";
-import Db from "../../Db";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import Db, { VideoMetadata } from "../../Db";
 import AudioFileRepository from "../AudioFileRepository";
+import { QueryKind } from "../QueryParser";
 import YouTube from "./YouTube";
-import YouTubeApi from "./YouTubeApi";
 import { YtDlp } from "./YtDlp";
 
 vi.mock("node:fs", async (importOriginal) => ({
@@ -12,26 +11,28 @@ vi.mock("node:fs", async (importOriginal) => ({
   existsSync: vi.fn(),
 }));
 
-vi.mock("./YouTubeApi");
 vi.mock("./YtDlp");
 
 vi.mock("../../logging", () => ({
-  log: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+  log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 describe("YouTube", () => {
   const videoId = "dQw4w9WgXcQ";
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
   const filePath = "/app/downloads/youtube/Song [dQw4w9WgXcQ].opus";
-  const metadata = {
-    title: "Song",
-    author: { name: "Author" },
-    duration: { timestamp: "3:32" },
-  } as VideoMetadataResult;
+  const metadata = (id: string): VideoMetadata => ({
+    id,
+    title: `Song ${id}`,
+    url: `https://www.youtube.com/watch?v=${id}`,
+    timestamp: "3:32",
+    seconds: 212,
+    views: 1500,
+    uploadDate: "2009-10-25",
+    image: null,
+    authorName: "Author",
+    authorUrl: null,
+  });
 
   const existsSync = vi.mocked(fs.existsSync);
   const downloadAudio = vi.mocked(YtDlp.downloadAudio);
@@ -49,11 +50,91 @@ describe("YouTube", () => {
 
     existsSync.mockReturnValue(true);
     downloadAudio.mockResolvedValue(filePath);
-    vi.mocked(YouTubeApi.fetchVideoData).mockResolvedValue(metadata);
+    vi.mocked(YtDlp.fetchVideo).mockResolvedValue(metadata(videoId));
   });
 
   afterEach(async () => {
     await db.close();
+  });
+
+  describe("handleQuery", () => {
+    it("should fetch and save a new video from a URL", async () => {
+      const { videos, errors } = await youTube.handleQuery({
+        type: QueryKind.YT_URL,
+        payload: videoUrl,
+      });
+
+      expect(YtDlp.fetchVideo).toHaveBeenCalledWith(videoUrl);
+      expect(videos.map((video) => video.title)).toEqual([`Song ${videoId}`]);
+      expect(errors).toEqual([]);
+    });
+
+    it("should not fetch a known video again", async () => {
+      await db.insertVideo(metadata(videoId));
+
+      await youTube.handleQuery({ type: QueryKind.YT_URL, payload: videoUrl });
+
+      expect(YtDlp.fetchVideo).not.toHaveBeenCalled();
+    });
+
+    it("should report a video that cannot be loaded", async () => {
+      vi.mocked(YtDlp.fetchVideo).mockRejectedValue(new Error("Video unavailable"));
+
+      const { videos, errors } = await youTube.handleQuery({
+        type: QueryKind.YT_URL,
+        payload: videoUrl,
+      });
+
+      expect(videos).toEqual([]);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.videoId).toBe(videoId);
+    });
+
+    it("should save search results", async () => {
+      vi.mocked(YtDlp.search).mockResolvedValue([metadata("search")]);
+
+      const { videos } = await youTube.handleQuery({
+        type: QueryKind.YT_SEARCH,
+        payload: "song",
+      });
+
+      expect(YtDlp.search).toHaveBeenCalledWith("song");
+      expect(videos.map((video) => video.id)).toEqual(["search"]);
+    });
+
+    it("should return nothing when a search finds nothing", async () => {
+      vi.mocked(YtDlp.search).mockResolvedValue([]);
+
+      const result = await youTube.handleQuery({ type: QueryKind.YT_SEARCH, payload: "x" });
+
+      expect(result).toEqual({ videos: [], errors: [] });
+    });
+
+    it("should save every playlist video in order", async () => {
+      vi.mocked(YtDlp.fetchPlaylist).mockResolvedValue([metadata("a"), metadata("b")]);
+
+      const { videos } = await youTube.handleQuery({
+        type: QueryKind.YT_PLAYLIST,
+        payload: "PLexample",
+      });
+
+      expect(YtDlp.fetchPlaylist).toHaveBeenCalledWith("PLexample");
+      expect(videos.map((video) => video.id)).toEqual(["a", "b"]);
+      expect(YtDlp.fetchVideo).not.toHaveBeenCalled();
+    });
+
+    it("should keep a downloaded file when a known video is found again", async () => {
+      await db.insertVideo(metadata(videoId));
+      await db.setVideoPath(videoId, filePath);
+      vi.mocked(YtDlp.search).mockResolvedValue([metadata(videoId)]);
+
+      const { videos } = await youTube.handleQuery({
+        type: QueryKind.YT_SEARCH,
+        payload: "song",
+      });
+
+      expect(videos[0]?.path).toBe(filePath);
+    });
   });
 
   describe("findLocalOrDownload", () => {
@@ -63,7 +144,6 @@ describe("YouTube", () => {
     });
 
     it("should use a file found on disk without downloading", async () => {
-      await db.insertVideoData(videoId, null, metadata);
       repository.registerVideo(videoId, filePath);
 
       expect(await youTube.findLocalOrDownload(videoId)).toBe(filePath);
@@ -84,6 +164,16 @@ describe("YouTube", () => {
       await youTube.findLocalOrDownload(videoId);
 
       expect(downloadAudio).toHaveBeenCalledTimes(2);
+    });
+
+    it("should keep the metadata after downloading", async () => {
+      await db.insertVideo(metadata(videoId));
+
+      await youTube.findLocalOrDownload(videoId);
+
+      const record = await db.getVideoRecord(videoId);
+      expect(record?.path).toBe(filePath);
+      expect(record?.title).toBe(`Song ${videoId}`);
     });
 
     it("should fail when the download fails", async () => {
