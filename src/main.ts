@@ -35,4 +35,4 @@ process.on("SIGTERM", () => {
   void NicheBot.shutdown();
 });
 
-void main();
+await main();

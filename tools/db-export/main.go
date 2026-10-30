@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	// Registers the "sqlite" driver used by sql.Open
 	_ "modernc.org/sqlite"
 )
 

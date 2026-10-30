@@ -117,7 +117,7 @@ def plot_channel_popularity():
     vals = [v for _, v in channels]
 
     fig, ax = plt.subplots(figsize=(8, 6))
-    wedges, texts, autotexts = ax.pie(
+    _, texts, autotexts = ax.pie(
         vals, labels=names, autopct=lambda p: f"{p:.1f}%" if p > 3 else "",
         colors=PALETTE[:len(names)],
         pctdistance=0.8, startangle=140,

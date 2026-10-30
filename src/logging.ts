@@ -31,7 +31,6 @@ export const consoleFormat = winston.format.combine(
     format: TIMESTAMP_FORMAT,
   }),
   winston.format.align(),
-  // deno-lint-ignore no-explicit-any
   winston.format.printf((info: any) => `[${info.timestamp}] ${info.level}: ${info.message}`),
 );
 

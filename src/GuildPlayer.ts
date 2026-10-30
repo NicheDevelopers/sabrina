@@ -38,7 +38,7 @@ export class GuildPlayer {
       },
     });
 
-    const onQueueEmpty = async () => {
+    const onQueueEmpty = () => {
       log.debug(`[Guild ${this.guildId}] Song queue is empty.`);
       this.stopPlayback();
     };

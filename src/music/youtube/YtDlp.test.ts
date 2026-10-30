@@ -153,7 +153,13 @@ describe("YtDlp", () => {
         authorName: "jawed",
         authorUrl: "https://www.youtube.com/@jawed",
       });
-      expect(vi.mocked(spawn).mock.calls[0]?.[1]).toEqual(["--dump-json", "--no-playlist", url]);
+      expect(vi.mocked(spawn).mock.calls[0]?.[1]).toEqual([
+        "--js-runtimes",
+        "node",
+        "--dump-json",
+        "--no-playlist",
+        url,
+      ]);
     });
 
     it("should fail when a video cannot be loaded", async () => {
@@ -225,6 +231,13 @@ describe("YtDlp", () => {
 
       const args = vi.mocked(spawn).mock.calls[0][1];
       expect(args[args.indexOf("--print") + 1]).toBe("after_move:filepath");
+    });
+
+    it("should run YouTube's JavaScript with Node", async () => {
+      await runYtDlp(`${filePath}\n`);
+
+      const args = vi.mocked(spawn).mock.calls[0]?.[1] ?? [];
+      expect(args[args.indexOf("--js-runtimes") + 1]).toBe("node");
     });
 
     it("should return the printed file path", async () => {

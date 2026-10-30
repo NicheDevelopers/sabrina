@@ -12,18 +12,15 @@ export default class SongQueue<T> {
   private looping: LoopType = LoopType.Disabled;
 
   private readonly onCurrentSongChanged: (song: T) => Promise<void>;
-  private readonly onQueueEmpty: () => Promise<void>;
+  private readonly onQueueEmpty: () => void;
 
   private previousSong: T | undefined;
 
   private currentSongIndex: number = 0;
 
-  constructor(
-    onCurrentSongChanged?: (song: T) => Promise<void>,
-    onQueueEmpty?: () => Promise<void>,
-  ) {
+  constructor(onCurrentSongChanged?: (song: T) => Promise<void>, onQueueEmpty?: () => void) {
     this.onCurrentSongChanged = onCurrentSongChanged ?? (async () => {});
-    this.onQueueEmpty = onQueueEmpty ?? (async () => {});
+    this.onQueueEmpty = onQueueEmpty ?? (() => {});
   }
 
   /* Checks if the current song has changed and calls the callback if it has */
@@ -201,7 +198,7 @@ export default class SongQueue<T> {
     this.previousSong = undefined;
     this.currentSongIndex = 0;
     this.queue = [];
-    void this.onQueueEmpty();
+    this.onQueueEmpty();
   }
 
   setLoopType(type: LoopType): LoopType {

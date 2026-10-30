@@ -4,6 +4,9 @@ import { spawn, spawnSync } from "child_process";
 
 const ytDlpPath = "yt-dlp";
 
+// YouTube needs a JavaScript runtime, and yt-dlp only enables Deno by default
+const jsRuntimeArgs = ["--js-runtimes", "node"];
+
 const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const UPDATE_TIMEOUT_MS = 2 * 60 * 1000;
 const METADATA_TIMEOUT_MS = 60 * 1000;
@@ -114,7 +117,7 @@ export function fetchPlaylist(listId: string): Promise<VideoMetadata[]> {
 
 function fetchMetadata(args: string[]): Promise<VideoMetadata[]> {
   return new Promise((resolve, reject) => {
-    const fetcher = spawn(ytDlpPath, ["--dump-json", ...args], {
+    const fetcher = spawn(ytDlpPath, [...jsRuntimeArgs, "--dump-json", ...args], {
       timeout: METADATA_TIMEOUT_MS,
     });
 
@@ -152,6 +155,7 @@ export async function downloadAudio(url: string, outputDir: string): Promise<str
 
   return new Promise((resolve) => {
     const process = spawn(ytDlpPath, [
+      ...jsRuntimeArgs,
       "-x",
       "--print",
       "after_move:filepath",

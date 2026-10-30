@@ -1,10 +1,10 @@
-const validHosts = [
+const validHosts = new Set([
   "www.youtube.com",
   "youtu.be",
   "music.youtube.com",
   "youtube.com",
   "m.youtube.com",
-];
+]);
 
 export function isValidHttpUrl(string: string): boolean {
   try {
@@ -16,7 +16,7 @@ export function isValidHttpUrl(string: string): boolean {
 }
 
 export function isValidYoutubeUrl(url: URL): boolean {
-  return isValidHttpUrl(url.toString()) && validHosts.includes(url.hostname);
+  return isValidHttpUrl(url.toString()) && validHosts.has(url.hostname);
 }
 
 export function isPlaylistUrl(url: URL): boolean {
@@ -37,7 +37,7 @@ export function isPlaylistUrl(url: URL): boolean {
 }
 
 export function extractVideoId(url: URL): string {
-  if (!validHosts.includes(url.hostname)) {
+  if (!validHosts.has(url.hostname)) {
     throw new Error("Invalid host");
   }
 

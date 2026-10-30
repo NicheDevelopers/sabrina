@@ -2,7 +2,7 @@ import { type ChannelFetcher, GuildPlayer } from "./GuildPlayer";
 import { log } from "./logging";
 
 export class GuildPlayersManager {
-  private guildPlayers = new Map<string, GuildPlayer>();
+  private readonly guildPlayers = new Map<string, GuildPlayer>();
   private readonly fetchChannel: ChannelFetcher;
 
   constructor(fetchChannel: ChannelFetcher) {

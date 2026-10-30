@@ -188,7 +188,7 @@ class NicheBotClass {
     const guildPlayer = this.guildPlayersManager.getGuildPlayer(guild.id);
     const channel = guild.members.me?.voice.channel;
 
-    if (channel && channel.members.every((member) => member.user.bot)) {
+    if (channel?.members.every((member) => member.user.bot)) {
       guildPlayer.scheduleLeave(() => {
         log.info(`Leaving empty voice channel in guild ${guild.id}.`);
         guildPlayer.disconnect();
