@@ -9,14 +9,18 @@ export function getVoiceChannelFromInteraction(
   return member.voice.channel as VoiceChannel;
 }
 
+/* Formats a count with the correct singular/plural noun, e.g. "1 song", "2 songs" */
+export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /* Describes what a play command added to the queue, and what it could not load */
 export function queueResultMessage(
   query: string,
   videos: readonly VideoDataRecord[],
   failedCount: number,
 ): string {
-  const failed =
-    failedCount === 1 ? "1 song could not be loaded." : `${failedCount} songs could not be loaded.`;
+  const failed = `${pluralize(failedCount, "song")} could not be loaded.`;
 
   if (videos.length === 0) {
     return failedCount > 0 ? failed : `No results found for query: "${query}"`;
@@ -25,7 +29,7 @@ export function queueResultMessage(
   const added =
     videos.length === 1
       ? `Added **${videos[0].title}** to the queue.`
-      : `Added ${videos.length} songs to the queue.`;
+      : `Added ${pluralize(videos.length, "song")} to the queue.`;
 
   return failedCount > 0 ? `${added} ${failed}` : added;
 }

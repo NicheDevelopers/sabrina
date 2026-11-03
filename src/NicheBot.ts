@@ -66,7 +66,7 @@ class NicheBotClass {
    */
   private async refreshCommands() {
     const commandData = CommandProvider.getAllCommands().map((c) => c.data.toJSON());
-    log.info(`Registering ${commandData.length} commands...`);
+    log.info(`Registering ${Utils.pluralize(commandData.length, "command")}...`);
     const rest = new REST({ version: "10" }).setToken(this.token);
 
     const postCommands = rest.put(Routes.applicationCommands(this.appId), {

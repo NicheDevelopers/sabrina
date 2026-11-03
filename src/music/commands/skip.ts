@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { log } from "../../logging";
 import NicheBot from "../../NicheBot";
 import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
+import { pluralize } from "../../Utils";
 
 const data = new SlashCommandBuilder()
   .setName("skip")
@@ -21,8 +22,8 @@ async function execute(ctx: CommandContext) {
   const guildPlayer = NicheBot.getGuildPlayer(ctx.guildId);
   guildPlayer.songQueue.skipSongs(amount);
 
-  log.info(`[skip] Skipped ${amount} songs in guild ${ctx.guildId}`);
-  await ctx.interaction.followUp(`Skipped ${amount} songs!`);
+  log.info(`[skip] Skipped ${pluralize(amount, "song")} in guild ${ctx.guildId}`);
+  await ctx.interaction.followUp(`Skipped ${pluralize(amount, "song")}!`);
 }
 
 const skipCommand = new NicheBotCommand(data, execute, {

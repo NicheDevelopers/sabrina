@@ -3,6 +3,7 @@ import NicheBotCommand, { type CommandContext } from "../../NicheBotCommand";
 import * as QueryParser from "../QueryParser";
 import { youTube } from "../youtube/YouTube";
 import { log } from "../../logging";
+import { pluralize } from "../../Utils";
 
 const data = new SlashCommandBuilder()
   .setName("cache")
@@ -30,7 +31,7 @@ async function execute(ctx: CommandContext) {
   const titles = downloadResults.map((v) => v.title);
 
   log.info(
-    `[cache] Cached ${titles.length} out of ${videos.length} videos. Failed fetches: ${errors.length}`,
+    `[cache] Cached ${titles.length} out of ${pluralize(videos.length, "video")}. Failed fetches: ${errors.length}`,
   );
   if (titles.length === 0) {
     await ctx.interaction.followUp(`No results found for query: "${input}"`);

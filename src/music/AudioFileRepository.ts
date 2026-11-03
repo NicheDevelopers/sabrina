@@ -1,4 +1,5 @@
 import { log } from "../logging";
+import { pluralize } from "../Utils";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -31,7 +32,7 @@ export default class AudioFileRepository {
       log.error(`Error loading audio files: ${error}`);
     }
 
-    log.info(`Registered ${this.videos.size} audio files from disk.`);
+    log.info(`Registered ${pluralize(this.videos.size, "audio file")} from disk.`);
   }
 
   public registerVideo(videoId: string, filePath: string) {

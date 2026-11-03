@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { log } from "./logging";
+import { pluralize } from "./Utils";
 import { ChatInputCommandInteraction } from "discord.js";
 import { randomUUID } from "node:crypto";
 import type { VoiceStateChange } from "./analytics/analytics";
@@ -91,7 +92,7 @@ export default class Db {
             FROM yt_videos;
         `)
       .get() as { count: number } | undefined;
-    log.info(`Found ${result?.count || 0} entries in the database.`);
+    log.info(`Found ${pluralize(result?.count || 0, "entry", "entries")} in the database.`);
 
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS play_analytics (
