@@ -13,14 +13,21 @@ export default class SongQueue<T> {
 
   private readonly onCurrentSongChanged: (song: T) => Promise<void>;
   private readonly onQueueEmpty: () => void;
+  private readonly onNextSongChanged: (song: T) => void;
 
   private previousSong: T | undefined;
+  private upcomingSong: T | undefined;
 
   private currentSongIndex: number = 0;
 
-  constructor(onCurrentSongChanged?: (song: T) => Promise<void>, onQueueEmpty?: () => void) {
+  constructor(
+    onCurrentSongChanged?: (song: T) => Promise<void>,
+    onQueueEmpty?: () => void,
+    onNextSongChanged?: (song: T) => void,
+  ) {
     this.onCurrentSongChanged = onCurrentSongChanged ?? (async () => {});
     this.onQueueEmpty = onQueueEmpty ?? (() => {});
+    this.onNextSongChanged = onNextSongChanged ?? (() => {});
   }
 
   /* Checks if the current song has changed and calls the callback if it has */
@@ -42,6 +49,21 @@ export default class SongQueue<T> {
     if (restartCurrent || currentSong !== this.previousSong) {
       this.previousSong = currentSong;
       void this.onCurrentSongChanged(currentSong);
+    }
+
+    this.onMaybeNextSongChanged();
+  }
+
+  /* Checks if the song playing after the current one has changed and calls the callback if it has */
+  private onMaybeNextSongChanged() {
+    const nextSong = this.peekNextSong();
+    if (nextSong === this.upcomingSong) {
+      return;
+    }
+
+    this.upcomingSong = nextSong;
+    if (nextSong) {
+      this.onNextSongChanged(nextSong);
     }
   }
 
@@ -72,6 +94,7 @@ export default class SongQueue<T> {
       this.currentSongIndex += song.length;
     }
     this.queue.splice(index, 0, ...song);
+    this.onMaybeNextSongChanged();
   }
 
   addSongsNext(song: T[]) {
@@ -80,6 +103,11 @@ export default class SongQueue<T> {
 
   getCurrentSong(): T | undefined {
     return this.queue.at(this.currentSongIndex);
+  }
+
+  /* The song that will play once the current one finishes */
+  peekNextSong(): T | undefined {
+    return this.queue.at(this.nextSongIndexValue());
   }
 
   nextSongIndexValue(): number {
@@ -152,6 +180,7 @@ export default class SongQueue<T> {
       currentSong,
       ...toShuffle.slice(beforeCurrent.length),
     );
+    this.onMaybeNextSongChanged();
   }
 
   removeSong(index: number) {
@@ -174,6 +203,7 @@ export default class SongQueue<T> {
     if (isCurrentSong) {
       this.onMaybeSongChanged();
     }
+    this.onMaybeNextSongChanged();
   }
 
   removeCurrentSong() {
@@ -196,13 +226,16 @@ export default class SongQueue<T> {
 
   reset() {
     this.previousSong = undefined;
+    this.upcomingSong = undefined;
     this.currentSongIndex = 0;
     this.queue = [];
     this.onQueueEmpty();
   }
 
   setLoopType(type: LoopType): LoopType {
-    return (this.looping = type);
+    this.looping = type;
+    this.onMaybeNextSongChanged();
+    return type;
   }
 
   get loopType(): LoopType {

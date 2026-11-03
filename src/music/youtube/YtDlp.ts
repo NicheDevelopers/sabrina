@@ -1,6 +1,7 @@
 import type { VideoMetadata } from "../../Db";
 import { log } from "../../logging";
 import { spawn, spawnSync } from "child_process";
+import { constants, setPriority } from "node:os";
 
 const ytDlpPath = "yt-dlp";
 
@@ -10,6 +11,13 @@ const jsRuntimeArgs = ["--js-runtimes", "node"];
 const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const UPDATE_TIMEOUT_MS = 2 * 60 * 1000;
 const METADATA_TIMEOUT_MS = 60 * 1000;
+const DOWNLOAD_TIMEOUT_MS = 30 * 60 * 1000;
+const BACKGROUND_RATE_LIMIT = "2M";
+
+export interface DownloadOptions {
+  /* Leaves CPU and bandwidth to the audio playing right now */
+  background?: boolean;
+}
 
 interface YtDlpVideo {
   id: string;
@@ -150,19 +158,32 @@ function fetchMetadata(args: string[]): Promise<VideoMetadata[]> {
   });
 }
 
-export async function downloadAudio(url: string, outputDir: string): Promise<string | null> {
+export async function downloadAudio(
+  url: string,
+  outputDir: string,
+  { background = false }: DownloadOptions = {},
+): Promise<string | null> {
   const outputTemplate = `${outputDir}/%(title)s - %(uploader)s [%(id)s].%(ext)s`;
 
   return new Promise((resolve) => {
-    const process = spawn(ytDlpPath, [
-      ...jsRuntimeArgs,
-      "-x",
-      "--print",
-      "after_move:filepath",
-      "-o",
-      outputTemplate,
-      url,
-    ]);
+    const process = spawn(
+      ytDlpPath,
+      [
+        ...jsRuntimeArgs,
+        ...(background ? ["--limit-rate", BACKGROUND_RATE_LIMIT] : []),
+        "-x",
+        "--print",
+        "after_move:filepath",
+        "-o",
+        outputTemplate,
+        url,
+      ],
+      { timeout: DOWNLOAD_TIMEOUT_MS },
+    );
+
+    if (background) {
+      lowerPriority(process.pid);
+    }
 
     let stdout = "";
     let stderr = "";
@@ -198,6 +219,19 @@ export async function downloadAudio(url: string, outputDir: string): Promise<str
       resolve(null);
     });
   });
+}
+
+/* Child processes of yt-dlp, like ffmpeg, inherit this */
+function lowerPriority(pid: number | undefined) {
+  if (pid === undefined) {
+    return;
+  }
+
+  try {
+    setPriority(pid, constants.priority.PRIORITY_LOW);
+  } catch (error) {
+    log.warn(`Could not lower yt-dlp priority: ${error}`);
+  }
 }
 
 export function getVersion(): string | null {

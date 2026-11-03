@@ -17,6 +17,8 @@ export interface QueryResult {
 export default class YouTube {
   private audioRepo: AudioFileRepository;
   private db: Db;
+  private downloads: Map<string, Promise<string>> = new Map(); // videoId -> running download
+  private preloads: Promise<void> = Promise.resolve();
 
   constructor(audioFileRepository: AudioFileRepository, Db: Db) {
     this.audioRepo = audioFileRepository;
@@ -46,7 +48,40 @@ export default class YouTube {
     }
 
     log.debug(`Audio file not on disk, downloading: ${videoId}`);
-    return await this.downloadAudio(videoId);
+    return await this.joinOrStartDownload(videoId, false);
+  }
+
+  /* Downloads audio ahead of time, one video at a time, so several preloads never pile up.
+   * Never rejects: a failed preload is retried and reported when the song actually plays.
+   */
+  public preload(videoId: string): Promise<void> {
+    this.preloads = this.preloads.then(async () => {
+      if (this.audioRepo.getPath(videoId) || this.downloads.has(videoId)) {
+        return;
+      }
+
+      log.debug(`Preloading audio file: ${videoId}`);
+      try {
+        await this.joinOrStartDownload(videoId, true);
+      } catch (error) {
+        log.warn(`Audio preload failed: ${videoId}`, error);
+      }
+    });
+    return this.preloads;
+  }
+
+  /* A second yt-dlp would write to the same file as the one already running */
+  private joinOrStartDownload(videoId: string, background: boolean): Promise<string> {
+    const running = this.downloads.get(videoId);
+    if (running) {
+      return running;
+    }
+
+    const download = this.downloadAudio(videoId, background).finally(() => {
+      this.downloads.delete(videoId);
+    });
+    this.downloads.set(videoId, download);
+    return download;
   }
 
   private async handleVideoUrl(url: URL): Promise<QueryResult> {
@@ -74,12 +109,13 @@ export default class YouTube {
   }
 
   /* Downloads audio for a given YouTube video ID and returns the file path */
-  private async downloadAudio(videoId: string): Promise<string> {
+  private async downloadAudio(videoId: string, background: boolean): Promise<string> {
     log.info(`Starting audio download: ${videoId}`);
 
     const filePath = await YtDlp.downloadAudio(
       this.watchUrl(videoId),
       AudioFileRepository.audioFolderPath,
+      { background },
     );
 
     if (!filePath) {

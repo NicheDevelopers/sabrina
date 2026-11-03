@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "node:events";
+import { setPriority } from "node:os";
 import { log } from "../../logging";
 import * as YtDlp from "./YtDlp";
 
 vi.mock("child_process");
+
+vi.mock("node:os", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  setPriority: vi.fn(),
+}));
 
 vi.mock("../../logging", () => ({
   log: {
@@ -250,6 +256,47 @@ describe("YtDlp", () => {
 
     it("should return null when no file path was printed", async () => {
       expect(await runYtDlp("\n")).toBeNull();
+    });
+
+    it("should neither throttle nor deprioritize a normal download", async () => {
+      await runYtDlp(`${filePath}\n`);
+
+      expect(vi.mocked(spawn).mock.calls[0][1]).not.toContain("--limit-rate");
+      expect(setPriority).not.toHaveBeenCalled();
+    });
+
+    describe("in the background", () => {
+      function runBackground() {
+        const child = Object.assign(makeChild(), { pid: 1234 });
+        const download = YtDlp.downloadAudio(url, outputDir, { background: true });
+
+        child.stdout.emit("data", Buffer.from(`${filePath}\n`));
+        child.emit("close", 0);
+
+        return download;
+      }
+
+      it("should limit the download rate", async () => {
+        await runBackground();
+
+        const args = vi.mocked(spawn).mock.calls[0][1];
+        expect(args[args.indexOf("--limit-rate") + 1]).toBe("2M");
+      });
+
+      it("should run at low priority", async () => {
+        await runBackground();
+
+        expect(setPriority).toHaveBeenCalledWith(1234, expect.any(Number));
+      });
+
+      it("should still download when the priority cannot be changed", async () => {
+        vi.mocked(setPriority).mockImplementationOnce(() => {
+          throw new Error("EPERM");
+        });
+
+        expect(await runBackground()).toBe(filePath);
+        expect(log.warn).toHaveBeenCalled();
+      });
     });
 
     it("should return null when yt-dlp cannot be started", async () => {

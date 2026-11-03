@@ -45,7 +45,7 @@ vi.mock("@discordjs/voice", async (importOriginal) => ({
 
 vi.mock("./music/youtube/YouTube", async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  youTube: { findLocalOrDownload: vi.fn() },
+  youTube: { findLocalOrDownload: vi.fn(), preload: vi.fn() },
 }));
 
 const actualVoice = await vi.importActual<typeof voice>("@discordjs/voice");
@@ -423,6 +423,21 @@ describe("NicheBot playback", () => {
 
     await waitFor(() => playedPaths().includes("b.opus"));
     expect(queuedIds()).toEqual(["b"]);
+  });
+
+  it("preloads the next song without interrupting the current one", async () => {
+    const preload = vi.mocked(youTube.preload);
+    preload.mockClear();
+    await startPlaying([song("a"), song("b")]);
+    const status = () => guildPlayer().audioPlayer.state.status;
+    const stop = vi.spyOn(guildPlayer().audioPlayer, "stop");
+
+    await sleep(50);
+
+    expect(preload).toHaveBeenCalledWith("b");
+    expect(stop).not.toHaveBeenCalled();
+    expect(status()).toBe("playing");
+    expect(playedPaths()).toEqual(["a.opus"]);
   });
 
   it("keeps the queue intact when skipping to a song still downloading", async () => {

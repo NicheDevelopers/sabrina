@@ -43,7 +43,11 @@ export class GuildPlayer {
       this.stopPlayback();
     };
 
-    this.songQueue = new SongQueue<VideoDataRecord>((song) => this.playSong(song), onQueueEmpty);
+    this.songQueue = new SongQueue<VideoDataRecord>(
+      (song) => this.playSong(song),
+      onQueueEmpty,
+      (song) => void youTube.preload(song.id),
+    );
 
     this.setupAudioPlayerEvents();
   }

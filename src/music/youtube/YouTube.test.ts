@@ -183,5 +183,124 @@ describe("YouTube", () => {
         "Failed to download audio",
       );
     });
+
+    it("should share a running download instead of starting another", async () => {
+      const first = youTube.findLocalOrDownload(videoId);
+      const second = youTube.findLocalOrDownload(videoId);
+
+      expect(await Promise.all([first, second])).toEqual([filePath, filePath]);
+      expect(downloadAudio).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not run a download in the background", async () => {
+      await youTube.findLocalOrDownload(videoId);
+
+      expect(downloadAudio.mock.calls[0]?.[2]).toEqual({ background: false });
+    });
+  });
+
+  describe("preload", () => {
+    function holdDownloads() {
+      const finish: ((path: string) => void)[] = [];
+      downloadAudio.mockImplementation(
+        () => new Promise<string>((resolve) => finish.push(resolve)),
+      );
+      return finish;
+    }
+
+    it("should download in the background", async () => {
+      await youTube.preload(videoId);
+
+      expect(downloadAudio.mock.calls[0]?.[2]).toEqual({ background: true });
+    });
+
+    it("should make the file available to playback", async () => {
+      await youTube.preload(videoId);
+
+      expect(await youTube.findLocalOrDownload(videoId)).toBe(filePath);
+      expect(downloadAudio).toHaveBeenCalledTimes(1);
+    });
+
+    it("should skip a video already on disk", async () => {
+      repository.registerVideo(videoId, filePath);
+
+      await youTube.preload(videoId);
+
+      expect(downloadAudio).not.toHaveBeenCalled();
+    });
+
+    it("should let playback join a running preload", async () => {
+      const finish = holdDownloads();
+      const preload = youTube.preload(videoId);
+      await vi.waitFor(() => expect(downloadAudio).toHaveBeenCalledTimes(1));
+
+      const playback = youTube.findLocalOrDownload(videoId);
+      finish[0]?.(filePath);
+
+      expect(await playback).toBe(filePath);
+      await preload;
+      expect(downloadAudio).toHaveBeenCalledTimes(1);
+    });
+
+    it("should skip a video playback is already downloading", async () => {
+      const finish = holdDownloads();
+      const playback = youTube.findLocalOrDownload(videoId);
+
+      const preload = youTube.preload(videoId);
+      await preload;
+      finish[0]?.(filePath);
+      await playback;
+
+      expect(downloadAudio).toHaveBeenCalledTimes(1);
+    });
+
+    it("should run one preload at a time", async () => {
+      const finish = holdDownloads();
+      const first = youTube.preload("aaaaaaaaaaa");
+      const second = youTube.preload("bbbbbbbbbbb");
+      await vi.waitFor(() => expect(downloadAudio).toHaveBeenCalledTimes(1));
+
+      finish[0]?.("/a [aaaaaaaaaaa].opus");
+      await first;
+      await vi.waitFor(() => expect(downloadAudio).toHaveBeenCalledTimes(2));
+      finish[1]?.("/b [bbbbbbbbbbb].opus");
+      await second;
+    });
+
+    it("should not block playback of another video", async () => {
+      const finish = holdDownloads();
+      const preload = youTube.preload("aaaaaaaaaaa");
+      await vi.waitFor(() => expect(downloadAudio).toHaveBeenCalledTimes(1));
+
+      const playback = youTube.findLocalOrDownload(videoId);
+      expect(downloadAudio).toHaveBeenCalledTimes(2);
+
+      finish[0]?.("/a [aaaaaaaaaaa].opus");
+      finish[1]?.(filePath);
+      await Promise.all([preload, playback]);
+    });
+
+    it("should not fail when the download fails", async () => {
+      downloadAudio.mockResolvedValue(null);
+
+      await expect(youTube.preload(videoId)).resolves.toBeUndefined();
+    });
+
+    it("should keep preloading after a failure", async () => {
+      downloadAudio.mockResolvedValueOnce(null);
+
+      await youTube.preload("aaaaaaaaaaa");
+      await youTube.preload(videoId);
+
+      expect(repository.getPath(videoId)).toBe(filePath);
+    });
+
+    it("should download again for playback after a failed preload", async () => {
+      downloadAudio.mockResolvedValueOnce(null);
+
+      await youTube.preload(videoId);
+
+      expect(await youTube.findLocalOrDownload(videoId)).toBe(filePath);
+    });
   });
 });

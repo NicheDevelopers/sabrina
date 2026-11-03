@@ -673,4 +673,97 @@ describe("SongQueue", () => {
       expect(songChangeCallbacks.map((song) => song.id)).toEqual([2]);
     });
   });
+
+  describe("next song", () => {
+    let nextSongs: TestSong[];
+    const [a, b, c] = [createSong(1), createSong(2), createSong(3)];
+
+    beforeEach(() => {
+      nextSongs = [];
+      queue = new SongQueue<TestSong>(
+        () => Promise.resolve(),
+        undefined,
+        (song) => nextSongs.push(song),
+      );
+    });
+
+    it("should not report a next song for a single song", () => {
+      queue.addSongs([a]);
+
+      expect(queue.peekNextSong()).toBeUndefined();
+      expect(nextSongs).toEqual([]);
+    });
+
+    it("should report the next song when songs are added", () => {
+      queue.addSongs([a]);
+      queue.addSongs([b]);
+
+      expect(nextSongs).toEqual([b]);
+    });
+
+    it("should not report again when the next song stays the same", () => {
+      queue.addSongs([a, b]);
+      queue.addSongs([c]);
+
+      expect(nextSongs).toEqual([b]);
+    });
+
+    it("should report the new next song after a song finishes", () => {
+      queue.addSongs([a, b, c]);
+      queue.notifyCurrentSongFinished();
+
+      expect(nextSongs).toEqual([b, c]);
+    });
+
+    it("should report the new next song after a skip", () => {
+      queue.addSongs([a, b, c]);
+      queue.skipSongs(1);
+
+      expect(nextSongs).toEqual([b, c]);
+    });
+
+    it("should report a song inserted right after the current one", () => {
+      queue.addSongs([a, b]);
+      queue.addSongsNext([c]);
+
+      expect(nextSongs).toEqual([b, c]);
+    });
+
+    it("should report when the next song is removed", () => {
+      queue.addSongs([a, b, c]);
+      queue.removeSong(1);
+
+      expect(nextSongs).toEqual([b, c]);
+    });
+
+    it("should report the next song after a shuffle changes it", () => {
+      queue.addSongs([a, b, c]);
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      queue.shuffle();
+
+      expect(nextSongs).toEqual([b, c]);
+    });
+
+    it("should report the first song when loop all makes the last song wrap around", () => {
+      queue.addSongs([a, b]);
+      queue.notifyCurrentSongFinished();
+      queue.addSongs([c]);
+      queue.notifyCurrentSongFinished();
+      expect(queue.peekNextSong()).toBeUndefined();
+      nextSongs.length = 0;
+
+      queue.setLoopType(LoopType.All);
+
+      expect(queue.peekNextSong()).toBe(c);
+      expect(nextSongs).toEqual([c]);
+    });
+
+    it("should report songs again after the queue was reset", () => {
+      queue.addSongs([a, b]);
+      queue.reset();
+      queue.addSongs([a, b]);
+
+      expect(nextSongs).toEqual([b, b]);
+    });
+  });
 });
